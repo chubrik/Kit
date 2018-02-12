@@ -7,28 +7,37 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Utils.Helpers;
-using Utils.Models;
 
 namespace Utils.Services {
     public class BlobService {
 
         private static ExceptionService ExceptionService => ExceptionService.Instance;
 
+        private static BlobService instance;
+        public static BlobService Instance => instance ?? (instance = new BlobService());
+        private BlobService() { }
+
         private static readonly AccessCondition accessCondition = new AccessCondition();
         private static readonly BlobRequestOptions options = new BlobRequestOptions();
         private static readonly OperationContext operationContext = new OperationContext();
 
         private CloudBlobContainer container;
-        private string workDirectory;
+        private string targetDirectory = string.Empty;
 
-        public BlobService(BlobOptions options) {
+        public void Setup(
+            string accountName = null,
+            string accountKey = null,
+            string containerName = null,
+            string targetDirectory = null) {
 
             var account = CloudStorageAccount.Parse(
-                $"DefaultEndpointsProtocol=https;AccountName={options.AccountName};AccountKey={options.AccountKey}");
+                $"DefaultEndpointsProtocol=https;AccountName={accountName};AccountKey={accountKey}");
 
             var client = account.CreateCloudBlobClient();
-            container = client.GetContainerReference(options.ContainerName);
-            workDirectory = options.WorkDirectory ?? string.Empty;
+            container = client.GetContainerReference(containerName);
+
+            if (targetDirectory != null)
+                this.targetDirectory = targetDirectory;
         }
 
         #region Download
@@ -37,15 +46,15 @@ namespace Utils.Services {
             DownloadBaseAsync(path, cancellationToken, (fullPath, blob) =>
                 blob.DownloadTextAsync(Encoding.UTF8, accessCondition, options, operationContext, cancellationToken));
 
-        public IReadOnlyList<string> DownloadLines(string path, CancellationToken cancellationToken) =>
+        public IReadOnlyList<string> DownloadLinesAsync(string path, CancellationToken cancellationToken) =>
             throw new NotImplementedException();
 
-        public IReadOnlyList<string> DownloadBytes(string path, CancellationToken cancellationToken) =>
+        public IReadOnlyList<string> DownloadBytesAsync(string path, CancellationToken cancellationToken) =>
             throw new NotImplementedException();
 
         private async Task<T> DownloadBaseAsync<T>(string path, CancellationToken cancellationToken, Func<string, CloudBlockBlob, Task<T>> action) {
             try {
-                var fullPath = PathHelper.Combine(workDirectory, path);
+                var fullPath = PathHelper.Combine(targetDirectory, path);
                 LogHelper.WriteLine($"Download blob \"{fullPath}\"");
                 var blob = container.GetBlockBlobReference(fullPath);
                 return await action(fullPath, blob);
@@ -58,7 +67,7 @@ namespace Utils.Services {
 
         public async Task DownloadStreamAsync(string path, Stream target, CancellationToken cancellationToken) {
             try {
-                var fullPath = PathHelper.Combine(workDirectory, path);
+                var fullPath = PathHelper.Combine(targetDirectory, path);
                 LogHelper.WriteLine($"Download blob \"{fullPath}\"");
                 var blob = container.GetBlockBlobReference(fullPath);
                 await blob.DownloadToStreamAsync(target, accessCondition, options, operationContext, cancellationToken);
@@ -90,7 +99,7 @@ namespace Utils.Services {
 
         public async Task UploadAsync(string path, Stream source, CancellationToken cancellationToken) {
             try {
-                var fullPath = PathHelper.Combine(workDirectory, path);
+                var fullPath = PathHelper.Combine(targetDirectory, path);
                 LogHelper.WriteLine($"Upload blob \"{fullPath}\"");
                 var blob = container.GetBlockBlobReference(fullPath);
                 await blob.UploadFromStreamAsync(source, accessCondition, options, operationContext, cancellationToken);

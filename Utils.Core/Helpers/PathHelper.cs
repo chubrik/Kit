@@ -12,7 +12,7 @@ namespace Utils.Helpers {
             try {
                 var result = Path.Combine(paths).Replace(@"\", "/");
 
-                while (result.Contains("/../"))
+                while (result.Contains("../"))
                     result = Regex.Replace(result, @"(?<=^|/)[^/]+/\.\./", "");
 
                 return result;
@@ -21,6 +21,16 @@ namespace Utils.Helpers {
                 ExceptionService.Register(exception);
                 throw;
             }
+        }
+
+        public static string CombineLocal(params string[] paths) {
+            var allPaths = new string[paths.Length + 1];
+            allPaths[0] = Utils.BaseDirectory;
+
+            for (var i = 0; i < paths.Length; i++)
+                allPaths[i + 1] = paths[i];
+
+            return Combine(allPaths);
         }
     }
 }

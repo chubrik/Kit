@@ -9,9 +9,17 @@ namespace Utils.Services {
 
         private static ExceptionService ExceptionService => ExceptionService.Instance;
 
-        private string workingDirectory;
+        private static FileService instance;
+        public static FileService Instance => instance ?? (instance = new FileService());
+        private FileService() { }
 
-        public FileService(string workingDirectory = "workDir") => this.workingDirectory = workingDirectory;
+        private string targetDirectory = "$work";
+
+        public void Setup(string targetDirectory = null) {
+
+            if (targetDirectory != null)
+                this.targetDirectory = targetDirectory;
+        }
 
         #region Read
 
@@ -26,7 +34,7 @@ namespace Utils.Services {
 
         private T ReadBase<T>(string path, Func<string, T> readFunc) {
             try {
-                var fullPath = PathHelper.Combine(workingDirectory, path);
+                var fullPath = PathHelper.CombineLocal(targetDirectory, path);
                 LogHelper.WriteLine($"Read file \"{fullPath}\"");
                 return readFunc(fullPath);
             }
@@ -38,7 +46,7 @@ namespace Utils.Services {
 
         public FileStream OpenRead(string path) {
             try {
-                var fullPath = PathHelper.Combine(workingDirectory, path);
+                var fullPath = PathHelper.CombineLocal(targetDirectory, path);
                 LogHelper.WriteLine($"Read file \"{fullPath}\"");
                 return File.OpenRead(fullPath);
             }
@@ -69,7 +77,7 @@ namespace Utils.Services {
 
         private void WriteBase(string path, Action<string> writeAction) {
             try {
-                var fullPath = PathHelper.Combine(workingDirectory, path);
+                var fullPath = PathHelper.CombineLocal(targetDirectory, path);
                 LogHelper.WriteLine($"Write file \"{fullPath}\"");
                 CreateTree(fullPath);
                 writeAction(fullPath);
@@ -82,7 +90,7 @@ namespace Utils.Services {
 
         public Stream OpenWrite(string path) {
             try {
-                var fullPath = PathHelper.Combine(workingDirectory, path);
+                var fullPath = PathHelper.CombineLocal(targetDirectory, path);
                 LogHelper.WriteLine($"Write file \"{fullPath}\"");
                 CreateTree(fullPath);
                 return File.OpenWrite(fullPath);
