@@ -1,19 +1,12 @@
-﻿using System;
-
-namespace Utils {
+﻿namespace Utils {
     public class Utils {
 
         public static string BaseDirectory { get; private set; } = string.Empty;
-        private static bool isInitialized;
 
-        public static void Initialize(string baseDirectory) {
-            if (isInitialized)
-                throw new InvalidOperationException();
+        public static void Setup(string baseDirectory = null) {
 
             if (baseDirectory != null)
                 BaseDirectory = baseDirectory;
-
-            isInitialized = true;
         }
     }
 }

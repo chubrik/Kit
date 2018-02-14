@@ -8,17 +8,18 @@ namespace Utils.Services {
     public class FileService {
 
         private static ExceptionService ExceptionService => ExceptionService.Instance;
+        private static LogService LogService => LogService.Instance;
 
         private static FileService instance;
         public static FileService Instance => instance ?? (instance = new FileService());
         private FileService() { }
 
-        private string targetDirectory = "$work";
+        internal string TargetDirectory = "$work";
 
         public void Setup(string targetDirectory = null) {
 
             if (targetDirectory != null)
-                this.targetDirectory = targetDirectory;
+                TargetDirectory = targetDirectory;
         }
 
         #region Read
@@ -34,8 +35,8 @@ namespace Utils.Services {
 
         private T ReadBase<T>(string path, Func<string, T> readFunc) {
             try {
-                var fullPath = PathHelper.CombineLocal(targetDirectory, path);
-                LogHelper.WriteLine($"Read file \"{fullPath}\"");
+                var fullPath = PathHelper.CombineLocal(TargetDirectory, path);
+                LogService.WriteLine($"Read file \"{fullPath}\"");
                 return readFunc(fullPath);
             }
             catch (Exception exception) {
@@ -46,8 +47,8 @@ namespace Utils.Services {
 
         public FileStream OpenRead(string path) {
             try {
-                var fullPath = PathHelper.CombineLocal(targetDirectory, path);
-                LogHelper.WriteLine($"Read file \"{fullPath}\"");
+                var fullPath = PathHelper.CombineLocal(TargetDirectory, path);
+                LogService.WriteLine($"Read file \"{fullPath}\"");
                 return File.OpenRead(fullPath);
             }
             catch (Exception exception) {
@@ -77,8 +78,8 @@ namespace Utils.Services {
 
         private void WriteBase(string path, Action<string> writeAction) {
             try {
-                var fullPath = PathHelper.CombineLocal(targetDirectory, path);
-                LogHelper.WriteLine($"Write file \"{fullPath}\"");
+                var fullPath = PathHelper.CombineLocal(TargetDirectory, path);
+                LogService.WriteLine($"Write file \"{fullPath}\"");
                 CreateTree(fullPath);
                 writeAction(fullPath);
             }
@@ -88,10 +89,10 @@ namespace Utils.Services {
             }
         }
 
-        public Stream OpenWrite(string path) {
+        public FileStream OpenWrite(string path) {
             try {
-                var fullPath = PathHelper.CombineLocal(targetDirectory, path);
-                LogHelper.WriteLine($"Write file \"{fullPath}\"");
+                var fullPath = PathHelper.CombineLocal(TargetDirectory, path);
+                LogService.WriteLine($"Write file \"{fullPath}\"");
                 CreateTree(fullPath);
                 return File.OpenWrite(fullPath);
             }

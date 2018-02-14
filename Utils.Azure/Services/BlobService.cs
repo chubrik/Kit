@@ -12,6 +12,7 @@ namespace Utils.Services {
     public class BlobService {
 
         private static ExceptionService ExceptionService => ExceptionService.Instance;
+        private static LogService LogService => LogService.Instance;
 
         private static BlobService instance;
         public static BlobService Instance => instance ?? (instance = new BlobService());
@@ -55,9 +56,11 @@ namespace Utils.Services {
         private async Task<T> DownloadBaseAsync<T>(string path, CancellationToken cancellationToken, Func<string, CloudBlockBlob, Task<T>> action) {
             try {
                 var fullPath = PathHelper.Combine(targetDirectory, path);
-                LogHelper.WriteLine($"Download blob \"{fullPath}\"");
+                LogService.WriteLine($"Start downloading blob \"{fullPath}\"");
                 var blob = container.GetBlockBlobReference(fullPath);
-                return await action(fullPath, blob);
+                var result = await action(fullPath, blob);
+                LogService.WriteLine($"End downloading blob \"{fullPath}\"");
+                return result;
             }
             catch (Exception exception) {
                 ExceptionService.Register(exception);
@@ -68,9 +71,10 @@ namespace Utils.Services {
         public async Task DownloadStreamAsync(string path, Stream target, CancellationToken cancellationToken) {
             try {
                 var fullPath = PathHelper.Combine(targetDirectory, path);
-                LogHelper.WriteLine($"Download blob \"{fullPath}\"");
+                LogService.WriteLine($"Start downloading blob \"{fullPath}\"");
                 var blob = container.GetBlockBlobReference(fullPath);
                 await blob.DownloadToStreamAsync(target, accessCondition, options, operationContext, cancellationToken);
+                LogService.WriteLine($"End downloading blob \"{fullPath}\"");
             }
             catch (Exception exception) {
                 ExceptionService.Register(exception);
@@ -100,9 +104,10 @@ namespace Utils.Services {
         public async Task UploadAsync(string path, Stream source, CancellationToken cancellationToken) {
             try {
                 var fullPath = PathHelper.Combine(targetDirectory, path);
-                LogHelper.WriteLine($"Upload blob \"{fullPath}\"");
+                LogService.WriteLine($"Start uploading blob \"{fullPath}\"");
                 var blob = container.GetBlockBlobReference(fullPath);
                 await blob.UploadFromStreamAsync(source, accessCondition, options, operationContext, cancellationToken);
+                LogService.WriteLine($"End uploading blob \"{fullPath}\"");
             }
             catch (Exception exception) {
                 ExceptionService.Register(exception);
