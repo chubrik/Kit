@@ -33,8 +33,8 @@ namespace Utils.Services {
                 Directory.CreateDirectory(targetDir);
 
             filePath = PathHelper.Combine(targetDir, fileName);
-            WriteLine($"Initialize LogService");
             isInitialized = true;
+            WriteLine($"Initialize LogService");
         }
 
         public void WriteLine(string message) {
