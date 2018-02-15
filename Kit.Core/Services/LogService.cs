@@ -1,11 +1,11 @@
-﻿using System;
+﻿using Kit.Abstractions;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using Utils.Abstractions;
 
-namespace Utils.Services {
+namespace Kit.Services {
     public class LogService {
 
         private static LogService instance;

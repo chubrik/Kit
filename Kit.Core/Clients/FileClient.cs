@@ -1,13 +1,14 @@
-﻿using System;
+﻿using Kit.Abstractions;
+using Kit.Helpers;
+using Kit.Services;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Utils.Abstractions;
-using Utils.Helpers;
 
-namespace Utils.Services {
+namespace Kit.Clients {
     public class FileClient : IDataClient, ILogClient {
 
         private static ExceptionService ExceptionService => ExceptionService.Instance;

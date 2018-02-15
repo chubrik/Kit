@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 
-namespace Utils.Abstractions {
+namespace Kit.Abstractions {
     public interface ILogClient {
 
         Task LogAsync(string message, CancellationToken cancellationToken, LogLevel level = LogLevel.Log);

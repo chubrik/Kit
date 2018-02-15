@@ -1,9 +1,9 @@
-﻿using System;
+﻿using Kit.Abstractions;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Utils.Abstractions;
 
-namespace Utils.Helpers {
+namespace Kit.Clients {
     public class ConsoleClient : ILogClient {
 
         #region ILogClient
@@ -30,10 +30,8 @@ namespace Utils.Helpers {
 
         #endregion
 
-        public void WriteLine(string message, ConsoleColor? color = null) {
-            Write(message, color);
-            Console.WriteLine();
-        }
+        public void WriteLine(string message, ConsoleColor? color = null) =>
+            Write($"{message}\r\n", color);
 
         public void Write(string message, ConsoleColor? color = null) {
             var time = DateTime.Now.ToString("HH:mm:ss");

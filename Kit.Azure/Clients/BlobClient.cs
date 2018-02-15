@@ -1,4 +1,7 @@
-﻿using Microsoft.WindowsAzure.Storage;
+﻿using Kit.Abstractions;
+using Kit.Helpers;
+using Kit.Services;
+using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using System;
 using System.Collections.Generic;
@@ -6,10 +9,8 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Utils.Abstractions;
-using Utils.Helpers;
 
-namespace Utils.Services {
+namespace Kit.Clients {
     public class BlobClient : IDataClient {
 
         private static ExceptionService ExceptionService => ExceptionService.Instance;

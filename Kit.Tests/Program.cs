@@ -1,15 +1,16 @@
-﻿using System;
+﻿using Kit.Clients;
+using Kit.Services;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Utils.Services;
 
-namespace Utils.Tests {
+namespace Kit.Tests {
     public class Program {
 
         public static ExceptionService ExceptionService => ExceptionService.Instance;
-        public static BlobClient BlobService => BlobClient.Instance;
+        public static BlobClient BlobClient => BlobClient.Instance;
 
         public static void Main(string[] args) => MainAsync(args, CancellationToken.None).Wait();
 
@@ -26,13 +27,13 @@ namespace Utils.Tests {
 
         public static void Initialize(string[] args) {
 
-            Utils.Setup(
+            Kit.Setup(
                 baseDirectory: args.Length > 0 ? args[0] : null
             );
 
             var lines = File.ReadAllLines("../../azure-storage-login.txt");
 
-            BlobService.Setup(
+            BlobClient.Setup(
                 accountName: lines[0],
                 accountKey: lines[1],
                 containerName: "test"

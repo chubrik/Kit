@@ -1,14 +1,14 @@
-﻿using System;
+﻿using Kit.Abstractions;
+using Kit.Helpers;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using Utils.Abstractions;
-using Utils.Helpers;
 
-namespace Utils.Services {
+namespace Kit.Services {
     public class ExceptionService {
 
         private static LogService LogService => LogService.Instance;

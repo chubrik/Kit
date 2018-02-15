@@ -1,5 +1,5 @@
-﻿namespace Utils {
-    public class Utils {
+﻿namespace Kit {
+    public class Kit {
 
         public static string BaseDirectory { get; private set; } = string.Empty;
 

@@ -2,11 +2,11 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <RootNamespace>Utils</RootNamespace>
+    <RootNamespace>Kit</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Utils.Abstractions\Utils.Abstractions.csproj" />
+    <ProjectReference Include="..\Kit.Abstractions\Kit.Abstractions.csproj" />
   </ItemGroup>
 
 </Project>

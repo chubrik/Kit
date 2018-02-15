@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace Utils.Helpers {
+namespace Kit.Helpers {
     public class PathHelper {
 
         public static string Combine(params string[] paths) {
@@ -16,7 +16,7 @@ namespace Utils.Helpers {
 
         public static string CombineLocal(params string[] paths) {
             var allPaths = new string[paths.Length + 1];
-            allPaths[0] = Utils.BaseDirectory;
+            allPaths[0] = Kit.BaseDirectory;
 
             for (var i = 0; i < paths.Length; i++)
                 allPaths[i + 1] = paths[i];

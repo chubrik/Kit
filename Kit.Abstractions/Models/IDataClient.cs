@@ -3,7 +3,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Utils.Abstractions {
+namespace Kit.Abstractions {
     public interface IDataClient {
 
         Task<string> ReadTextAsync(string path, CancellationToken cancellationToken);
