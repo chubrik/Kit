@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using Utils.Helpers;
+using System.Threading;
+using System.Threading.Tasks;
+using Utils.Abstractions;
 
 namespace Utils.Services {
     public class LogService {
@@ -10,10 +12,10 @@ namespace Utils.Services {
         public static LogService Instance => instance ?? (instance = new LogService());
         private LogService() { }
 
+        public readonly List<ILogClient> LogClients = new List<ILogClient>();
+
         private bool isEnable = true;
         private bool isInitialized = false;
-        private const string fileName = "$log.txt";
-        private string filePath = string.Empty;
 
         public void Setup(bool? isEnable = null) {
 
@@ -21,31 +23,38 @@ namespace Utils.Services {
                 this.isEnable = (bool)isEnable;
         }
 
-        private void Initialize() {
+        private async Task InitializeAsync(CancellationToken cancellationToken) {
             Debug.Assert(!isInitialized);
 
             if (isInitialized)
                 throw new InvalidOperationException();
-
-            var targetDir = PathHelper.CombineLocal(FileService.Instance.TargetDirectory);
-
-            if (!Directory.Exists(targetDir))
-                Directory.CreateDirectory(targetDir);
-
-            filePath = PathHelper.Combine(targetDir, fileName);
+            
             isInitialized = true;
-            WriteLine($"Initialize LogService");
+            await LogAsync("Initialize LogService", cancellationToken);
         }
 
-        public void WriteLine(string message) {
+        public Task LogAsync(string message, CancellationToken cancellationToken) =>
+            PushAsync(message, cancellationToken, LogLevel.Log);
+
+        public Task InfoAsync(string message, CancellationToken cancellationToken) =>
+            PushAsync(message, cancellationToken, LogLevel.Info);
+
+        public Task WarningAsync(string message, CancellationToken cancellationToken) =>
+            PushAsync(message, cancellationToken, LogLevel.Warning);
+
+        public Task ErrorAsync(string message, CancellationToken cancellationToken) =>
+            PushAsync(message, cancellationToken, LogLevel.Error);
+
+        public async Task PushAsync(string message, CancellationToken cancellationToken, LogLevel level = LogLevel.Log) {
 
             if (!isEnable)
                 return;
 
             if (!isInitialized)
-                Initialize();
+                await InitializeAsync(cancellationToken);
 
-            File.AppendAllText(filePath, $"{message}\r\n");
+            foreach (var logClient in LogClients)
+                await logClient.LogAsync(message, cancellationToken, level);
         }
     }
 }

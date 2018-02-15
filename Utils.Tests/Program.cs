@@ -9,17 +9,17 @@ namespace Utils.Tests {
     public class Program {
 
         public static ExceptionService ExceptionService => ExceptionService.Instance;
-        public static BlobService BlobService => BlobService.Instance;
+        public static BlobClient BlobService => BlobClient.Instance;
 
         public static void Main(string[] args) => MainAsync(args, CancellationToken.None).Wait();
 
-        private static async Task MainAsync(string[] args, CancellationToken cancellationToken) {
+        private static async Task MainAsync(string[] args, CancellationToken ct) {
             try {
                 Initialize(args);
-                await new Test().Run(cancellationToken);
+                await new Test().RunAsync(ct);
             }
             catch (Exception exception) {
-                ExceptionService.Register(exception);
+                await ExceptionService.RegisterAsync(exception, ct);
                 Debugger.Break();
             }
         }

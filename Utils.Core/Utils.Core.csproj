@@ -5,4 +5,8 @@
     <RootNamespace>Utils</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Utils.Abstractions\Utils.Abstractions.csproj" />
+  </ItemGroup>
+
 </Project>

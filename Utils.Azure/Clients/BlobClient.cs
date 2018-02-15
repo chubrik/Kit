@@ -6,17 +6,18 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Utils.Abstractions;
 using Utils.Helpers;
 
 namespace Utils.Services {
-    public class BlobService {
+    public class BlobClient : IDataClient {
 
         private static ExceptionService ExceptionService => ExceptionService.Instance;
         private static LogService LogService => LogService.Instance;
 
-        private static BlobService instance;
-        public static BlobService Instance => instance ?? (instance = new BlobService());
-        private BlobService() { }
+        private static BlobClient instance;
+        public static BlobClient Instance => instance ?? (instance = new BlobClient());
+        private BlobClient() { }
 
         private static readonly AccessCondition accessCondition = new AccessCondition();
         private static readonly BlobRequestOptions options = new BlobRequestOptions();
@@ -41,79 +42,85 @@ namespace Utils.Services {
                 this.targetDirectory = targetDirectory;
         }
 
-        #region Download
+        #region Read
 
-        public Task<string> DownloadTextAsync(string path, CancellationToken cancellationToken) =>
-            DownloadBaseAsync(path, cancellationToken, (fullPath, blob) =>
+        public Task<string> ReadTextAsync(string path, CancellationToken cancellationToken) =>
+            ReadBaseAsync(path, cancellationToken, (fullPath, blob) =>
                 blob.DownloadTextAsync(Encoding.UTF8, accessCondition, options, operationContext, cancellationToken));
 
-        public IReadOnlyList<string> DownloadLinesAsync(string path, CancellationToken cancellationToken) =>
+        public Task<List<string>> ReadLinesAsync(string path, CancellationToken cancellationToken) =>
             throw new NotImplementedException();
 
-        public IReadOnlyList<string> DownloadBytesAsync(string path, CancellationToken cancellationToken) =>
+        public Task<List<byte>> ReadBytesAsync(string path, CancellationToken cancellationToken) =>
             throw new NotImplementedException();
 
-        private async Task<T> DownloadBaseAsync<T>(string path, CancellationToken cancellationToken, Func<string, CloudBlockBlob, Task<T>> action) {
+        private async Task<T> ReadBaseAsync<T>(string path, CancellationToken cancellationToken, Func<string, CloudBlockBlob, Task<T>> action) {
             try {
                 var fullPath = PathHelper.Combine(targetDirectory, path);
-                LogService.WriteLine($"Start downloading blob \"{fullPath}\"");
+                await LogService.LogAsync($"Start downloading blob \"{fullPath}\"", cancellationToken);
                 var blob = container.GetBlockBlobReference(fullPath);
                 var result = await action(fullPath, blob);
-                LogService.WriteLine($"End downloading blob \"{fullPath}\"");
+                await LogService.LogAsync($"End downloading blob \"{fullPath}\"", cancellationToken);
                 return result;
             }
             catch (Exception exception) {
-                ExceptionService.Register(exception);
+                await ExceptionService.RegisterAsync(exception, cancellationToken);
                 throw;
             }
         }
 
-        public async Task DownloadStreamAsync(string path, Stream target, CancellationToken cancellationToken) {
+        public async Task ReadAsync(string path, Stream target, CancellationToken cancellationToken) {
             try {
                 var fullPath = PathHelper.Combine(targetDirectory, path);
-                LogService.WriteLine($"Start downloading blob \"{fullPath}\"");
+                await LogService.LogAsync($"Start downloading blob \"{fullPath}\"", cancellationToken);
                 var blob = container.GetBlockBlobReference(fullPath);
                 await blob.DownloadToStreamAsync(target, accessCondition, options, operationContext, cancellationToken);
-                LogService.WriteLine($"End downloading blob \"{fullPath}\"");
+                await LogService.LogAsync($"End downloading blob \"{fullPath}\"", cancellationToken);
             }
             catch (Exception exception) {
-                ExceptionService.Register(exception);
+                await ExceptionService.RegisterAsync(exception, cancellationToken);
                 throw;
             }
         }
+
+        public Task<Stream> OpenReadAsync(string path, CancellationToken cancellationToken) =>
+            throw new NotImplementedException();
 
         #endregion
 
-        #region Upload
+        #region Write
 
-        public Task UploadAsync(string path, string text, CancellationToken cancellationToken) =>
+        public Task WriteAsync(string path, string text, CancellationToken cancellationToken) =>
             throw new NotImplementedException();
 
-        public Task UploadAsync(string path, string[] lines, CancellationToken cancellationToken) =>
+        public Task WriteAsync(string path, string[] lines, CancellationToken cancellationToken) =>
             throw new NotImplementedException();
 
-        public Task UploadAsync(string path, IEnumerable<string> lines, CancellationToken cancellationToken) =>
+        public Task WriteAsync(string path, IEnumerable<string> lines, CancellationToken cancellationToken) =>
             throw new NotImplementedException();
 
-        public Task UploadAsync(string path, byte[] bytes, CancellationToken cancellationToken) =>
+        public Task WriteAsync(string path, byte[] bytes, CancellationToken cancellationToken) =>
             throw new NotImplementedException();
 
-        public Task UploadAsync(string path, IEnumerable<byte> bytes, CancellationToken cancellationToken) =>
+        public Task WriteAsync(string path, IEnumerable<byte> bytes, CancellationToken cancellationToken) =>
             throw new NotImplementedException();
 
-        public async Task UploadAsync(string path, Stream source, CancellationToken cancellationToken) {
+        public async Task WriteAsync(string path, Stream source, CancellationToken cancellationToken) {
             try {
                 var fullPath = PathHelper.Combine(targetDirectory, path);
-                LogService.WriteLine($"Start uploading blob \"{fullPath}\"");
+                await LogService.LogAsync($"Start uploading blob \"{fullPath}\"", cancellationToken);
                 var blob = container.GetBlockBlobReference(fullPath);
                 await blob.UploadFromStreamAsync(source, accessCondition, options, operationContext, cancellationToken);
-                LogService.WriteLine($"End uploading blob \"{fullPath}\"");
+                await LogService.LogAsync($"End uploading blob \"{fullPath}\"", cancellationToken);
             }
             catch (Exception exception) {
-                ExceptionService.Register(exception);
+                await ExceptionService.RegisterAsync(exception, cancellationToken);
                 throw;
             }
         }
+
+        public Task<Stream> OpenWriteAsync(string path, CancellationToken cancellationToken) =>
+            throw new NotImplementedException();
 
         #endregion
     }

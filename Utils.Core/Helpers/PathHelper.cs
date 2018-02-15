@@ -1,26 +1,17 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
-using Utils.Services;
 
 namespace Utils.Helpers {
     public class PathHelper {
 
-        private static ExceptionService ExceptionService => ExceptionService.Instance;
-
         public static string Combine(params string[] paths) {
-            try {
-                var result = Path.Combine(paths).Replace(@"\", "/");
+            var result = Path.Combine(paths).Replace(@"\", "/");
 
-                while (result.Contains("../"))
-                    result = Regex.Replace(result, @"(?<=^|/)[^/]+/\.\./", "");
+            while (result.Contains("../"))
+                result = Regex.Replace(result, @"(?<=^|/)[^/]+/\.\./", "");
 
-                return result;
-            }
-            catch (Exception exception) {
-                ExceptionService.Register(exception);
-                throw;
-            }
+            return result;
         }
 
         public static string CombineLocal(params string[] paths) {
@@ -32,5 +23,8 @@ namespace Utils.Helpers {
 
             return Combine(allPaths);
         }
+
+        public static string GetParent(string path) =>
+            path.Contains('/') ? path.Substring(0, path.LastIndexOf('/')) : string.Empty;
     }
 }

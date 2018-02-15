@@ -6,18 +6,18 @@ using Utils.Services;
 namespace Utils.Tests {
     public class Test {
 
-        private BlobService BlobService => BlobService.Instance;
+        private BlobClient BlobService => BlobClient.Instance;
         private ExceptionService ExceptionService => ExceptionService.Instance;
-        private FileService FileService => FileService.Instance;
+        private FileClient FileService => FileClient.Instance;
 
-        public async Task Run(CancellationToken cancellationToken) {
+        public async Task RunAsync(CancellationToken ct) {
             Console.WriteLine("Hello World!");
 
-            using (var stream = FileService.OpenRead("../Test.cs"))
-                await BlobService.UploadAsync("file.ext", stream, cancellationToken);
+            using (var stream = await FileService.OpenReadAsync("../Test.cs", ct))
+                await BlobService.WriteAsync("file.ext", stream, ct);
 
-            using (var stream = FileService.OpenWrite("Test2.cs"))
-                await BlobService.DownloadStreamAsync("file.ext", stream, cancellationToken);
+            using (var stream = await FileService.OpenWriteAsync("Test2.cs", ct))
+                await BlobService.ReadAsync("file.ext", stream, ct);
         }
     }
 }
