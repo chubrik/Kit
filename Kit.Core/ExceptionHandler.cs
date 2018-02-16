@@ -1,60 +1,28 @@
-﻿using Kit.Abstractions;
-using Kit.Clients;
-using Kit.Helpers;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Text.RegularExpressions;
 
-namespace Kit.Services {
-    public class ExceptionService {
+namespace Kit {
+    public class ExceptionHandler {
 
-        private ExceptionService() { }
+        private ExceptionHandler() { }
 
         public static readonly List<IDataClient> DataClients = new List<IDataClient> {
             FileClient.Instance
         };
-
-        private static bool isEnable = true;
+        
         private static bool isInitialized = false;
         private static string targetDirectory = Kit.DiagnosticsDirectory;
         private static int counter = 1;
 
-        public static void Setup(bool? isEnable = null, string targetDirectory = null) {
-
-            if (isEnable != null)
-                ExceptionService.isEnable = (bool)isEnable;
-
+        public static void Setup(string targetDirectory = null) {
+            
             if (targetDirectory != null)
-                ExceptionService.targetDirectory = targetDirectory;
+                ExceptionHandler.targetDirectory = targetDirectory;
         }
-
-        private static void Initialize() {
-            LogService.Log("Initialize ExceptionService");
-            Debug.Assert(!isInitialized);
-
-            if (isInitialized)
-                throw new InvalidOperationException();
-
-            var fullTargetDir = PathHelper.CombineLocal(targetDirectory);
-
-            if (Directory.Exists(fullTargetDir))
-                counter = Directory.GetFiles(fullTargetDir).Length;
-            else
-                Directory.CreateDirectory(fullTargetDir);
-
-            isInitialized = true;
-        }
-
+        
         public static void Register(Exception exception, LogLevel level = LogLevel.Error) {
-
-            if (!isEnable)
-                return;
-
-            if (!isInitialized)
-                Initialize();
-
+            
             if (exception.Data.Contains("registered"))
                 return;
 

@@ -1,5 +1,4 @@
-﻿using Kit.Clients;
-using Kit.Services;
+﻿using Kit.Azure;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -10,10 +9,10 @@ namespace Kit.Tests {
             LogService.LogInfo("Hello World!");
 
             using (var stream = FileClient.OpenRead("../Test.cs"))
-                await BlobClient.WriteAsync("file.ext", stream, ct);
+                await AzureBlobClient.WriteAsync("file.ext", stream, ct);
 
             using (var stream = FileClient.OpenWrite("Test2.cs"))
-                await BlobClient.ReadAsync("file.ext", stream, ct);
+                await AzureBlobClient.ReadAsync("file.ext", stream, ct);
         }
     }
 }

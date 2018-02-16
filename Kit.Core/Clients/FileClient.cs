@@ -1,13 +1,10 @@
-﻿using Kit.Abstractions;
-using Kit.Helpers;
-using Kit.Services;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
-namespace Kit.Clients {
+namespace Kit {
     public class FileClient : IDataClient, ILogClient {
 
         private static FileClient instance;
@@ -102,7 +99,7 @@ namespace Kit.Clients {
             }
             catch (Exception exception) {
                 Debug.Fail(exception.ToString());
-                ExceptionService.Register(exception);
+                ExceptionHandler.Register(exception);
                 throw;
             }
         }
@@ -115,7 +112,7 @@ namespace Kit.Clients {
             }
             catch (Exception exception) {
                 Debug.Fail(exception.ToString());
-                ExceptionService.Register(exception);
+                ExceptionHandler.Register(exception);
                 throw;
             }
         }
@@ -153,7 +150,7 @@ namespace Kit.Clients {
             }
             catch (Exception exception) {
                 Debug.Fail(exception.ToString());
-                ExceptionService.Register(exception);
+                ExceptionHandler.Register(exception);
                 throw;
             }
         }
@@ -167,7 +164,7 @@ namespace Kit.Clients {
             }
             catch (Exception exception) {
                 Debug.Fail(exception.ToString());
-                ExceptionService.Register(exception);
+                ExceptionHandler.Register(exception);
                 throw;
             }
         }

@@ -1,4 +1,4 @@
-﻿using Kit.Clients;
+﻿using Kit.Azure;
 using System.IO;
 
 namespace Kit.Tests {
@@ -6,19 +6,15 @@ namespace Kit.Tests {
 
         public static void Main(string[] args) {
 
-            Kit.Setup(
-                baseDirectory: args.Length > 0 ? args[0] : null
-            );
-
             var azureStorageLogin = File.ReadAllLines("../../azure-storage-login.txt");
 
-            BlobClient.Setup(
+            AzureBlobClient.Setup(
                 accountName: azureStorageLogin[0],
                 accountKey: azureStorageLogin[1],
                 containerName: "test"
             );
 
-            Kit.Run(ct => new Test().RunAsync(ct));
+            Kit.Execute(ct => new Test().RunAsync(ct));
         }
     }
 }

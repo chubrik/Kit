@@ -1,17 +1,28 @@
-﻿using Kit.Abstractions;
-using System;
+﻿using System;
 using System.Diagnostics;
 
-namespace Kit.Clients {
+namespace Kit {
     public class ConsoleClient : ILogClient {
 
         private static ConsoleClient instance;
         public static ConsoleClient Instance => instance ?? (instance = new ConsoleClient());
         private ConsoleClient() { }
 
+        private static LogLevel minLogLevel = LogLevel.Info;
+
+        public static void Setup(LogLevel? minLogLevel = null) {
+
+            if (minLogLevel != null)
+                ConsoleClient.minLogLevel = (LogLevel)minLogLevel;
+        }
+
         #region ILogClient
 
         public void PushToLog(string message, LogLevel level = LogLevel.Log, string targetDirectory = null) {
+
+            if (level < minLogLevel)
+                return;
+
             ConsoleColor? color;
 
             switch (level) {

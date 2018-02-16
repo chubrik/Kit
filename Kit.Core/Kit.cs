@@ -1,6 +1,4 @@
-﻿using Kit.Abstractions;
-using Kit.Services;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,18 +25,20 @@ namespace Kit {
             RunAsync(delegateAsync, CancellationToken.None).Wait();
         }
 
-        public static void Run(Func<CancellationToken, Task> delegateAsync) =>
+        public static void Execute(Func<CancellationToken, Task> delegateAsync) =>
             RunAsync(delegateAsync, CancellationToken.None).Wait();
 
-        private static async Task RunAsync(Func<CancellationToken, Task> delegateAsync, CancellationToken cancellationToken) {
+        private static async Task RunAsync(
+            Func<CancellationToken, Task> delegateAsync, CancellationToken cancellationToken) {
+
             try {
                 Initialize();
                 await delegateAsync(cancellationToken);
-                LogService.LogInfo("Done.");
+                LogService.LogInfo("Done");
             }
             catch (Exception exception) {
                 Debug.Fail(exception.ToString());
-                ExceptionService.Register(exception);
+                ExceptionHandler.Register(exception);
             }
 
             Console.Write("\nPress any key to exit...");
@@ -50,7 +50,7 @@ namespace Kit {
                 throw new Exception("Test exception");
             }
             catch (Exception exception) {
-                ExceptionService.Register(exception, LogLevel.Log);
+                ExceptionHandler.Register(exception, LogLevel.Log);
             }
         }
     }

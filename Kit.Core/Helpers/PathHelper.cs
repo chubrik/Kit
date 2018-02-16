@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace Kit.Helpers {
+namespace Kit {
     public class PathHelper {
 
         public static string Combine(params string[] paths) {

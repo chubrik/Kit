@@ -1,7 +1,4 @@
-﻿using Kit.Abstractions;
-using Kit.Helpers;
-using Kit.Services;
-using Microsoft.WindowsAzure.Storage;
+﻿using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using System;
 using System.Collections.Generic;
@@ -11,12 +8,12 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Kit.Clients {
-    public class BlobClient : IDataClient {
+namespace Kit.Azure {
+    public class AzureBlobClient : IDataClient {
 
-        private static BlobClient instance;
-        public static BlobClient Instance => instance ?? (instance = new BlobClient());
-        private BlobClient() { }
+        private static AzureBlobClient instance;
+        public static AzureBlobClient Instance => instance ?? (instance = new AzureBlobClient());
+        private AzureBlobClient() { }
 
         private static readonly AccessCondition accessCondition = new AccessCondition();
         private static readonly BlobRequestOptions options = new BlobRequestOptions();
@@ -38,13 +35,13 @@ namespace Kit.Clients {
             container = client.GetContainerReference(containerName);
 
             if (targetDirectory != null)
-                BlobClient.targetDirectory = targetDirectory;
+                AzureBlobClient.targetDirectory = targetDirectory;
         }
 
         #region IDataClient
 
         public void PushToWrite(string path, string text, string targetDirectory = null) =>
-            WriteAsync(path, text, CancellationToken.None);
+            WriteAsync(path, text, CancellationToken.None, targetDirectory);
 
         #endregion
 
@@ -70,7 +67,7 @@ namespace Kit.Clients {
             }
             catch (Exception exception) {
                 Debug.Fail(exception.ToString());
-                ExceptionService.Register(exception);
+                ExceptionHandler.Register(exception);
                 throw;
             }
         }
@@ -91,7 +88,7 @@ namespace Kit.Clients {
             }
             catch (Exception exception) {
                 Debug.Fail(exception.ToString());
-                ExceptionService.Register(exception);
+                ExceptionHandler.Register(exception);
                 throw;
             }
         }
@@ -100,7 +97,8 @@ namespace Kit.Clients {
 
         #region Write
 
-        public static Task WriteAsync(string path, string text, CancellationToken cancellationToken) =>
+        public static Task WriteAsync(
+            string path, string text, CancellationToken cancellationToken, string targetDirectory = null) =>
             throw new NotImplementedException();
 
         public static Task WriteAsync(string path, string[] lines, CancellationToken cancellationToken) =>
@@ -114,7 +112,7 @@ namespace Kit.Clients {
 
         public static Task WriteAsync(string path, IEnumerable<byte> bytes, CancellationToken cancellationToken) =>
             throw new NotImplementedException();
-
+        
         public static async Task WriteAsync(string path, Stream source, CancellationToken cancellationToken) {
             try {
                 var fullPath = PathHelper.Combine(targetDirectory, path);
@@ -125,7 +123,7 @@ namespace Kit.Clients {
             }
             catch (Exception exception) {
                 Debug.Fail(exception.ToString());
-                ExceptionService.Register(exception);
+                ExceptionHandler.Register(exception);
                 throw;
             }
         }
