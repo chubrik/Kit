@@ -1,60 +1,65 @@
 ﻿using Kit.Abstractions;
+using Kit.Clients;
+using Kit.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
+using System.IO;
 
 namespace Kit.Services {
     public class LogService {
 
-        private static LogService instance;
-        public static LogService Instance => instance ?? (instance = new LogService());
         private LogService() { }
 
-        public readonly List<ILogClient> LogClients = new List<ILogClient>();
+        public static readonly List<ILogClient> LogClients = new List<ILogClient> {
+            ConsoleClient.Instance,
+            FileClient.Instance
+        };
 
-        private bool isEnable = true;
-        private bool isInitialized = false;
+        private static bool isEnable = true;
+        private static bool isInitialized = false;
+        private static string targetDirectory = Kit.DiagnosticsDirectory;
 
-        public void Setup(bool? isEnable = null) {
+        public static void Setup(bool? isEnable = null, string targetDirectory = null) {
 
             if (isEnable != null)
-                this.isEnable = (bool)isEnable;
+                LogService.isEnable = (bool)isEnable;
+
+            if (targetDirectory != null)
+                LogService.targetDirectory = targetDirectory;
         }
 
-        private async Task InitializeAsync(CancellationToken cancellationToken) {
+        private static void Initialize() {
             Debug.Assert(!isInitialized);
 
             if (isInitialized)
                 throw new InvalidOperationException();
-            
+
+            var fullTargetDir = PathHelper.CombineLocal(Kit.DiagnosticsDirectory);
+
+            if (!Directory.Exists(fullTargetDir))
+                Directory.CreateDirectory(fullTargetDir);
+
             isInitialized = true;
-            await LogAsync("Initialize LogService", cancellationToken);
+            Log("Initialize LogService");
         }
 
-        public Task LogAsync(string message, CancellationToken cancellationToken) =>
-            PushAsync(message, cancellationToken, LogLevel.Log);
-
-        public Task InfoAsync(string message, CancellationToken cancellationToken) =>
-            PushAsync(message, cancellationToken, LogLevel.Info);
-
-        public Task WarningAsync(string message, CancellationToken cancellationToken) =>
-            PushAsync(message, cancellationToken, LogLevel.Warning);
-
-        public Task ErrorAsync(string message, CancellationToken cancellationToken) =>
-            PushAsync(message, cancellationToken, LogLevel.Error);
-
-        public async Task PushAsync(string message, CancellationToken cancellationToken, LogLevel level = LogLevel.Log) {
+        public static void Log(string message, LogLevel level = LogLevel.Log) {
 
             if (!isEnable)
                 return;
 
             if (!isInitialized)
-                await InitializeAsync(cancellationToken);
+                Initialize();
 
             foreach (var logClient in LogClients)
-                await logClient.LogAsync(message, cancellationToken, level);
+                logClient.PushToLog(message, level, targetDirectory);
         }
+
+        public static void LogInfo(string message) => Log(message, LogLevel.Info);
+
+        public static void LogWarning(string message) => Log(message, LogLevel.Warning);
+
+        public static void LogError(string message) => Log(message, LogLevel.Error);
     }
 }

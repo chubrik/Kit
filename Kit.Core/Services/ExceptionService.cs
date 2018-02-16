@@ -1,40 +1,37 @@
 ﻿using Kit.Abstractions;
+using Kit.Clients;
 using Kit.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Kit.Services {
     public class ExceptionService {
 
-        private static LogService LogService => LogService.Instance;
-
-        private static ExceptionService instance;
-        public static ExceptionService Instance => instance ?? (instance = new ExceptionService());
         private ExceptionService() { }
 
-        public readonly List<IDataClient> DataClients = new List<IDataClient>();
+        public static readonly List<IDataClient> DataClients = new List<IDataClient> {
+            FileClient.Instance
+        };
 
-        private bool isEnable = true;
-        private bool isInitialized = false;
-        private string targetDirectory = "$exceptions";
-        private int counter = 1;
+        private static bool isEnable = true;
+        private static bool isInitialized = false;
+        private static string targetDirectory = Kit.DiagnosticsDirectory;
+        private static int counter = 1;
 
-        public void Setup(bool? isEnable = null, string targetDirectory = null) {
+        public static void Setup(bool? isEnable = null, string targetDirectory = null) {
 
             if (isEnable != null)
-                this.isEnable = (bool)isEnable;
+                ExceptionService.isEnable = (bool)isEnable;
 
             if (targetDirectory != null)
-                this.targetDirectory = targetDirectory;
+                ExceptionService.targetDirectory = targetDirectory;
         }
 
-        private async Task InitializeAsync(CancellationToken cancellationToken) {
-            await LogService.LogAsync("Initialize ExceptionService", cancellationToken);
+        private static void Initialize() {
+            LogService.Log("Initialize ExceptionService");
             Debug.Assert(!isInitialized);
 
             if (isInitialized)
@@ -43,20 +40,20 @@ namespace Kit.Services {
             var fullTargetDir = PathHelper.CombineLocal(targetDirectory);
 
             if (Directory.Exists(fullTargetDir))
-                counter += Directory.GetFiles(fullTargetDir).Length;
+                counter = Directory.GetFiles(fullTargetDir).Length;
             else
                 Directory.CreateDirectory(fullTargetDir);
 
             isInitialized = true;
         }
 
-        public async Task RegisterAsync(Exception exception, CancellationToken cancellationToken, LogLevel level = LogLevel.Error) {
+        public static void Register(Exception exception, LogLevel level = LogLevel.Error) {
 
             if (!isEnable)
                 return;
 
             if (!isInitialized)
-                await InitializeAsync(cancellationToken);
+                Initialize();
 
             if (exception.Data.Contains("registered"))
                 return;
@@ -67,10 +64,7 @@ namespace Kit.Services {
             if (match.Success)
                 message += $" ({match.Groups[1].Value}:{match.Groups[2].Value})";
 
-            await LogService.PushAsync(message, cancellationToken, level);
-
-            //LogService.WriteLine($"EXCEPTION #{counter}: {message}");
-            //ConsoleHelper.WriteLine(message, isCritical ? ConsoleColor.Red : ConsoleColor.Yellow);
+            LogService.Log(message, level);
             var text = $"Exception #{counter}\n{message}\n\n";
 
             var thisException = exception;
@@ -87,13 +81,13 @@ namespace Kit.Services {
 
             text = text.Replace("\n", "\r\n").Replace("\r\r", "\r");
             var fileName = $"{counter.ToString().PadLeft(3, '0')} {message}.txt";
-            fileName = Regex.Replace(fileName, @"[^A-Za-z0-9.,()'# -]", "_");
-            var filePath = PathHelper.CombineLocal(targetDirectory, fileName);
-            //File.WriteAllText(filePath, text);
+            fileName = fileName.Replace('\"', '\'');
+            fileName = Regex.Replace(fileName, @"[^a-zа-яё0-9.,()'# -]", "_", RegexOptions.IgnoreCase);
 
             foreach (var client in DataClients)
-                await client.WriteAsync(filePath, text, cancellationToken);
-            
+                client.PushToWrite(fileName, text, targetDirectory);
+
+            counter++;
             exception.Data["registered"] = true;
         }
     }
