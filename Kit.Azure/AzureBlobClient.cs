@@ -5,11 +5,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Kit.Azure {
-    public class AzureBlobClient : IDataClient {
+    public class AzureBlobClient : IDataClient, IReportClient {
 
         private static AzureBlobClient instance;
         public static AzureBlobClient Instance => instance ?? (instance = new AzureBlobClient());
@@ -38,12 +39,27 @@ namespace Kit.Azure {
                 AzureBlobClient.targetDirectory = targetDirectory;
 
             ExceptionHandler.DataClients.Add(Instance);
+            ReportService.ReportClients.Add(Instance);
         }
 
         #region IDataClient
 
         public void PushToWrite(string path, string text, string targetDirectory = null) =>
-            WriteAsync(path, text, CancellationToken.None, targetDirectory: targetDirectory, logging: false);
+            WriteAsync(path, text, CancellationToken.None, targetDirectory, logging: false);
+
+        #endregion
+
+        #region IReportClient
+
+        private static int reportCounter = 0;
+
+        public void PushToReport(string subject, string body, string targetDirectory) {
+            reportCounter++;
+            var fileName = $"{reportCounter.ToString().PadLeft(3, '0')} {subject}.txt";
+            fileName = fileName.Replace('\"', '\'');
+            fileName = Regex.Replace(fileName, @"[^a-zа-яё0-9.,()'# -]", "_", RegexOptions.IgnoreCase);
+            WriteAsync(fileName, $"{subject}\r\n\r\n{body}\r\n", CancellationToken.None, targetDirectory, logging: false);
+        }
 
         #endregion
 
@@ -104,7 +120,7 @@ namespace Kit.Azure {
 
             return WriteBaseAsync(path, cancellationToken, (fullPath, blob) =>
                 blob.UploadTextAsync(text, Encoding.UTF8, accessCondition, options, operationContext, cancellationToken),
-                    targetDirectory: targetDirectory, logging: logging);
+                    targetDirectory, logging);
         }
 
         public static Task WriteAsync(string path, string[] lines, CancellationToken cancellationToken) =>
@@ -158,7 +174,7 @@ namespace Kit.Azure {
                 throw;
             }
         }
-
+        
         #endregion
     }
 }

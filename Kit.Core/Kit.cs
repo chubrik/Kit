@@ -33,20 +33,23 @@ namespace Kit {
 
             try {
                 LogService.LogInfo("Start");
-                TextException();
+                Initialize();
+                LogService.Log("Ready");
+                Console.WriteLine();
                 await delegateAsync(cancellationToken);
-                LogService.LogInfo("Done");
             }
             catch (Exception exception) {
                 Debug.Fail(exception.ToString());
                 ExceptionHandler.Register(exception);
             }
 
-            Console.Write("\nPress any key to exit...");
+            Console.WriteLine();
+            LogService.Log("Done");
+            Console.Write("Press any key to exit...");
             Console.ReadKey(true);
         }
 
-        private static void TextException() {
+        private static void Initialize() {
             try {
                 throw new Exception("Test exception");
             }

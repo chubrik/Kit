@@ -12,7 +12,7 @@ namespace Kit {
         };
 
         private static string targetDirectory = null;
-        private static int counter = 1;
+        private static int counter = 0;
 
         public static void Setup(string targetDirectory = null) {
 
@@ -25,13 +25,14 @@ namespace Kit {
             if (exception.Data.Contains("registered"))
                 return;
 
+            counter++;
             var message = exception.Message;
             var match = Regex.Match(exception.ToString(), @"(\w+\.cs):line (\d+)");
 
             if (match.Success)
                 message += $" ({match.Groups[1].Value}:{match.Groups[2].Value})";
 
-            LogService.Log(message, level);
+            LogService.Log($"Exception: {message}", level);
             var text = $"Exception #{counter}\n{message}\n\n";
 
             var thisException = exception;
@@ -47,6 +48,8 @@ namespace Kit {
             }
 
             text = text.Replace("\n", "\r\n").Replace("\r\r", "\r");
+
+            //todo move outside
             var fileName = $"{counter.ToString().PadLeft(3, '0')} {message}.txt";
             fileName = fileName.Replace('\"', '\'');
             fileName = Regex.Replace(fileName, @"[^a-zа-яё0-9.,()'# -]", "_", RegexOptions.IgnoreCase);
@@ -54,8 +57,8 @@ namespace Kit {
             foreach (var dataClient in DataClients)
                 dataClient.PushToWrite(fileName, text, targetDirectory ?? Kit.DiagnosticsDirectory);
 
-            counter++;
             exception.Data["registered"] = true;
+            ReportService.Report(message, text, LogLevel.Log);
         }
     }
 }

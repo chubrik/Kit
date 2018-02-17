@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Kit {
-    public class FileClient : IDataClient, ILogClient {
+    public class FileClient : IDataClient, IReportClient, ILogClient {
 
         private static FileClient instance;
         public static FileClient Instance => instance ?? (instance = new FileClient());
@@ -32,6 +33,20 @@ namespace Kit {
 
         #endregion
 
+        #region IReportClient
+
+        private static int reportCounter = 0;
+
+        public void PushToReport(string subject, string body, string targetDirectory) {
+            reportCounter++;
+            var fileName = $"{reportCounter.ToString().PadLeft(3, '0')} {subject}.txt";
+            fileName = fileName.Replace('\"', '\'');
+            fileName = Regex.Replace(fileName, @"[^a-zа-яё0-9.,()'# -]", "_", RegexOptions.IgnoreCase);
+            Write(fileName, $"{subject}\r\n\r\n{body}\r\n", targetDirectory);
+        }
+
+        #endregion
+
         #region ILogClient
 
         private bool logIndent = false;
@@ -46,9 +61,9 @@ namespace Kit {
                 logIndent = false;
                 return;
             }
-            
+
             string header;
-            
+
             switch (level) {
 
                 case LogLevel.Info:
@@ -120,8 +135,8 @@ namespace Kit {
 
         #region Write
 
-        public static void Write(string path, string text) =>
-            WriteBase(path, fullPath => File.WriteAllText(fullPath, text));
+        public static void Write(string path, string text, string targetDirectory = null) =>
+            WriteBase(path, fullPath => File.WriteAllText(fullPath, text), targetDirectory);
 
         public static void Write(string path, string[] lines) =>
             WriteBase(path, fullPath => File.WriteAllLines(fullPath, lines));

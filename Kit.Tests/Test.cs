@@ -13,6 +13,9 @@ namespace Kit.Tests {
 
             using (var stream = FileClient.OpenWrite("Test2.cs"))
                 await AzureBlobClient.ReadAsync("file.ext", stream, ct);
+
+            ReportService.Report("My report", "My report body");
+            //throw new Exception("My exception");
         }
     }
 }
