@@ -5,7 +5,7 @@ namespace Kit.Tests {
     public class Program {
 
         public static void Main(string[] args) {
-            ConsoleClient.Setup(minLogLevel: LogLevel.Log);
+            ConsoleClient.Setup(minLevel: LogLevel.Log);
 
             var azureStorageLogin = File.ReadAllLines("../../azure-storage-login.txt");
 

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 
 namespace Kit {
     public class FileClient : IDataClient, IReportClient, ILogClient {
@@ -12,18 +11,16 @@ namespace Kit {
         public static FileClient Instance => instance ?? (instance = new FileClient());
         private FileClient() { }
 
-        private static string baseDirectory = string.Empty;
-        private static string targetDirectory = "$work";
+        private static string baseDirectory = "$work";
+        private static string workingDirectory = string.Empty;
 
-        public static void Setup(
-            string baseDirectory = null,
-            string targetDirectory = null) {
+        public static void Setup(string baseDirectory = null, string workingDirectory = null) {
 
             if (baseDirectory != null)
                 FileClient.baseDirectory = baseDirectory;
 
-            if (targetDirectory != null)
-                FileClient.targetDirectory = targetDirectory;
+            if (workingDirectory != null)
+                FileClient.workingDirectory = workingDirectory;
         }
 
         #region IDataClient
@@ -38,10 +35,8 @@ namespace Kit {
         private static int reportCounter = 0;
 
         public void PushToReport(string subject, string body, string targetDirectory) {
-            reportCounter++;
-            var fileName = $"{reportCounter.ToString().PadLeft(3, '0')} {subject}.txt";
-            fileName = fileName.Replace('\"', '\'');
-            fileName = Regex.Replace(fileName, @"[^a-zа-яё0-9.,()'# -]", "_", RegexOptions.IgnoreCase);
+            var count = (++reportCounter).ToString().PadLeft(3, '0');
+            var fileName = PathHelper.SafeFileName($"{count} {subject}.txt");
             Write(fileName, $"{subject}\r\n\r\n{body}\r\n", targetDirectory);
         }
 
@@ -53,7 +48,7 @@ namespace Kit {
 
         public void PushToLog(string message, LogLevel level = LogLevel.Log, string targetDirectory = null) {
             var fullMessage = $"{DateTimeOffset.Now.ToString("dd.MM.yyyy HH:mm:ss.fff")} - {message}";
-            var filePath = GetFullPath(Kit.LogFileName, targetDirectory);
+            var filePath = GetFullPath(LogService.LogFileName, targetDirectory);
             CreateDir(filePath);
 
             if (level == LogLevel.Log) {
@@ -68,6 +63,10 @@ namespace Kit {
 
                 case LogLevel.Info:
                     header = "INFO";
+                    break;
+
+                case LogLevel.Success:
+                    header = "SUCCESS";
                     break;
 
                 case LogLevel.Warning:
@@ -91,11 +90,11 @@ namespace Kit {
 
         #region Read
 
-        public static string ReadText(string path) =>
-            ReadBase(path, fullPath => File.ReadAllText(fullPath));
+        public static string ReadText(string path, string targetDirectory = null) =>
+            ReadBase(path, fullPath => File.ReadAllText(fullPath), targetDirectory);
 
-        public static List<string> ReadLines(string path) =>
-            ReadBase(path, fullPath => File.ReadAllLines(fullPath).ToList());
+        public static List<string> ReadLines(string path, string targetDirectory = null) =>
+            ReadBase(path, fullPath => File.ReadAllLines(fullPath).ToList(), targetDirectory);
 
         public static List<byte> ReadBytes(string path) =>
             ReadBase(path, fullPath => File.ReadAllBytes(fullPath).ToList());
@@ -118,9 +117,11 @@ namespace Kit {
             }
         }
 
-        private static T ReadBase<T>(string path, Func<string, T> readFunc) {
+        private static T ReadBase<T>(
+            string path, Func<string, T> readFunc, string targetDirectory = null) {
+
             try {
-                var fullPath = GetFullPath(path);
+                var fullPath = GetFullPath(path, targetDirectory);
                 LogService.Log($"Read file \"{fullPath}\"");
                 return readFunc(fullPath);
             }
@@ -185,14 +186,23 @@ namespace Kit {
 
         #endregion
 
+        public static bool Exists(string path, string targetDirectory = null) =>
+            File.Exists(GetFullPath(path, targetDirectory));
+
+        public static void AppendText(string path, string text, string targetDirectory = null) {
+            var fullPath = GetFullPath(path, targetDirectory);
+            CreateDir(fullPath);
+            File.AppendAllText(fullPath, $"{text}\r\n");
+        }
+
         private static void CreateDir(string filePath) {
-            var dirPath = PathHelper.GetParent(filePath);
+            var dirPath = PathHelper.Parent(filePath);
 
             if (!Directory.Exists(dirPath))
                 Directory.CreateDirectory(dirPath);
         }
 
         private static string GetFullPath(string path, string targetDirectory = null) =>
-            PathHelper.Combine(baseDirectory, targetDirectory ?? FileClient.targetDirectory, path);
+            PathHelper.Combine(baseDirectory, targetDirectory ?? workingDirectory, path);
     }
 }

@@ -7,7 +7,6 @@ namespace Kit {
     public class Kit {
 
         internal static string DiagnosticsDirectory = "$diagnostics";
-        internal const string LogFileName = "$log.txt";
 
         public static void Setup(string diagnosticsDirectory = null) {
             
@@ -32,20 +31,20 @@ namespace Kit {
             Func<CancellationToken, Task> delegateAsync, CancellationToken cancellationToken) {
 
             try {
-                LogService.LogInfo("Start");
+                Console.WriteLine("--- Start ---");
+                LogService.Log("Start");
                 Initialize();
                 LogService.Log("Ready");
-                Console.WriteLine();
                 await delegateAsync(cancellationToken);
+                LogService.Log("Done");
+                Console.WriteLine("--- Done ---");
             }
             catch (Exception exception) {
                 Debug.Fail(exception.ToString());
                 ExceptionHandler.Register(exception);
             }
 
-            Console.WriteLine();
-            LogService.Log("Done");
-            Console.Write("Press any key to exit...");
+            Console.Write("\nPress any key to exit...");
             Console.ReadKey(true);
         }
 

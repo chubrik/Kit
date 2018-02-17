@@ -8,19 +8,19 @@ namespace Kit {
         public static ConsoleClient Instance => instance ?? (instance = new ConsoleClient());
         private ConsoleClient() { }
 
-        private static LogLevel minLogLevel = LogLevel.Info;
+        private static LogLevel minLevel = LogLevel.Info;
 
-        public static void Setup(LogLevel? minLogLevel = null) {
+        public static void Setup(LogLevel? minLevel = null) {
 
-            if (minLogLevel != null)
-                ConsoleClient.minLogLevel = (LogLevel)minLogLevel;
+            if (minLevel != null)
+                ConsoleClient.minLevel = (LogLevel)minLevel;
         }
 
         #region ILogClient
 
         public void PushToLog(string message, LogLevel level = LogLevel.Log, string targetDirectory = null) {
 
-            if (level < minLogLevel)
+            if (level < minLevel)
                 return;
 
             ConsoleColor? color;
@@ -33,6 +33,10 @@ namespace Kit {
 
                 case LogLevel.Info:
                     color = null;
+                    break;
+
+                case LogLevel.Success:
+                    color = ConsoleColor.Green;
                     break;
 
                 case LogLevel.Warning:

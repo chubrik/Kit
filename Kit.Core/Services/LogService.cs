@@ -5,26 +5,29 @@ namespace Kit {
 
         private LogService() { }
 
-        public static readonly List<ILogClient> LogClients = new List<ILogClient> {
+        public static readonly List<ILogClient> Clients = new List<ILogClient> {
             ConsoleClient.Instance,
             FileClient.Instance
         };
 
-        private static string targetDirectory = null;
+        private static string logDirectory = null;
+        internal const string LogFileName = "$log.txt";
 
-        public static void Setup(string targetDirectory = null) {
+        public static void Setup(string logDirectory = null) {
 
-            if (targetDirectory != null)
-                LogService.targetDirectory = targetDirectory;
+            if (logDirectory != null)
+                LogService.logDirectory = logDirectory;
         }
 
         public static void Log(string message, LogLevel level = LogLevel.Log) {
 
-            foreach (var logClient in LogClients)
-                logClient.PushToLog(message, level, targetDirectory ?? Kit.DiagnosticsDirectory);
+            foreach (var client in Clients)
+                client.PushToLog(message, level, logDirectory ?? Kit.DiagnosticsDirectory);
         }
 
         public static void LogInfo(string message) => Log(message, LogLevel.Info);
+
+        public static void LogSuccess(string message) => Log(message, LogLevel.Success);
 
         public static void LogWarning(string message) => Log(message, LogLevel.Warning);
 

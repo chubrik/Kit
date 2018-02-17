@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -21,13 +20,13 @@ namespace Kit.Azure {
         private static readonly OperationContext operationContext = new OperationContext();
 
         private static CloudBlobContainer container;
-        private static string targetDirectory = string.Empty;
+        private static string workingDirectory = string.Empty;
 
         public static void Setup(
             string accountName = null,
             string accountKey = null,
             string containerName = null,
-            string targetDirectory = null) {
+            string workingDirectory = null) {
 
             var account = CloudStorageAccount.Parse(
                 $"DefaultEndpointsProtocol=https;AccountName={accountName};AccountKey={accountKey}");
@@ -35,11 +34,11 @@ namespace Kit.Azure {
             var client = account.CreateCloudBlobClient();
             container = client.GetContainerReference(containerName);
 
-            if (targetDirectory != null)
-                AzureBlobClient.targetDirectory = targetDirectory;
+            if (workingDirectory != null)
+                AzureBlobClient.workingDirectory = workingDirectory;
 
             ExceptionHandler.DataClients.Add(Instance);
-            ReportService.ReportClients.Add(Instance);
+            ReportService.Clients.Add(Instance);
         }
 
         #region IDataClient
@@ -54,10 +53,8 @@ namespace Kit.Azure {
         private static int reportCounter = 0;
 
         public void PushToReport(string subject, string body, string targetDirectory) {
-            reportCounter++;
-            var fileName = $"{reportCounter.ToString().PadLeft(3, '0')} {subject}.txt";
-            fileName = fileName.Replace('\"', '\'');
-            fileName = Regex.Replace(fileName, @"[^a-zа-яё0-9.,()'# -]", "_", RegexOptions.IgnoreCase);
+            var count = (++reportCounter).ToString().PadLeft(3, '0');
+            var fileName = PathHelper.SafeFileName($"{count} {subject}.txt");
             WriteAsync(fileName, $"{subject}\r\n\r\n{body}\r\n", CancellationToken.None, targetDirectory, logging: false);
         }
 
@@ -77,7 +74,7 @@ namespace Kit.Azure {
 
         public static async Task ReadAsync(string path, Stream target, CancellationToken cancellationToken) {
             try {
-                var fullPath = PathHelper.Combine(targetDirectory, path);
+                var fullPath = PathHelper.Combine(workingDirectory, path);
                 LogService.Log($"Start downloading blob \"{fullPath}\"");
                 var blob = container.GetBlockBlobReference(fullPath);
                 await blob.DownloadToStreamAsync(target, accessCondition, options, operationContext, cancellationToken);
@@ -96,7 +93,7 @@ namespace Kit.Azure {
             string path, CancellationToken cancellationToken, Func<string, CloudBlockBlob, Task<T>> action) {
 
             try {
-                var fullPath = PathHelper.Combine(targetDirectory, path);
+                var fullPath = PathHelper.Combine(workingDirectory, path);
                 LogService.Log($"Start downloading blob \"{fullPath}\"");
                 var blob = container.GetBlockBlobReference(fullPath);
                 var result = await action(fullPath, blob);
@@ -137,7 +134,7 @@ namespace Kit.Azure {
 
         public static async Task WriteAsync(string path, Stream source, CancellationToken cancellationToken) {
             try {
-                var fullPath = PathHelper.Combine(targetDirectory, path);
+                var fullPath = PathHelper.Combine(workingDirectory, path);
                 LogService.Log($"Start uploading blob \"{fullPath}\"");
                 var blob = container.GetBlockBlobReference(fullPath);
                 await blob.UploadFromStreamAsync(source, accessCondition, options, operationContext, cancellationToken);
@@ -157,7 +154,7 @@ namespace Kit.Azure {
             string targetDirectory = null, bool logging = true) {
 
             try {
-                var fullPath = PathHelper.Combine(targetDirectory ?? AzureBlobClient.targetDirectory, path);
+                var fullPath = PathHelper.Combine(targetDirectory ?? workingDirectory, path);
 
                 if (logging)
                     LogService.Log($"Start uploading blob \"{fullPath}\"");
