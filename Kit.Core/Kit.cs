@@ -9,7 +9,7 @@ namespace Kit {
         internal static string DiagnosticsDirectory = "$diagnostics";
 
         public static void Setup(string diagnosticsDirectory = null) {
-            
+
             if (diagnosticsDirectory != null)
                 DiagnosticsDirectory = diagnosticsDirectory;
         }
@@ -31,17 +31,17 @@ namespace Kit {
             Func<CancellationToken, Task> delegateAsync, CancellationToken cancellationToken) {
 
             try {
-                Console.WriteLine("--- Start ---");
                 LogService.Log("Start");
                 Initialize();
                 LogService.Log("Ready");
                 await delegateAsync(cancellationToken);
-                LogService.Log("Done");
-                Console.WriteLine("--- Done ---");
+                LogService.LogSuccess("Complete");
             }
             catch (Exception exception) {
                 Debug.Fail(exception.ToString());
                 ExceptionHandler.Register(exception);
+                ReportService.ReportError(exception.Message, exception.ToString());
+                LogService.LogError("Fail");
             }
 
             Console.Write("\nPress any key to exit...");
@@ -54,6 +54,7 @@ namespace Kit {
             }
             catch (Exception exception) {
                 ExceptionHandler.Register(exception, LogLevel.Log);
+                ReportService.Report(exception.Message, exception.ToString());
             }
         }
     }

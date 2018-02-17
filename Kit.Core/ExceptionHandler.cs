@@ -55,7 +55,6 @@ namespace Kit {
                 client.PushToWrite(fileName, text, exceptionsDirectory ?? Kit.DiagnosticsDirectory);
 
             exception.Data["registered"] = true;
-            ReportService.Report(message, text, LogLevel.Log);
         }
     }
 }
