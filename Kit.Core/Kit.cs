@@ -5,34 +5,35 @@ using System.Threading.Tasks;
 
 namespace Kit {
     public class Kit {
-        
-        public static string BaseDirectory { get; private set; } = string.Empty;
-        public static string DiagnosticsDirectory { get; private set; } = "$diagnostics";
 
-        public static void Setup(string baseDirectory = null) {
+        internal static string DiagnosticsDirectory = "$diagnostics";
+        internal const string LogFileName = "$log.txt";
 
-            if (baseDirectory != null)
-                BaseDirectory = baseDirectory;
+        public static void Setup(string diagnosticsDirectory = null) {
+            
+            if (diagnosticsDirectory != null)
+                DiagnosticsDirectory = diagnosticsDirectory;
         }
 
-        public static void Run(Action @delegate) {
+        public static void Execute(Action @delegate) {
 
             Task delegateAsync(CancellationToken CancellationToken) {
                 @delegate();
                 return Task.CompletedTask;
             }
 
-            RunAsync(delegateAsync, CancellationToken.None).Wait();
+            ExecuteAsync(delegateAsync, CancellationToken.None).Wait();
         }
 
         public static void Execute(Func<CancellationToken, Task> delegateAsync) =>
-            RunAsync(delegateAsync, CancellationToken.None).Wait();
+            ExecuteAsync(delegateAsync, CancellationToken.None).Wait();
 
-        private static async Task RunAsync(
+        private static async Task ExecuteAsync(
             Func<CancellationToken, Task> delegateAsync, CancellationToken cancellationToken) {
 
             try {
-                Initialize();
+                LogService.LogInfo("Start");
+                TextException();
                 await delegateAsync(cancellationToken);
                 LogService.LogInfo("Done");
             }
@@ -45,7 +46,7 @@ namespace Kit {
             Console.ReadKey(true);
         }
 
-        private static void Initialize() {
+        private static void TextException() {
             try {
                 throw new Exception("Test exception");
             }

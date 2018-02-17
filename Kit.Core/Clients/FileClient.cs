@@ -11,9 +11,15 @@ namespace Kit {
         public static FileClient Instance => instance ?? (instance = new FileClient());
         private FileClient() { }
 
+        private static string baseDirectory = string.Empty;
         private static string targetDirectory = "$work";
 
-        public static void Setup(string targetDirectory = null) {
+        public static void Setup(
+            string baseDirectory = null,
+            string targetDirectory = null) {
+
+            if (baseDirectory != null)
+                FileClient.baseDirectory = baseDirectory;
 
             if (targetDirectory != null)
                 FileClient.targetDirectory = targetDirectory;
@@ -28,29 +34,21 @@ namespace Kit {
 
         #region ILogClient
 
-        private bool wasIndent = false;
-        private const string logFileName = "$log.txt";
+        private bool logIndent = false;
 
         public void PushToLog(string message, LogLevel level = LogLevel.Log, string targetDirectory = null) {
-            var filePath = $"{targetDirectory ?? FileClient.targetDirectory}/{logFileName}"; //todo
+            var fullMessage = $"{DateTimeOffset.Now.ToString("dd.MM.yyyy HH:mm:ss.fff")} - {message}";
+            var filePath = GetFullPath(Kit.LogFileName, targetDirectory);
             CreateDir(filePath);
 
             if (level == LogLevel.Log) {
-                File.AppendAllText(filePath, $"{message}\r\n");
-                wasIndent = false;
+                File.AppendAllText(filePath, logIndent ? $"\r\n{fullMessage}\r\n" : $"{fullMessage}\r\n");
+                logIndent = false;
                 return;
             }
-
-            string indent;
+            
             string header;
-
-            if (wasIndent)
-                indent = string.Empty;
-            else {
-                wasIndent = true;
-                indent = "\r\n";
-            }
-
+            
             switch (level) {
 
                 case LogLevel.Info:
@@ -70,7 +68,8 @@ namespace Kit {
                     throw new ArgumentOutOfRangeException(nameof(level));
             }
 
-            File.AppendAllText(filePath, $"{indent}--- {header} ---\r\n{message}\r\n\r\n");
+            File.AppendAllText(filePath, $"\r\n--- {header} ---\r\n{fullMessage}\r\n");
+            logIndent = true;
         }
 
         #endregion
@@ -93,7 +92,7 @@ namespace Kit {
 
         public static FileStream OpenRead(string path) {
             try {
-                var fullPath = PathHelper.CombineLocal(targetDirectory, path);
+                var fullPath = GetFullPath(path);
                 LogService.Log($"Read file \"{fullPath}\"");
                 return File.OpenRead(fullPath);
             }
@@ -106,7 +105,7 @@ namespace Kit {
 
         private static T ReadBase<T>(string path, Func<string, T> readFunc) {
             try {
-                var fullPath = PathHelper.CombineLocal(targetDirectory, path);
+                var fullPath = GetFullPath(path);
                 LogService.Log($"Read file \"{fullPath}\"");
                 return readFunc(fullPath);
             }
@@ -143,7 +142,7 @@ namespace Kit {
 
         public static FileStream OpenWrite(string path) {
             try {
-                var fullPath = PathHelper.CombineLocal(targetDirectory, path);
+                var fullPath = GetFullPath(path);
                 LogService.Log($"Write file \"{fullPath}\"");
                 CreateDir(fullPath);
                 return File.OpenWrite(fullPath);
@@ -157,7 +156,7 @@ namespace Kit {
 
         private static void WriteBase(string path, Action<string> writeAction, string targetDirectory = null) {
             try {
-                var fullPath = PathHelper.CombineLocal(targetDirectory ?? FileClient.targetDirectory, path);
+                var fullPath = GetFullPath(path, targetDirectory);
                 LogService.Log($"Write file \"{fullPath}\"");
                 CreateDir(fullPath);
                 writeAction(fullPath);
@@ -177,5 +176,8 @@ namespace Kit {
             if (!Directory.Exists(dirPath))
                 Directory.CreateDirectory(dirPath);
         }
+
+        private static string GetFullPath(string path, string targetDirectory = null) =>
+            PathHelper.Combine(baseDirectory, targetDirectory ?? FileClient.targetDirectory, path);
     }
 }

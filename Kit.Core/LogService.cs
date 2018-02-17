@@ -10,25 +10,18 @@ namespace Kit {
             FileClient.Instance
         };
 
-        private static bool isEnable = true;
-        private static string targetDirectory = Kit.DiagnosticsDirectory;
+        private static string targetDirectory = null;
 
-        public static void Setup(bool? isEnable = null, string targetDirectory = null) {
-
-            if (isEnable != null)
-                LogService.isEnable = (bool)isEnable;
+        public static void Setup(string targetDirectory = null) {
 
             if (targetDirectory != null)
                 LogService.targetDirectory = targetDirectory;
         }
-        
+
         public static void Log(string message, LogLevel level = LogLevel.Log) {
 
-            if (!isEnable)
-                return;
-
             foreach (var logClient in LogClients)
-                logClient.PushToLog(message, level, targetDirectory);
+                logClient.PushToLog(message, level, targetDirectory ?? Kit.DiagnosticsDirectory);
         }
 
         public static void LogInfo(string message) => Log(message, LogLevel.Info);

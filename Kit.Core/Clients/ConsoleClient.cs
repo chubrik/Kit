@@ -57,7 +57,7 @@ namespace Kit {
             Write($"{message}\r\n", color);
 
         public static void Write(string message, ConsoleColor? color = null) {
-            var time = DateTime.Now.ToString("HH:mm:ss");
+            var time = DateTimeOffset.Now.ToString("HH:mm:ss");
             var origColor = Console.ForegroundColor;
 
             if (color != null)

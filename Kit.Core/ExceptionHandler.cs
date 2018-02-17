@@ -10,19 +10,18 @@ namespace Kit {
         public static readonly List<IDataClient> DataClients = new List<IDataClient> {
             FileClient.Instance
         };
-        
-        private static bool isInitialized = false;
-        private static string targetDirectory = Kit.DiagnosticsDirectory;
+
+        private static string targetDirectory = null;
         private static int counter = 1;
 
         public static void Setup(string targetDirectory = null) {
-            
+
             if (targetDirectory != null)
                 ExceptionHandler.targetDirectory = targetDirectory;
         }
-        
+
         public static void Register(Exception exception, LogLevel level = LogLevel.Error) {
-            
+
             if (exception.Data.Contains("registered"))
                 return;
 
@@ -52,8 +51,8 @@ namespace Kit {
             fileName = fileName.Replace('\"', '\'');
             fileName = Regex.Replace(fileName, @"[^a-zа-яё0-9.,()'# -]", "_", RegexOptions.IgnoreCase);
 
-            foreach (var client in DataClients)
-                client.PushToWrite(fileName, text, targetDirectory);
+            foreach (var dataClient in DataClients)
+                dataClient.PushToWrite(fileName, text, targetDirectory ?? Kit.DiagnosticsDirectory);
 
             counter++;
             exception.Data["registered"] = true;

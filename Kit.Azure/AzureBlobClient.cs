@@ -36,12 +36,14 @@ namespace Kit.Azure {
 
             if (targetDirectory != null)
                 AzureBlobClient.targetDirectory = targetDirectory;
+
+            ExceptionHandler.DataClients.Add(Instance);
         }
 
         #region IDataClient
 
         public void PushToWrite(string path, string text, string targetDirectory = null) =>
-            WriteAsync(path, text, CancellationToken.None, targetDirectory);
+            WriteAsync(path, text, CancellationToken.None, targetDirectory: targetDirectory, logging: false);
 
         #endregion
 
@@ -72,8 +74,7 @@ namespace Kit.Azure {
             }
         }
 
-        public static Task<Stream> OpenReadAsync(string path, CancellationToken cancellationToken) =>
-            throw new NotImplementedException();
+        public static Stream OpenRead(string path) => throw new NotImplementedException();
 
         private static async Task<T> ReadBaseAsync<T>(
             string path, CancellationToken cancellationToken, Func<string, CloudBlockBlob, Task<T>> action) {
@@ -98,8 +99,13 @@ namespace Kit.Azure {
         #region Write
 
         public static Task WriteAsync(
-            string path, string text, CancellationToken cancellationToken, string targetDirectory = null) =>
-            throw new NotImplementedException();
+            string path, string text, CancellationToken cancellationToken, string targetDirectory = null,
+            bool logging = true) {
+
+            return WriteBaseAsync(path, cancellationToken, (fullPath, blob) =>
+                blob.UploadTextAsync(text, Encoding.UTF8, accessCondition, options, operationContext, cancellationToken),
+                    targetDirectory: targetDirectory, logging: logging);
+        }
 
         public static Task WriteAsync(string path, string[] lines, CancellationToken cancellationToken) =>
             throw new NotImplementedException();
@@ -112,7 +118,7 @@ namespace Kit.Azure {
 
         public static Task WriteAsync(string path, IEnumerable<byte> bytes, CancellationToken cancellationToken) =>
             throw new NotImplementedException();
-        
+
         public static async Task WriteAsync(string path, Stream source, CancellationToken cancellationToken) {
             try {
                 var fullPath = PathHelper.Combine(targetDirectory, path);
@@ -128,11 +134,30 @@ namespace Kit.Azure {
             }
         }
 
-        public static Stream OpenWrite(string path) =>
-            throw new NotImplementedException();
+        public static Stream OpenWrite(string path) => throw new NotImplementedException();
 
-        public static Task<Stream> OpenWriteAsync(string path, CancellationToken cancellationToken) =>
-            throw new NotImplementedException();
+        public static async Task WriteBaseAsync(
+            string path, CancellationToken cancellationToken, Func<string, CloudBlockBlob, Task> action,
+            string targetDirectory = null, bool logging = true) {
+
+            try {
+                var fullPath = PathHelper.Combine(targetDirectory ?? AzureBlobClient.targetDirectory, path);
+
+                if (logging)
+                    LogService.Log($"Start uploading blob \"{fullPath}\"");
+
+                var blob = container.GetBlockBlobReference(fullPath);
+                await action(fullPath, blob);
+
+                if (logging)
+                    LogService.Log($"End uploading blob \"{fullPath}\"");
+            }
+            catch (Exception exception) {
+                Debug.Fail(exception.ToString());
+                ExceptionHandler.Register(exception);
+                throw;
+            }
+        }
 
         #endregion
     }
