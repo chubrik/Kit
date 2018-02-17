@@ -14,6 +14,8 @@
   <ItemGroup>
     <ProjectReference Include="..\Kit.Azure\Kit.Azure.csproj" />
     <ProjectReference Include="..\Kit.Core\Kit.Core.csproj" />
+    <ProjectReference Include="..\Kit.Html\Kit.Html.csproj" />
+    <ProjectReference Include="..\Kit.Http\Kit.Http.csproj" />
   </ItemGroup>
 
 </Project>
