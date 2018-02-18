@@ -22,6 +22,8 @@ namespace Kit {
         public static string Parent(string path) =>
             path.Contains('/') ? path.Substring(0, path.LastIndexOf('/')) : string.Empty;
 
+        public static string FileName(string path) => Path.GetFileName(path);
+
         public static string SafeFileName(string fileName) {
             var safeName = fileName.Replace('\"', '\'');
             safeName = Regex.Replace(safeName, @"[^a-zа-яё0-9.,()'# -]", "_", RegexOptions.IgnoreCase);

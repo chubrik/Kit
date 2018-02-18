@@ -11,18 +11,6 @@ namespace Kit {
         public static FileClient Instance => instance ?? (instance = new FileClient());
         private FileClient() { }
 
-        private static string baseDirectory = "$work";
-        private static string workingDirectory = string.Empty;
-
-        public static void Setup(string baseDirectory = null, string workingDirectory = null) {
-
-            if (baseDirectory != null)
-                FileClient.baseDirectory = baseDirectory;
-
-            if (workingDirectory != null)
-                FileClient.workingDirectory = workingDirectory;
-        }
-
         #region IDataClient
 
         public void PushToWrite(string path, string text, string targetDirectory = null) =>
@@ -203,6 +191,6 @@ namespace Kit {
         }
 
         private static string GetFullPath(string path, string targetDirectory = null) =>
-            PathHelper.Combine(baseDirectory, targetDirectory ?? workingDirectory, path);
+            PathHelper.Combine(Kit.BaseDirectory, targetDirectory ?? Kit.WorkingDirectory, path);
     }
 }

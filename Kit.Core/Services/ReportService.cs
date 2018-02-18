@@ -5,23 +5,18 @@ namespace Kit {
 
         private ReportService() { }
 
+        private const string reportsDirName = "reports";
+
         public static readonly List<IReportClient> Clients = new List<IReportClient> {
             FileClient.Instance
         };
-
-        private static string reportsDirectory = "$reports";
-
-        public static void Setup(string reportsDirectory = null) {
-
-            if (reportsDirectory != null)
-                ReportService.reportsDirectory = reportsDirectory;
-        }
 
         public static void Report(string subject, string body, LogLevel level = LogLevel.Info) {
             LogService.Log($"Report: {subject}", level);
 
             foreach (var client in Clients)
-                client.PushToReport(subject, body, reportsDirectory);
+                client.PushToReport(
+                    subject, body, PathHelper.Combine(Kit.DiagnisticsCurrentDirectory, reportsDirName));
         }
 
         public static void ReportSuccess(string subject, string body) =>

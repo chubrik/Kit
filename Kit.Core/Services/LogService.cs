@@ -5,24 +5,17 @@ namespace Kit {
 
         private LogService() { }
 
+        internal const string LogFileName = "$log.txt";
+
         public static readonly List<ILogClient> Clients = new List<ILogClient> {
             ConsoleClient.Instance,
             FileClient.Instance
         };
 
-        private static string logDirectory = null;
-        internal const string LogFileName = "$log.txt";
-
-        public static void Setup(string logDirectory = null) {
-
-            if (logDirectory != null)
-                LogService.logDirectory = logDirectory;
-        }
-
         public static void Log(string message, LogLevel level = LogLevel.Log) {
 
             foreach (var client in Clients)
-                client.PushToLog(message, level, logDirectory ?? Kit.DiagnosticsDirectory);
+                client.PushToLog(message, level, Kit.DiagnisticsCurrentDirectory);
         }
 
         public static void LogInfo(string message) => Log(message, LogLevel.Info);

@@ -7,18 +7,11 @@ namespace Kit {
 
         private ExceptionHandler() { }
 
+        private static int counter = 0;
+
         public static readonly List<IDataClient> DataClients = new List<IDataClient> {
             FileClient.Instance
         };
-
-        private static string exceptionsDirectory = null;
-        private static int counter = 0;
-
-        public static void Setup(string exceptionsDirectory = null) {
-
-            if (exceptionsDirectory != null)
-                ExceptionHandler.exceptionsDirectory = exceptionsDirectory;
-        }
 
         public static void Register(Exception exception, LogLevel level = LogLevel.Error) {
 
@@ -52,7 +45,7 @@ namespace Kit {
             var fileName = PathHelper.SafeFileName($"{paddedCount} {message}.txt");
 
             foreach (var client in DataClients)
-                client.PushToWrite(fileName, text, exceptionsDirectory ?? Kit.DiagnosticsDirectory);
+                client.PushToWrite(fileName, text, Kit.DiagnisticsCurrentDirectory);
 
             exception.Data["registered"] = true;
         }

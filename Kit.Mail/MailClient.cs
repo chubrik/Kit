@@ -74,12 +74,12 @@ namespace Kit.Mail {
                     var attachment = new Attachment(imagePath, "image/jpg") {
                         ContentId = new Guid().ToString(),
                         ContentDisposition = {
-                                Inline = true,
-                                DispositionType = DispositionTypeNames.Inline
-                            },
+                            Inline = true,
+                            DispositionType = DispositionTypeNames.Inline
+                        },
                         ContentType = {
-                                Name = Path.GetFileName(imagePath)
-                            }
+                            Name = PathHelper.FileName(imagePath)
+                        }
                     };
 
                     message.Attachments.Add(attachment);

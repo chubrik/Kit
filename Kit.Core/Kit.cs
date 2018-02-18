@@ -6,12 +6,27 @@ using System.Threading.Tasks;
 namespace Kit {
     public class Kit {
 
-        internal static string DiagnosticsDirectory = "$diagnostics";
+        private static readonly string formattedStartTime = DateTimeOffset.Now.ToString("dd.MM.yyyy HH.mm.ss");
+        internal static string BaseDirectory = "$work";
+        internal static string WorkingDirectory = string.Empty;
+        private static string diagnosticsDirectory = "$diagnostics";
 
-        public static void Setup(string diagnosticsDirectory = null) {
+        internal static string DiagnisticsCurrentDirectory =>
+            PathHelper.Combine(diagnosticsDirectory, formattedStartTime);
+
+        public static void Setup(
+            string baseDirectory = null,
+            string workingDirectory = null,
+            string diagnosticsDirectory = null) {
+
+            if (baseDirectory != null)
+                BaseDirectory = baseDirectory;
+
+            if (workingDirectory != null)
+                WorkingDirectory = workingDirectory;
 
             if (diagnosticsDirectory != null)
-                DiagnosticsDirectory = diagnosticsDirectory;
+                Kit.diagnosticsDirectory = diagnosticsDirectory;
         }
 
         public static void Execute(Action @delegate) {
@@ -35,7 +50,7 @@ namespace Kit {
                 Initialize();
                 LogService.Log("Ready");
                 await delegateAsync(cancellationToken);
-                LogService.LogSuccess("Complete");
+                LogService.LogInfo("Complete");
             }
             catch (Exception exception) {
                 Debug.Fail(exception.ToString());
