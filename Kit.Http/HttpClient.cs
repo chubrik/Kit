@@ -16,7 +16,7 @@ namespace Kit.Http {
         private HttpClient() { }
 
         private static bool isInitialized = false;
-        private static System.Net.Http.HttpClient client;
+        private static System.Net.Http.HttpClient client; //todo dispose
         private static bool useRepeat = true;
         private static bool useCache = true;
         private static string cacheDirectory = "$http-cache";
@@ -51,8 +51,8 @@ namespace Kit.Http {
                 throw new InvalidOperationException();
 
             var handler = new HttpClientHandler {
-                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                AllowAutoRedirect = false
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+                //AllowAutoRedirect = false //todo redirect
             };
 
             client = new System.Net.Http.HttpClient(handler);
@@ -82,8 +82,12 @@ namespace Kit.Http {
         }
 
         public static Task<string> GetAsync(
-            string url, CancellationToken cancellationToken, string cacheKey = null) =>
-            GetAsync(new Uri(url), cancellationToken, cacheKey: cacheKey);
+            string url,
+            CancellationToken cancellationToken,
+            bool? useRepeat = null,
+            bool? useCache = null,
+            string cacheKey = null) =>
+            GetAsync(new Uri(url), cancellationToken, useRepeat: useRepeat, useCache: useCache, cacheKey: cacheKey);
 
         public static async Task<string> GetAsync(
             Uri uri,
@@ -95,64 +99,75 @@ namespace Kit.Http {
             if (!isInitialized)
                 Initialize();
 
-            if (!(useCache ?? HttpClient.useCache))
-                return await GetOrRepeatAsync(uri, useRepeat ?? HttpClient.useRepeat, cancellationToken);
+            HttpResponse response;
 
-            var cachedName = GetCachedName(uri, $"{cacheKey ?? HttpClient.cacheKey};get");
-            string cachedFileName;
+            if (!(useCache ?? HttpClient.useCache)) {
+                response = await GetOrRepeatAsync(uri, useRepeat ?? HttpClient.useRepeat, cancellationToken);
+                return response.Body;
+            }
+
+            var key = "(" + $"{cacheKey ?? HttpClient.cacheKey};get".TrimStart(';') + ")";
+            var cachedName = $"{key} {uri.AbsoluteUri}";
+            string paddedCount;
+            string bodyFileName;
 
             if (registry.ContainsKey(cachedName)) {
-                cachedFileName = registry.GetValue(cachedName);
+                bodyFileName = registry.GetValue(cachedName);
 
-                if (FileClient.Exists(cachedFileName, cacheDirectory)) {
+                if (FileClient.Exists(bodyFileName, cacheDirectory)) {
                     LogService.Log($"Http get (cached): {uri.AbsoluteUri}");
-                    return FileClient.ReadText(cachedFileName, cacheDirectory);
+                    return FileClient.ReadText(bodyFileName, cacheDirectory);
                 }
+                else
+                    paddedCount = bodyFileName.Substring(0, 4);
             }
             else {
-                var count = (++cacheCounter).ToString().PadLeft(4, '0');
-                cachedFileName = PathHelper.SafeFileName($"{count} {cachedName}.txt");
+                paddedCount = (++cacheCounter).ToString().PadLeft(4, '0');
+                bodyFileName = $"{paddedCount} {key} {PathHelper.SafeFileName(uri.AbsoluteUri)}.txt";
             }
 
-            var body = await GetOrRepeatAsync(uri, useRepeat ?? HttpClient.useRepeat, cancellationToken);
+            response = await GetOrRepeatAsync(uri, useRepeat ?? HttpClient.useRepeat, cancellationToken);
 
-            if (body == null)
+            if (response.Body == null)
                 return null;
 
-            FileClient.Write(cachedFileName, body, cacheDirectory);
+            var infoFileName = $"{paddedCount} {key} info.txt";
+            FileClient.Write(bodyFileName, response.Body, cacheDirectory);
+            FileClient.Write(infoFileName, response.FormattedInfo, cacheDirectory);
 
             if (!registry.ContainsKey(cachedName))
-                FileClient.AppendText(registryFileName, $"{cachedName} | {cachedFileName}", cacheDirectory);
+                FileClient.AppendText(registryFileName, $"{cachedName} | {bodyFileName}", cacheDirectory);
 
             SetHeader("Referer", uri.AbsoluteUri);
-            return body;
+            return response.Body;
         }
 
-        private static async Task<string> GetOrRepeatAsync(
+        private static async Task<HttpResponse> GetOrRepeatAsync(
             Uri uri, bool useRepeat, CancellationToken cancellationToken) {
 
             if (!useRepeat)
                 return await GetBaseAsync(uri, cancellationToken);
 
-            string body = null;
+            HttpResponse response = null;
 
             await RepeatHelper.Repeat(async () => {
-                body = await GetBaseAsync(uri, cancellationToken);
+                response = await GetBaseAsync(uri, cancellationToken);
             }, cancellationToken);
 
-            return body;
+            return response;
         }
 
-        private static async Task<string> GetBaseAsync(Uri uri, CancellationToken cancellationToken) {
+        private static async Task<HttpResponse> GetBaseAsync(Uri uri, CancellationToken cancellationToken) {
             LogService.Log($"Http get: {uri.AbsoluteUri}");
             var response = await client.GetAsync(uri, cancellationToken);
             var statusCode = response.StatusCode;
 
+            //todo redirect
             if (statusCode == HttpStatusCode.Found)
                 return await GetBaseAsync(FixUri(uri, response.Headers.Location), cancellationToken);
 
             if (response.IsSuccessStatusCode)
-                return await response.Content.ReadAsStringAsync();
+                return new HttpResponse(response, await response.Content.ReadAsStringAsync());
 
             var message = $"Status {statusCode}: {uri.AbsoluteUri}";
             Debug.Assert(statusCode == HttpStatusCode.NotFound);
@@ -161,7 +176,7 @@ namespace Kit.Http {
                 throw new InvalidOperationException(message);
 
             LogService.LogWarning(message);
-            return null;
+            return new HttpResponse(response, body: null);
         }
 
         public Task<string> PostFormAsync(
@@ -221,6 +236,7 @@ namespace Kit.Http {
                 SetHeader("Origin", null);
             }
 
+            //todo redirect
             if (response.StatusCode == HttpStatusCode.Found)
                 return await GetAsync(FixUri(uri, response.Headers.Location), cancellationToken);
 
@@ -238,9 +254,6 @@ namespace Kit.Http {
 
             return body;
         }
-
-        private static string GetCachedName(Uri uri, string cacheKey) =>
-            $"({cacheKey.TrimStart(';')}) {uri.AbsoluteUri}";
 
         private static Uri FixUri(Uri original, Uri rawPart) =>
             new Uri(new Uri($"{original.Scheme}://{original.Host}"), rawPart);
