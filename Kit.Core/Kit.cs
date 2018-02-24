@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 namespace Kit {
     public class Kit {
 
+        private static readonly CancellationTokenSource сancellationTokenSource = new CancellationTokenSource();
+        public static CancellationToken CancellationToken => сancellationTokenSource.Token;
         private static readonly string formattedStartTime = DateTimeOffset.Now.ToString("dd.MM.yyyy HH.mm.ss");
         internal static string BaseDirectory = "$work";
         internal static string WorkingDirectory = string.Empty;
@@ -13,6 +15,8 @@ namespace Kit {
 
         internal static string DiagnisticsCurrentDirectory =>
             PathHelper.Combine(diagnosticsDirectory, formattedStartTime);
+
+        #region Setup & Initialize
 
         public static void Setup(
             string baseDirectory = null,
@@ -29,48 +33,56 @@ namespace Kit {
                 Kit.diagnosticsDirectory = diagnosticsDirectory;
         }
 
-        public static void Execute(Action @delegate) {
-
-            Task delegateAsync(CancellationToken CancellationToken) {
-                @delegate();
-                return Task.CompletedTask;
+        private static void Initialize() {
+            try {
+                throw new Exception("Test exception");
             }
-
-            ExecuteAsync(delegateAsync, CancellationToken.None).Wait();
+            catch (Exception exception) {
+                ExceptionHandler.Register(exception, level: LogLevel.Log);
+                ReportService.Report(exception.Message, exception.ToString(), logLevel: LogLevel.Log);
+            }
         }
 
+        #endregion
+
+        public static void Execute(Action @delegate) =>
+            Execute((CancellationToken cancellationToken) => {
+                @delegate();
+                return Task.CompletedTask;
+            });
+
+        public static void Execute(Func<Task> delegateAsync) =>
+            Execute((CancellationToken cancellationToken) => {
+                delegateAsync();
+                return Task.CompletedTask;
+            });
+
         public static void Execute(Func<CancellationToken, Task> delegateAsync) =>
-            ExecuteAsync(delegateAsync, CancellationToken.None).Wait();
+            ExecuteAsync(delegateAsync).Wait();
 
         private static async Task ExecuteAsync(
-            Func<CancellationToken, Task> delegateAsync, CancellationToken cancellationToken) {
+            Func<CancellationToken, Task> delegateAsync) {
+
+            var startTime = DateTimeOffset.Now;
 
             try {
-                LogService.Log("Start");
+                LogService.LogInfo("Kit is started");
                 Initialize();
-                LogService.Log("Ready");
-                await delegateAsync(cancellationToken);
-                LogService.LogInfo("Complete");
+                LogService.Log($"Kit is ready at {TimeHelper.FormattedLatency(startTime)}");
+                await delegateAsync(CancellationToken);
+                LogService.LogInfo($"Completed at {TimeHelper.FormattedLatency(startTime)}");
             }
             catch (Exception exception) {
                 Debug.Fail(exception.ToString());
                 ExceptionHandler.Register(exception);
-                ReportService.ReportError(exception.Message, exception.ToString());
-                LogService.LogError("Fail");
+                ReportService.Report(exception.Message, exception.ToString());
+                LogService.LogError($"Failed at {TimeHelper.FormattedLatency(startTime)}");
             }
 
             Console.Write("\nPress any key to exit...");
             Console.ReadKey(true);
         }
 
-        private static void Initialize() {
-            try {
-                throw new Exception("Test exception");
-            }
-            catch (Exception exception) {
-                ExceptionHandler.Register(exception, LogLevel.Log);
-                ReportService.Report(exception.Message, exception.ToString());
-            }
-        }
+        public static void Exit() => сancellationTokenSource.Cancel();
     }
 }

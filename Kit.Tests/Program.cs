@@ -27,7 +27,7 @@ namespace Kit.Tests {
                 to: mailCredentials[5]
             );
 
-            Kit.Execute(ct => new Test().RunAsync(ct));
+            Kit.Execute(() => new Test().Run());
         }
     }
 }

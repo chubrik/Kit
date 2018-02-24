@@ -18,6 +18,7 @@ namespace Kit {
             if (exception.Data.Contains("registered"))
                 return;
 
+            var startTime = DateTimeOffset.Now;
             var message = exception.Message.Replace("\r\n", " ");
             var match = Regex.Match(exception.ToString(), @"(\w+\.cs):line (\d+)");
 
@@ -44,9 +45,12 @@ namespace Kit {
             text = text.Replace("\n", "\r\n").Replace("\r\r", "\r");
             var fileName = PathHelper.SafeFileName($"{paddedCount} {message}.txt");
 
+            LogService.Log($"Exception register started");
+
             foreach (var client in DataClients)
                 client.PushToWrite(fileName, text, Kit.DiagnisticsCurrentDirectory);
-
+            
+            LogService.Log($"Exception register completed at {TimeHelper.FormattedLatency(startTime)}");
             exception.Data["registered"] = true;
         }
     }

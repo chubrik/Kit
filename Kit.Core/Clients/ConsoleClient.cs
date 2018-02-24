@@ -18,7 +18,7 @@ namespace Kit {
 
         #region ILogClient
 
-        public void PushToLog(string message, LogLevel level = LogLevel.Log, string targetDirectory = null) {
+        public void PushToLog(string message, LogLevel level = LogLevel.Log) {
 
             if (level < minLevel)
                 return;

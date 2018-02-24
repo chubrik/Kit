@@ -1,11 +1,11 @@
-﻿using System;
+﻿using MimeTypes.Core;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Mail;
 using System.Net.Mime;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Kit.Mail {
@@ -21,6 +21,8 @@ namespace Kit.Mail {
         private static NetworkCredential credentials;
         private static string from;
         private static string to;
+
+        #region Setup
 
         public static void Setup(
             bool? isEnable = null,
@@ -52,33 +54,51 @@ namespace Kit.Mail {
             ReportService.Clients.Add(Instance);
         }
 
+        #endregion
+
         #region IReportClient
 
-        public async void PushToReport(string subject, string body, string targetDirectory) =>
-            await SendAsync(subject, body, CancellationToken.None);
+        public void PushToReport(string subject, string body, IEnumerable<string> attachmentPaths, string targetDirectory) =>
+            SendAsync(subject, body, attachmentPaths).Wait(); //todo queue
 
         #endregion
 
-        public static async Task SendAsync(
-            string subject, string body, CancellationToken cancellationToken, List<string> imagePaths = null) {
+        #region Send
+
+        #region Extensions
+
+        public static void Send(string subject, string body, string attachmentPath = null) =>
+            SendAsync(subject, body, attachmentPath).Wait();
+
+        public static void Send(string subject, string body, IEnumerable<string> attachmentPaths) =>
+            SendAsync(subject, body, attachmentPaths).Wait();
+
+        public static Task SendAsync(string subject, string body, string attachmentPath = null) =>
+            SendAsync(subject, body, attachmentPath == null ? new List<string>() : new List<string> { attachmentPath });
+
+        #endregion
+
+        //todo attachments
+        public static async Task SendAsync(string subject, string body, IEnumerable<string> attachmentPaths) {
 
             if (!isEnable)
                 return;
 
-            LogService.Log($"Send email \"{subject}\"");
+            var startTime = DateTimeOffset.Now;
+            LogService.Log($"Mail send started: {subject}");
             var message = new MailMessage(from, to, subject, body);
 
-            if (imagePaths != null)
-                foreach (var imagePath in imagePaths) {
+            if (attachmentPaths != null)
+                foreach (var attachmentPath in attachmentPaths) {
 
-                    var attachment = new Attachment(imagePath, "image/jpg") {
+                    var attachment = new Attachment(FileClient.FullPath(attachmentPath), MimeType(attachmentPath)) {
                         ContentId = new Guid().ToString(),
                         ContentDisposition = {
                             Inline = true,
                             DispositionType = DispositionTypeNames.Inline
                         },
                         ContentType = {
-                            Name = PathHelper.FileName(imagePath)
+                            Name = PathHelper.FileName(attachmentPath)
                         }
                     };
 
@@ -101,7 +121,12 @@ namespace Kit.Mail {
             foreach (var attachment in message.Attachments)
                 attachment.Dispose();
 
-            //LogService.Log($"End sending email \"{subject}\"");
+            LogService.Log($"Mail send completed at {TimeHelper.FormattedLatency(startTime)}");
         }
+
+        #endregion
+
+        private static string MimeType(string path) =>
+            MimeTypeMap.GetMimeType(Path.GetExtension(path));
     }
 }

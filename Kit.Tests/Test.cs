@@ -1,25 +1,23 @@
 ﻿using Kit.Azure;
 using Kit.Http;
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Kit.Tests {
     public class Test {
 
-        public async Task RunAsync(CancellationToken ct) {
+        public void Run() {
             LogService.LogInfo("Hello World!");
 
-            var html = await HttpClient.GetAsync("https://www.google.com/", ct);
+            var html = HttpClient.GetText("https://www.google.com/");
 
             using (var stream = FileClient.OpenRead("../Test.cs"))
-                await AzureBlobClient.WriteAsync("file.ext", stream, ct);
+                AzureBlobClient.Write("file.ext", stream);
 
             using (var stream = FileClient.OpenWrite("Test2.cs"))
-                await AzureBlobClient.ReadAsync("file.ext", stream, ct);
+                AzureBlobClient.Read("file.ext", stream);
 
-            ReportService.ReportSuccess("My report", "My report body");
-            //throw new Exception("My exception");
+            ReportService.ReportSuccess("My report", "My report body", "../Program.cs");
+            throw new Exception("My exception");
         }
     }
 }

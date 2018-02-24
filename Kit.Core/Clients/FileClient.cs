@@ -22,10 +22,22 @@ namespace Kit {
 
         private static int reportCounter = 0;
 
-        public void PushToReport(string subject, string body, string targetDirectory) {
-            var count = (++reportCounter).ToString().PadLeft(3, '0');
-            var fileName = PathHelper.SafeFileName($"{count} {subject}.txt");
+        public void PushToReport(string subject, string body, IEnumerable<string> attachmentPaths, string targetDirectory) {
+            Debug.Assert(attachmentPaths != null);
+
+            if (attachmentPaths == null)
+                throw new InvalidOperationException();
+
+            reportCounter++;
+            var paddedCount = reportCounter.ToString().PadLeft(3, '0');
+            var fileName = PathHelper.SafeFileName($"{paddedCount} {subject}.txt");
             Write(fileName, $"{subject}\r\n\r\n{body}\r\n", targetDirectory);
+            var attachmentCounter = 0;
+
+            foreach (var attachmentPath in attachmentPaths)
+                using (var stream = OpenRead(attachmentPath))
+                    Write($"{paddedCount}-{++attachmentCounter} {PathHelper.FileName(attachmentPath)}",
+                        stream, targetDirectory: targetDirectory);
         }
 
         #endregion
@@ -34,13 +46,13 @@ namespace Kit {
 
         private bool logIndent = false;
 
-        public void PushToLog(string message, LogLevel level = LogLevel.Log, string targetDirectory = null) {
+        public void PushToLog(string message, LogLevel level = LogLevel.Log) {
             var fullMessage = $"{DateTimeOffset.Now.ToString("dd.MM.yyyy HH:mm:ss.fff")} - {message}";
-            var filePath = GetFullPath(LogService.LogFileName, targetDirectory);
-            CreateDir(filePath);
+            var fullPath = FullPath(LogService.LogFileName, Kit.DiagnisticsCurrentDirectory);
+            CreateDir(fullPath);
 
             if (level == LogLevel.Log) {
-                File.AppendAllText(filePath, logIndent ? $"\r\n{fullMessage}\r\n" : $"{fullMessage}\r\n");
+                File.AppendAllText(fullPath, logIndent ? $"\r\n{fullMessage}\r\n" : $"{fullMessage}\r\n");
                 logIndent = false;
                 return;
             }
@@ -70,7 +82,7 @@ namespace Kit {
                     throw new ArgumentOutOfRangeException(nameof(level));
             }
 
-            File.AppendAllText(filePath, $"\r\n--- {header} ---\r\n{fullMessage}\r\n");
+            File.AppendAllText(fullPath, $"\r\n--- {header} ---\r\n{fullMessage}\r\n");
             logIndent = true;
         }
 
@@ -84,8 +96,8 @@ namespace Kit {
         public static List<string> ReadLines(string path, string targetDirectory = null) =>
             ReadBase(path, fullPath => File.ReadAllLines(fullPath).ToList(), targetDirectory);
 
-        public static List<byte> ReadBytes(string path) =>
-            ReadBase(path, fullPath => File.ReadAllBytes(fullPath).ToList());
+        public static byte[] ReadBytes(string path, string targetDirectory = null) =>
+            ReadBase(path, fullPath => File.ReadAllBytes(fullPath), targetDirectory);
 
         public static void Read(string path, Stream target) {
             using (var fs = OpenRead(path))
@@ -94,8 +106,8 @@ namespace Kit {
 
         public static FileStream OpenRead(string path) {
             try {
-                var fullPath = GetFullPath(path);
-                LogService.Log($"Read file \"{fullPath}\"");
+                var fullPath = FullPath(path);
+                LogService.Log($"Read file: {fullPath}");
                 return File.OpenRead(fullPath);
             }
             catch (Exception exception) {
@@ -106,11 +118,11 @@ namespace Kit {
         }
 
         private static T ReadBase<T>(
-            string path, Func<string, T> readFunc, string targetDirectory = null) {
+            string path, Func<string, T> readFunc, string targetDirectory) {
 
             try {
-                var fullPath = GetFullPath(path, targetDirectory);
-                LogService.Log($"Read file \"{fullPath}\"");
+                var fullPath = FullPath(path, targetDirectory);
+                LogService.Log($"Read file: {fullPath}");
                 return readFunc(fullPath);
             }
             catch (Exception exception) {
@@ -127,28 +139,25 @@ namespace Kit {
         public static void Write(string path, string text, string targetDirectory = null) =>
             WriteBase(path, fullPath => File.WriteAllText(fullPath, text), targetDirectory);
 
-        public static void Write(string path, string[] lines) =>
-            WriteBase(path, fullPath => File.WriteAllLines(fullPath, lines));
+        public static void Write(string path, string[] lines, string targetDirectory = null) =>
+            WriteBase(path, fullPath => File.WriteAllLines(fullPath, lines), targetDirectory);
 
-        public static void Write(string path, IEnumerable<string> lines) =>
-            WriteBase(path, fullPath => File.WriteAllLines(fullPath, lines.ToArray()));
+        public static void Write(string path, IEnumerable<string> lines, string targetDirectory = null) =>
+            WriteBase(path, fullPath => File.WriteAllLines(fullPath, lines.ToArray()), targetDirectory);
 
-        public static void Write(string path, byte[] bytes) =>
-            WriteBase(path, fullPath => File.WriteAllBytes(fullPath, bytes));
+        public static void Write(string path, byte[] bytes, string targetDirectory = null) =>
+            WriteBase(path, fullPath => File.WriteAllBytes(fullPath, bytes), targetDirectory);
 
-        public static void Write(string path, IEnumerable<byte> bytes) =>
-            WriteBase(path, fullPath => File.WriteAllBytes(fullPath, bytes.ToArray()));
-
-        public static void Write(string path, Stream source) {
-            using (var fs = File.OpenWrite(path))
+        public static void Write(string path, Stream source, string targetDirectory = null) {
+            using (var fs = OpenWrite(path, targetDirectory))
                 source.CopyTo(fs);
         }
 
-        public static FileStream OpenWrite(string path) {
+        public static FileStream OpenWrite(string path, string targetDirectory = null) {
             try {
-                var fullPath = GetFullPath(path);
-                LogService.Log($"Write file \"{fullPath}\"");
+                var fullPath = FullPath(path, targetDirectory);
                 CreateDir(fullPath);
+                LogService.Log($"Write file: {fullPath}");
                 return File.OpenWrite(fullPath);
             }
             catch (Exception exception) {
@@ -158,11 +167,11 @@ namespace Kit {
             }
         }
 
-        private static void WriteBase(string path, Action<string> writeAction, string targetDirectory = null) {
+        private static void WriteBase(string path, Action<string> writeAction, string targetDirectory) {
             try {
-                var fullPath = GetFullPath(path, targetDirectory);
-                LogService.Log($"Write file \"{fullPath}\"");
+                var fullPath = FullPath(path, targetDirectory);
                 CreateDir(fullPath);
+                LogService.Log($"Write file: {fullPath}");
                 writeAction(fullPath);
             }
             catch (Exception exception) {
@@ -175,22 +184,34 @@ namespace Kit {
         #endregion
 
         public static bool Exists(string path, string targetDirectory = null) =>
-            File.Exists(GetFullPath(path, targetDirectory));
+            File.Exists(FullPath(path, targetDirectory));
 
         public static void AppendText(string path, string text, string targetDirectory = null) {
-            var fullPath = GetFullPath(path, targetDirectory);
+            var fullPath = FullPath(path, targetDirectory);
             CreateDir(fullPath);
+            LogService.Log($"Append file: {fullPath}");
             File.AppendAllText(fullPath, $"{text}\r\n");
         }
 
-        private static void CreateDir(string filePath) {
-            var dirPath = PathHelper.Parent(filePath);
-
-            if (!Directory.Exists(dirPath))
-                Directory.CreateDirectory(dirPath);
+        public static void Delete(string path, string targetDirectory = null) {
+            var fullPath = FullPath(path, targetDirectory);
+            LogService.Log($"Delete file: {fullPath}");
+            File.Delete(fullPath);
         }
 
-        private static string GetFullPath(string path, string targetDirectory = null) =>
+        public static string FullPath(string path, string targetDirectory = null) =>
             PathHelper.Combine(Kit.BaseDirectory, targetDirectory ?? Kit.WorkingDirectory, path);
+
+        public static List<string> FileNames(string path = "") =>
+            Directory.GetFiles(FullPath(path)).Select(PathHelper.FileName).ToList();
+
+        private static void CreateDir(string fullPath) {
+            var dirPath = PathHelper.Parent(fullPath);
+
+            if (!Directory.Exists(dirPath)) {
+                Directory.CreateDirectory(dirPath);
+                LogService.Log($"Create directory: {dirPath}");
+            }
+        }
     }
 }

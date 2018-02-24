@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Kit.Azure {
@@ -21,6 +20,8 @@ namespace Kit.Azure {
 
         private static CloudBlobContainer container;
         private static string workingDirectory = string.Empty;
+
+        #region Setup
 
         public static void Setup(
             string accountName = null,
@@ -41,10 +42,12 @@ namespace Kit.Azure {
             ReportService.Clients.Add(Instance);
         }
 
+        #endregion
+
         #region IDataClient
 
         public void PushToWrite(string path, string text, string targetDirectory = null) =>
-            WriteAsync(path, text, CancellationToken.None, targetDirectory, logging: false);
+            WriteAsync(path, text, targetDirectory: targetDirectory).Wait(); //todo queue
 
         #endregion
 
@@ -52,33 +55,63 @@ namespace Kit.Azure {
 
         private static int reportCounter = 0;
 
-        public void PushToReport(string subject, string body, string targetDirectory) {
-            var count = (++reportCounter).ToString().PadLeft(3, '0');
-            var fileName = PathHelper.SafeFileName($"{count} {subject}.txt");
-            WriteAsync(fileName, $"{subject}\r\n\r\n{body}\r\n", CancellationToken.None, targetDirectory, logging: false);
+        public void PushToReport(string subject, string body, IEnumerable<string> attachmentPaths, string targetDirectory) {
+            Debug.Assert(attachmentPaths != null);
+
+            if (attachmentPaths == null)
+                throw new InvalidOperationException();
+
+            reportCounter++;
+            var paddedCount = reportCounter.ToString().PadLeft(3, '0');
+            var fileName = PathHelper.SafeFileName($"{paddedCount} {subject}.txt");
+            WriteAsync(fileName, $"{subject}\r\n\r\n{body}\r\n", targetDirectory: targetDirectory).Wait(); //todo queue
+            var attachmentCounter = 0;
+
+            foreach (var attachmentPath in attachmentPaths)
+                using (var stream = FileClient.OpenRead(attachmentPath))
+                    WriteAsync($"{paddedCount}-{++attachmentCounter} {PathHelper.FileName(attachmentPath)}",
+                        stream, targetDirectory: targetDirectory).Wait(); //todo queue
         }
 
         #endregion
 
         #region Read
 
-        public static Task<string> ReadTextAsync(string path, CancellationToken cancellationToken) =>
-            ReadBaseAsync(path, cancellationToken, (fullPath, blob) =>
-                blob.DownloadTextAsync(Encoding.UTF8, accessCondition, options, operationContext, cancellationToken));
+        #region Extensions
 
-        public static Task<List<string>> ReadLinesAsync(string path, CancellationToken cancellationToken) =>
+        public static string ReadText(string path, string targetDirectory = null) =>
+            ReadTextAsync(path, targetDirectory).Result;
+
+        public static List<string> ReadLines(string path, string targetDirectory = null) =>
+            ReadLinesAsync(path, targetDirectory).Result;
+
+        public static byte[] ReadBytes(string path, string targetDirectory = null) =>
+            ReadBytesAsync(path, targetDirectory).Result;
+
+        public static void Read(string path, Stream target, string targetDirectory = null) =>
+            ReadAsync(path, target, targetDirectory).Wait();
+
+        #endregion
+
+        public static Task<string> ReadTextAsync(string path, string targetDirectory = null) =>
+            ReadBaseAsync(path, (fullPath, blob) =>
+                blob.DownloadTextAsync(Encoding.UTF8, accessCondition, options, operationContext, Kit.CancellationToken),
+                targetDirectory: targetDirectory);
+
+        public static Task<List<string>> ReadLinesAsync(string path, string targetDirectory = null) =>
             throw new NotImplementedException();
 
-        public static Task<List<byte>> ReadBytesAsync(string path, CancellationToken cancellationToken) =>
+        public static Task<byte[]> ReadBytesAsync(string path, string targetDirectory = null) =>
             throw new NotImplementedException();
 
-        public static async Task ReadAsync(string path, Stream target, CancellationToken cancellationToken) {
+        public static async Task ReadAsync(string path, Stream target, string targetDirectory = null) {
             try {
-                var fullPath = PathHelper.Combine(workingDirectory, path);
-                LogService.Log($"Start downloading blob \"{fullPath}\"");
+                var startTime = DateTimeOffset.Now;
+                var fullPath = PathHelper.Combine(targetDirectory ?? workingDirectory, path);
+                LogService.Log($"Download blob started: {fullPath}");
                 var blob = container.GetBlockBlobReference(fullPath);
-                await blob.DownloadToStreamAsync(target, accessCondition, options, operationContext, cancellationToken);
-                LogService.Log($"End downloading blob \"{fullPath}\"");
+                await blob.DownloadToStreamAsync(target, accessCondition, options, operationContext, Kit.CancellationToken);
+                LogService.Log($"Download blob completed at {TimeHelper.FormattedLatency(startTime)}");
             }
             catch (Exception exception) {
                 Debug.Fail(exception.ToString());
@@ -87,17 +120,17 @@ namespace Kit.Azure {
             }
         }
 
-        public static Stream OpenRead(string path) => throw new NotImplementedException();
+        public static Stream OpenRead(string path, string targetDirectory = null) => throw new NotImplementedException();
 
         private static async Task<T> ReadBaseAsync<T>(
-            string path, CancellationToken cancellationToken, Func<string, CloudBlockBlob, Task<T>> action) {
-
+            string path, Func<string, CloudBlockBlob, Task<T>> action, string targetDirectory) {
             try {
-                var fullPath = PathHelper.Combine(workingDirectory, path);
-                LogService.Log($"Start downloading blob \"{fullPath}\"");
+                var startTime = DateTimeOffset.Now;
+                var fullPath = PathHelper.Combine(targetDirectory ?? workingDirectory, path);
+                LogService.Log($"Download blob started: {fullPath}");
                 var blob = container.GetBlockBlobReference(fullPath);
                 var result = await action(fullPath, blob);
-                LogService.Log($"End downloading blob \"{fullPath}\"");
+                LogService.Log($"Download blob completed at {TimeHelper.FormattedLatency(startTime)}");
                 return result;
             }
             catch (Exception exception) {
@@ -111,59 +144,42 @@ namespace Kit.Azure {
 
         #region Write
 
-        public static Task WriteAsync(
-            string path, string text, CancellationToken cancellationToken, string targetDirectory = null,
-            bool logging = true) {
+        #region Extensions
 
-            return WriteBaseAsync(path, cancellationToken, (fullPath, blob) =>
-                blob.UploadTextAsync(text, Encoding.UTF8, accessCondition, options, operationContext, cancellationToken),
-                    targetDirectory, logging);
+        public static void Write(string path, string text, string targetDirectory = null) =>
+            WriteAsync(path, text, targetDirectory: targetDirectory).Wait();
+
+        public static void Write(string path, IEnumerable<string> lines, string targetDirectory = null) =>
+            WriteAsync(path, lines, targetDirectory: targetDirectory).Wait();
+
+        public static void Write(string path, byte[] bytes, string targetDirectory = null) =>
+            WriteAsync(path, bytes, targetDirectory: targetDirectory).Wait();
+
+        public static void Write(string path, Stream source, string targetDirectory = null) =>
+            WriteAsync(path, source, targetDirectory: targetDirectory).Wait();
+
+        #endregion
+
+        public static Task WriteAsync(string path, string text, string targetDirectory = null) {
+            return WriteBaseAsync(path, blob =>
+                blob.UploadTextAsync(text, Encoding.UTF8, accessCondition, options, operationContext, Kit.CancellationToken),
+                targetDirectory: targetDirectory);
         }
 
-        public static Task WriteAsync(string path, string[] lines, CancellationToken cancellationToken) =>
+        public static Task WriteAsync(string path, IEnumerable<string> lines, string targetDirectory = null) =>
             throw new NotImplementedException();
 
-        public static Task WriteAsync(string path, IEnumerable<string> lines, CancellationToken cancellationToken) =>
+        public static Task WriteAsync(string path, byte[] bytes, string targetDirectory = null) =>
             throw new NotImplementedException();
 
-        public static Task WriteAsync(string path, byte[] bytes, CancellationToken cancellationToken) =>
-            throw new NotImplementedException();
-
-        public static Task WriteAsync(string path, IEnumerable<byte> bytes, CancellationToken cancellationToken) =>
-            throw new NotImplementedException();
-
-        public static async Task WriteAsync(string path, Stream source, CancellationToken cancellationToken) {
+        public static async Task WriteAsync(string path, Stream source, string targetDirectory = null) {
             try {
-                var fullPath = PathHelper.Combine(workingDirectory, path);
-                LogService.Log($"Start uploading blob \"{fullPath}\"");
-                var blob = container.GetBlockBlobReference(fullPath);
-                await blob.UploadFromStreamAsync(source, accessCondition, options, operationContext, cancellationToken);
-                LogService.Log($"End uploading blob \"{fullPath}\"");
-            }
-            catch (Exception exception) {
-                Debug.Fail(exception.ToString());
-                ExceptionHandler.Register(exception);
-                throw;
-            }
-        }
-
-        public static Stream OpenWrite(string path) => throw new NotImplementedException();
-
-        public static async Task WriteBaseAsync(
-            string path, CancellationToken cancellationToken, Func<string, CloudBlockBlob, Task> action,
-            string targetDirectory = null, bool logging = true) {
-
-            try {
+                var startTime = DateTimeOffset.Now;
                 var fullPath = PathHelper.Combine(targetDirectory ?? workingDirectory, path);
-
-                if (logging)
-                    LogService.Log($"Start uploading blob \"{fullPath}\"");
-
+                LogService.Log($"Upload blob started: {fullPath}");
                 var blob = container.GetBlockBlobReference(fullPath);
-                await action(fullPath, blob);
-
-                if (logging)
-                    LogService.Log($"End uploading blob \"{fullPath}\"");
+                await blob.UploadFromStreamAsync(source, accessCondition, options, operationContext, Kit.CancellationToken);
+                LogService.Log($"Upload blob completed at {TimeHelper.FormattedLatency(startTime)}");
             }
             catch (Exception exception) {
                 Debug.Fail(exception.ToString());
@@ -171,7 +187,27 @@ namespace Kit.Azure {
                 throw;
             }
         }
-        
+
+        public static Stream OpenWrite(string path, string targetDirectory = null) => throw new NotImplementedException();
+
+        private static async Task WriteBaseAsync(
+            string path, Func<CloudBlockBlob, Task> action, string targetDirectory) {
+
+            try {
+                var startTime = DateTimeOffset.Now;
+                var fullPath = PathHelper.Combine(targetDirectory ?? workingDirectory, path);
+                LogService.Log($"Upload blob started: {fullPath}");
+                var blob = container.GetBlockBlobReference(fullPath);
+                await action(blob);
+                LogService.Log($"Upload blob completed at {TimeHelper.FormattedLatency(startTime)}");
+            }
+            catch (Exception exception) {
+                Debug.Fail(exception.ToString());
+                ExceptionHandler.Register(exception);
+                throw;
+            }
+        }
+
         #endregion
     }
 }

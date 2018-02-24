@@ -15,7 +15,7 @@ namespace Kit {
         public static void Log(string message, LogLevel level = LogLevel.Log) {
 
             foreach (var client in Clients)
-                client.PushToLog(message, level, Kit.DiagnisticsCurrentDirectory);
+                client.PushToLog(message, level);
         }
 
         public static void LogInfo(string message) => Log(message, LogLevel.Info);
