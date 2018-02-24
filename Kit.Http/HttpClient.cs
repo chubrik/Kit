@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Kit.Http {
@@ -17,25 +16,27 @@ namespace Kit.Http {
 
         private static bool isInitialized = false;
         private static System.Net.Http.HttpClient client; //todo dispose
-        private static bool useRepeat = true;
-        private static bool useCache = true;
         private static string cacheDirectory = "$http-cache";
-        private static string cacheKey = string.Empty;
-        private static int cacheCounter = 0;
         private const string registryFileName = "$registry.txt";
-        private static Dictionary<string, string> registry = new Dictionary<string, string>();
+        private static CacheMode cacheMode = CacheMode.Disabled;
+        private static string cacheKey = string.Empty;
+        private static bool useRepeat = true;
+        private static int cacheCounter = 0;
+        private static Dictionary<string, CacheInfo> registry = new Dictionary<string, CacheInfo>();
+
+        #region Setup & Initialize
 
         public static void Setup(
-            bool? useRepeat = null,
-            bool? useCache = null,
+            bool? repeat = null,
+            CacheMode? cache = null,
             string cacheDirectory = null,
             string cacheKey = null) {
 
-            if (useRepeat != null)
-                HttpClient.useRepeat = (bool)useRepeat;
+            if (repeat != null)
+                useRepeat = (bool)repeat;
 
-            if (useCache != null)
-                HttpClient.useCache = (bool)useCache;
+            if (cache != null)
+                cacheMode = (CacheMode)cache;
 
             if (cacheDirectory != null)
                 HttpClient.cacheDirectory = cacheDirectory;
@@ -67,12 +68,19 @@ namespace Kit.Http {
 
                 foreach (var line in lines) {
                     var splitted = line.Split('|');
-                    registry.Add(splitted[0].Trim(), splitted[1].Trim());
+
+                    registry[splitted[0].Trim()] =
+                        new CacheInfo {
+                            MimeType = splitted[1].Trim(),
+                            BodyFileName = splitted[2].Trim()
+                        };
                 }
             }
 
             isInitialized = true;
         }
+
+        #endregion
 
         public static void SetHeader(string name, string value) {
             client.DefaultRequestHeaders.Remove(name);
@@ -81,150 +89,220 @@ namespace Kit.Http {
                 client.DefaultRequestHeaders.TryAddWithoutValidation(name, value);
         }
 
-        public static Task<string> GetAsync(
-            string url,
-            CancellationToken cancellationToken,
-            bool? useRepeat = null,
-            bool? useCache = null,
-            string cacheKey = null) =>
-            GetAsync(new Uri(url), cancellationToken, useRepeat: useRepeat, useCache: useCache, cacheKey: cacheKey);
+        #region Get
 
-        public static async Task<string> GetAsync(
-            Uri uri,
-            CancellationToken cancellationToken,
-            bool? useRepeat = null,
-            bool? useCache = null,
-            string cacheKey = null) {
+        #region Extensions
+
+        public static string GetText(string url, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) =>
+            GetTextAsync(url, cache: cache, cacheKey: cacheKey, repeat: repeat).Result;
+
+        public static byte[] GetBytes(string url, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) =>
+            GetBytesAsync(new Uri(url), cache: cache, cacheKey: cacheKey, repeat: repeat).Result;
+
+        public static HttpResponse Get(string url, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) =>
+            GetAsync(new Uri(url), cache: cache, cacheKey: cacheKey, repeat: repeat).Result;
+
+        //
+
+        public static Task<string> GetTextAsync(string url, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) =>
+            GetTextAsync(new Uri(url), cache: cache, cacheKey: cacheKey, repeat: repeat);
+
+        public static async Task<string> GetTextAsync(Uri uri, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) {
+            var response = await GetAsync(uri, cache: cache, cacheKey: cacheKey, repeat: repeat);
+            return await response.GetTextAsync();
+        }
+
+        public static Task<byte[]> GetBytesAsync(string url, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) =>
+            GetBytesAsync(new Uri(url), cache: cache, cacheKey: cacheKey, repeat: repeat);
+
+        //
+
+        public static async Task<byte[]> GetBytesAsync(Uri uri, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) {
+            var response = await GetAsync(uri, cache: cache, cacheKey: cacheKey, repeat: repeat);
+            return await response.GetBytesAsync();
+        }
+
+        public static Task<HttpResponse> GetAsync(string url, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) =>
+            GetAsync(new Uri(url), cache: cache, cacheKey: cacheKey, repeat: repeat);
+
+        #endregion
+
+        public static async Task<HttpResponse> GetAsync(Uri uri, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) {
+
+            var response =
+                await GetAsync(uri,
+                    cache: cache ?? cacheMode,
+                    cacheKey: cacheKey ?? HttpClient.cacheKey,
+                    repeat: repeat ?? useRepeat);
+
+            if (response.IsHtml)
+                SetHeader("Referer", uri.AbsoluteUri);
+
+            return response;
+        }
+
+        private static async Task<HttpResponse> GetAsync(Uri uri, CacheMode cache, string cacheKey, bool repeat) {
 
             if (!isInitialized)
                 Initialize();
 
-            HttpResponse response;
+            if (cache == CacheMode.Disabled)
+                return await GetAsync(uri, repeat);
 
-            if (!(useCache ?? HttpClient.useCache)) {
-                response = await GetOrRepeatAsync(uri, useRepeat ?? HttpClient.useRepeat, cancellationToken);
-                return response.Body;
-            }
-
-            var key = "(" + $"{cacheKey ?? HttpClient.cacheKey};get".TrimStart(';') + ")";
+            var key = "(" + $"{cacheKey};get".TrimStart(';') + ")";
             var cachedName = $"{key} {uri.AbsoluteUri}";
             string paddedCount;
             string bodyFileName;
 
-            if (registry.ContainsKey(cachedName)) {
-                bodyFileName = registry.GetValue(cachedName);
+            if (cache == CacheMode.Full && registry.ContainsKey(cachedName)) {
+                LogService.Log($"Http get cached: {uri.AbsoluteUri}");
+                var fileInfo = registry.GetValue(cachedName);
+                bodyFileName = fileInfo.BodyFileName;
 
-                if (FileClient.Exists(bodyFileName, cacheDirectory)) {
-                    LogService.Log($"Http get (cached): {uri.AbsoluteUri}");
-                    return FileClient.ReadText(bodyFileName, cacheDirectory);
-                }
+                if (FileClient.Exists(bodyFileName, cacheDirectory)) //todo ... && headersFileName
+                    return new HttpResponse(
+                        mimeType: fileInfo.MimeType,
+                        getHeadersAsync: () => throw new NotImplementedException(), //todo
+                        getTextAsync: () => Task.FromResult(FileClient.ReadText(bodyFileName, cacheDirectory)),
+                        getBytesAsync: () => Task.FromResult(FileClient.ReadBytes(bodyFileName, cacheDirectory))
+                    );
                 else
                     paddedCount = bodyFileName.Substring(0, 4);
             }
             else {
                 paddedCount = (++cacheCounter).ToString().PadLeft(4, '0');
-                bodyFileName = $"{paddedCount} {key} {PathHelper.SafeFileName(uri.AbsoluteUri)}.txt";
+                bodyFileName = $"{paddedCount} {key} {PathHelper.SafeFileName(uri.AbsoluteUri)}"; // no .ext
             }
 
-            response = await GetOrRepeatAsync(uri, useRepeat ?? HttpClient.useRepeat, cancellationToken);
-
-            if (response.Body == null)
-                return null;
-
+            var response = await GetAsync(uri, repeat);
             var infoFileName = $"{paddedCount} {key} info.txt";
-            FileClient.Write(bodyFileName, response.Body, cacheDirectory);
+            FixCacheFileExtension(response, ref bodyFileName);
             FileClient.Write(infoFileName, response.FormattedInfo, cacheDirectory);
 
-            if (!registry.ContainsKey(cachedName))
-                FileClient.AppendText(registryFileName, $"{cachedName} | {bodyFileName}", cacheDirectory);
+            if (response.IsText)
+                FileClient.Write(bodyFileName, await response.GetTextAsync(), cacheDirectory);
+            else
+                FileClient.Write(bodyFileName, await response.GetBytesAsync(), cacheDirectory);
 
-            SetHeader("Referer", uri.AbsoluteUri);
-            return response.Body;
+            FileClient.AppendText(registryFileName, $"{cachedName} | {response.MimeType} | {bodyFileName}", cacheDirectory);
+            registry[cachedName] = new CacheInfo { MimeType = response.MimeType, BodyFileName = bodyFileName };
+            return response;
         }
 
-        private static async Task<HttpResponse> GetOrRepeatAsync(
-            Uri uri, bool useRepeat, CancellationToken cancellationToken) {
+        private static async Task<HttpResponse> GetAsync(Uri uri, bool repeat) {
 
-            if (!useRepeat)
-                return await GetBaseAsync(uri, cancellationToken);
+            if (!repeat)
+                return await GetBaseAsync(uri);
 
             HttpResponse response = null;
 
             await RepeatHelper.Repeat(async () => {
-                response = await GetBaseAsync(uri, cancellationToken);
-            }, cancellationToken);
+                response = await GetBaseAsync(uri);
+            });
 
             return response;
         }
 
-        private static async Task<HttpResponse> GetBaseAsync(Uri uri, CancellationToken cancellationToken) {
-            LogService.Log($"Http get: {uri.AbsoluteUri}");
-            var response = await client.GetAsync(uri, cancellationToken);
+        private static async Task<HttpResponse> GetBaseAsync(Uri uri) {
+            HttpResponseMessage response;
+
+            try {
+                var startTime = DateTimeOffset.Now;
+                LogService.Log($"Http get started: {uri.AbsoluteUri}");
+                response = await client.GetAsync(uri, Kit.CancellationToken);
+                LogService.Log($"Http get completed at {TimeHelper.FormattedLatency(startTime)}");
+            }
+            catch (Exception exception) {
+                Debug.Fail(exception.ToString());
+                var newException = new Exception($"Http stream exception: {uri.AbsoluteUri}", exception);
+                ExceptionHandler.Register(newException, level: LogLevel.Warning);
+                throw newException;
+            }
+
             var statusCode = response.StatusCode;
 
             //todo redirect
             if (statusCode == HttpStatusCode.Found)
-                return await GetBaseAsync(FixUri(uri, response.Headers.Location), cancellationToken);
+                return await GetBaseAsync(FixRedirectUri(uri, response.Headers.Location));
 
-            if (response.IsSuccessStatusCode)
-                return new HttpResponse(response, await response.Content.ReadAsStringAsync());
+            if (!response.IsSuccessStatusCode) {
+                Debug.Assert(statusCode == HttpStatusCode.NotFound);
+                var message = $"Http get status {(int)statusCode}: {uri.AbsoluteUri}";
 
-            var message = $"Status {statusCode}: {uri.AbsoluteUri}";
-            Debug.Assert(statusCode == HttpStatusCode.NotFound);
+                if (statusCode != HttpStatusCode.NotFound)
+                    throw new Exception(message);
 
-            if (statusCode != HttpStatusCode.NotFound)
-                throw new InvalidOperationException(message);
+                LogService.LogWarning(message);
+            }
 
-            LogService.LogWarning(message);
-            return new HttpResponse(response, body: null);
+            return new HttpResponse(response);
         }
 
-        public Task<string> PostFormAsync(
-            string url, IEnumerable<KeyValuePair<string, string>> data, CancellationToken cancellationToken) =>
-            PostFormAsync(new Uri(url), data, cancellationToken);
+        #endregion
 
-        public Task<string> PostFormAsync(
-            Uri uri, IEnumerable<KeyValuePair<string, string>> data, CancellationToken cancellationToken) =>
-            PostBaseAsync(uri, new FormUrlEncodedContent(data), cancellationToken);
+        #region Post
 
-        public Task<string> PostJsonAsync(string url, object json, CancellationToken cancellationToken) =>
-            PostJsonAsync(new Uri(url), json, cancellationToken);
+        #region Extensions
 
-        public Task<string> PostJsonAsync(Uri uri, object json, CancellationToken cancellationToken) {
+        public static string PostForm(string url, IEnumerable<KeyValuePair<string, string>> form) =>
+            PostFormAsync(url, form).Result;
+
+        public static string PostJson(string url, object json) =>
+            PostJsonAsync(url, json).Result;
+
+        public static string PostMultipart(string url, Dictionary<string, string> multipart) =>
+            PostMultipartAsync(url, multipart).Result;
+
+        //
+
+        public static Task<string> PostFormAsync(string url, IEnumerable<KeyValuePair<string, string>> form) =>
+            PostFormAsync(new Uri(url), form);
+
+        public static Task<string> PostJsonAsync(string url, object json) =>
+            PostJsonAsync(new Uri(url), json);
+
+        public static Task<string> PostMultipartAsync(string url, Dictionary<string, string> multipart) =>
+            PostMultipartAsync(new Uri(url), multipart);
+
+        #endregion
+
+        public static async Task<string> PostFormAsync(Uri uri, IEnumerable<KeyValuePair<string, string>> form) {
+            var response = await PostBaseAsync(uri, new FormUrlEncodedContent(form));
+            return await response.GetTextAsync();
+        }
+
+        public static async Task<string> PostJsonAsync(Uri uri, object json) {
             var serialized = JsonConvert.SerializeObject(json);
-
-            return PostBaseAsync(
-                uri, new StringContent(serialized, Encoding.UTF8, "application/json"), cancellationToken);
+            var response = await PostBaseAsync(uri, new StringContent(serialized, Encoding.UTF8, "application/json"));
+            return await response.GetTextAsync();
         }
 
-        public Task<string> PostMultipartAsync(
-            string url, Dictionary<string, string> data, CancellationToken cancellationToken) =>
-            PostMultipartAsync(new Uri(url), data, cancellationToken);
+        public static async Task<string> PostMultipartAsync(Uri uri, Dictionary<string, string> multipart) {
 
-        public Task<string> PostMultipartAsync(
-            Uri uri, Dictionary<string, string> data, CancellationToken cancellationToken) {
+            var context = new MultipartFormDataContent(
+                "----WebKitFormBoundary" + DateTimeOffset.Now.Ticks.ToString("x"));
 
-            var context = new MultipartFormDataContent("----WebKitFormBoundaryfiPAGQ2wTpqYFEHb"); //todo
-
-            foreach (var keyValue in data) {
+            foreach (var keyValue in multipart) {
                 var value = new StringContent(keyValue.Value);
                 value.Headers.Remove("Content-Type");
                 value.Headers.Remove("Content-Length");
                 context.Add(value, $"\"{keyValue.Key}\"");
             }
 
-            return PostBaseAsync(uri, context, cancellationToken);
+            var response = await PostBaseAsync(uri, context);
+            return await response.GetTextAsync();
         }
 
-        private async Task<string> PostBaseAsync(
-            Uri uri, HttpContent content, CancellationToken cancellationToken) {
-
+        private static async Task<HttpResponse> PostBaseAsync(Uri uri, HttpContent content) {
             HttpResponseMessage response;
 
             try {
+                var startTime = DateTimeOffset.Now;
+                LogService.Log($"Http post started: {uri.AbsoluteUri}");
                 SetHeader("Cache-Control", "max-age=0");
                 SetHeader("Origin", $"{uri.Scheme}://{uri.Host}");
-                response = await client.PostAsync(uri, content, cancellationToken);
+                response = await client.PostAsync(uri, content, Kit.CancellationToken);
+                LogService.Log($"Http post completed at {TimeHelper.FormattedLatency(startTime)}");
             }
             catch (Exception exception) {
                 Debug.Fail(exception.ToString());
@@ -238,24 +316,28 @@ namespace Kit.Http {
 
             //todo redirect
             if (response.StatusCode == HttpStatusCode.Found)
-                return await GetAsync(FixUri(uri, response.Headers.Location), cancellationToken);
+                return await GetBaseAsync(FixRedirectUri(uri, response.Headers.Location));
 
             SetHeader("Cache-Control", null);
 
-            string body = null;
+            if (!response.IsSuccessStatusCode)
+                throw new Exception($"Http post status {(int)response.StatusCode}: {uri.AbsoluteUri}");
 
-            if (response.IsSuccessStatusCode)
-                body = await response.Content.ReadAsStringAsync();
-
-            Debug.Assert(body != null);
-
-            if (body == null)
-                throw new InvalidOperationException();
-
-            return body;
+            return new HttpResponse(response);
         }
 
-        private static Uri FixUri(Uri original, Uri rawPart) =>
+        #endregion
+
+        private static Uri FixRedirectUri(Uri original, Uri rawPart) =>
             new Uri(new Uri($"{original.Scheme}://{original.Host}"), rawPart);
+
+        private static void FixCacheFileExtension(HttpResponse response, ref string fileName) {
+
+            if (response.IsHtml && !fileName.EndsWith(".html"))
+                fileName += ".html";
+
+            else if (response.IsText && !fileName.EndsWith(".txt"))
+                fileName += ".txt";
+        }
     }
 }
