@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 
 namespace Kit.Http {
@@ -20,24 +21,60 @@ namespace Kit.Http {
 
         private IReadOnlyDictionary<string, IReadOnlyList<string>> headers;
 
-        public IReadOnlyDictionary<string, IReadOnlyList<string>> Headers =>
-            headers ?? (headers = GetHeaders());
+        public IReadOnlyDictionary<string, IReadOnlyList<string>> Headers {
+            get {
+                if (headers != null)
+                    return headers;
 
-        private IReadOnlyDictionary<string, IReadOnlyList<string>> GetHeaders() =>
-            Original.Headers.ToDictionary(i => i.Key, i => (IReadOnlyList<string>)i.Value.ToList());
+                var result = new Dictionary<string, IReadOnlyList<string>> {
+                    { "Connection", new List<string> { "Keep-Alive" } },
+                    { "Host", new List<string> { RequestUri.Host } }
+                };
+
+                foreach (var header in Original.Headers)
+                    result.Add(header.Key, header.Value.ToList());
+
+                var cookies = new List<string>();
+
+                foreach (var cookie in _cookies)
+                    cookies.Add(cookie.ToString());
+
+                if (cookies.Count > 0)
+                    result.Add("Cookie", cookies);
+
+                return headers = result.OrderBy(i => i.Key).ToDictionary(i => i.Key, i => i.Value);
+            }
+        }
 
         private string rawHeaders;
 
-        public string RawHeaders => rawHeaders ?? (rawHeaders = GetRawHeaders());
+        public string RawHeaders {
+            get {
+                if (rawHeaders != null)
+                    return rawHeaders;
 
-        private string GetRawHeaders() =>
-            Original.Headers.Select(i => $"{i.Key}: {i.Value.Join(", ")}").JoinLines();
+                var lines = new List<string>();
+
+                foreach (var header in Headers) {
+                    var separator = header.Key == "User-Agent" ? " " : header.Key == "Cookie" ? "; " : ", ";
+                    lines.Add($"{header.Key}: {header.Value.Join(separator)}");
+                }
+
+                return rawHeaders = lines.JoinLines();
+            }
+        }
 
         #endregion
 
-        public HttpRequest(HttpRequestMessage request) {
+        private CookieCollection _cookies;
+
+        public HttpRequest(HttpRequestMessage request, CookieCollection cookies) {
+
             Debug.Assert(request != null);
             Original = request ?? throw new ArgumentNullException(nameof(request));
+
+            Debug.Assert(cookies != null);
+            _cookies = cookies ?? throw new ArgumentNullException(nameof(cookies));
         }
     }
 }

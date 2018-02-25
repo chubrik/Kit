@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 
 namespace Kit.Http {
@@ -9,8 +10,7 @@ namespace Kit.Http {
 
         internal HttpResponseMessage Original { get; }
 
-        private HttpRequest request;
-        public IHttpRequest Request => request ?? (request = new HttpRequest(Original.RequestMessage));
+        public IHttpRequest Request { get; }
 
         public string HttpVersion => Original.Version.ToString();
 
@@ -28,24 +28,40 @@ namespace Kit.Http {
 
         #region Headers
 
-        //todo
+        private Dictionary<string, IReadOnlyList<string>> headers;
 
-        private IReadOnlyDictionary<string, IReadOnlyList<string>> headers;
+        public IReadOnlyDictionary<string, IReadOnlyList<string>> Headers {
+            get {
+                if (headers != null)
+                    return headers;
 
-        public IReadOnlyDictionary<string, IReadOnlyList<string>> Headers =>
-            headers ?? (headers = GetHeaders());
+                var result = new Dictionary<string, IReadOnlyList<string>>();
 
-        private IReadOnlyDictionary<string, IReadOnlyList<string>> GetHeaders() =>
-            Original.Headers.ToDictionary(i => i.Key, i => (IReadOnlyList<string>)i.Value.ToList());
+                foreach (var header in Original.Headers)
+                    result.Add(header.Key, header.Value.ToList());
+
+                foreach (var header in Original.Content.Headers)
+                    result.Add(header.Key, header.Value.ToList());
+
+                return headers = result.OrderBy(i => i.Key).ToDictionary(i => i.Key, i => i.Value);
+            }
+        }
 
         private string rawHeaders;
 
-        public string RawHeaders => rawHeaders ?? (rawHeaders = GetRawHeaders());
+        public string RawHeaders {
+            get {
+                if (rawHeaders != null)
+                    return rawHeaders;
 
-        private string GetRawHeaders() {
-            var lines = Original.ToString().SplitLines();
-            var result = lines.Skip(2).Take(lines.Count - 3).Select(i => i.TrimStart());
-            return result.JoinLines();
+                var lines = new List<string>();
+
+                foreach (var header in Headers)
+                    foreach (var item in header.Value)
+                        lines.Add($"{header.Key}: {item}");
+
+                return rawHeaders = lines.JoinLines();
+            }
         }
 
         #endregion
@@ -73,9 +89,10 @@ namespace Kit.Http {
             $"--- RESPONSE ---\r\n\r\n{ConnectionString}\r\n" +
             $"{RawHeaders}";
 
-        public HttpResponse(HttpResponseMessage response) {
+        public HttpResponse(HttpResponseMessage response, CookieCollection requestCookies) {
             Debug.Assert(response != null);
             Original = response ?? throw new ArgumentNullException(nameof(response));
+            Request = new HttpRequest(response.RequestMessage, requestCookies);
         }
     }
 }

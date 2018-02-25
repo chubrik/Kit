@@ -18,11 +18,13 @@ namespace Kit.Http {
         private static System.Net.Http.HttpClient client; //todo dispose
         private static string cacheDirectory = "$http-cache";
         private const string registryFileName = "$registry.txt";
+        private const string infoFileSuffix = "$.txt";
         private static CacheMode cacheMode = CacheMode.Disabled;
         private static string cacheKey = string.Empty;
         private static bool useRepeat = true;
         private static int cacheCounter = 0;
         private static Dictionary<string, CacheInfo> registry = new Dictionary<string, CacheInfo>();
+        private static CookieContainer cookieContainer = new CookieContainer();
 
         #region Setup & Initialize
 
@@ -52,7 +54,8 @@ namespace Kit.Http {
                 throw new InvalidOperationException();
 
             var handler = new HttpClientHandler {
-                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                CookieContainer = cookieContainer
                 //AllowAutoRedirect = false //todo redirect
             };
 
@@ -163,7 +166,7 @@ namespace Kit.Http {
                 if (FileClient.Exists(bodyFileName, cacheDirectory)) //todo ... && infoFileName
                     return new CachedResponse(
                         mimeType: fileInfo.MimeType,
-                        getInfo: () => FileClient.ReadLines($"{paddedCount} {key} info.txt", cacheDirectory),
+                        getInfo: () => FileClient.ReadLines($"{paddedCount} {infoFileSuffix}", cacheDirectory),
                         getText: () => FileClient.ReadText(bodyFileName, cacheDirectory),
                         getBytes: () => FileClient.ReadBytes(bodyFileName, cacheDirectory)
                     );
@@ -174,7 +177,7 @@ namespace Kit.Http {
             }
 
             var response = await GetAsync(uri, repeat);
-            var infoFileName = $"{paddedCount} {key} info.txt";
+            var infoFileName = $"{paddedCount} {infoFileSuffix}";
             FixCacheFileExtension(response, ref bodyFileName);
             FileClient.Write(infoFileName, response.FormattedInfo, cacheDirectory);
 
@@ -204,6 +207,7 @@ namespace Kit.Http {
 
         private static async Task<HttpResponse> GetBaseAsync(Uri uri) {
             HttpResponseMessage response;
+            var requestCookies = cookieContainer.GetCookies(uri);
 
             try {
                 var startTime = DateTimeOffset.Now;
@@ -234,7 +238,7 @@ namespace Kit.Http {
                 LogService.LogWarning(message);
             }
 
-            return new HttpResponse(response);
+            return new HttpResponse(response, requestCookies);
         }
 
         #endregion
@@ -290,6 +294,7 @@ namespace Kit.Http {
 
         private static async Task<HttpResponse> PostBaseAsync(Uri uri, HttpContent content) {
             HttpResponseMessage response;
+            var requestCookies = cookieContainer.GetCookies(uri);
 
             try {
                 var startTime = DateTimeOffset.Now;
@@ -318,7 +323,7 @@ namespace Kit.Http {
             if (!response.IsSuccessStatusCode)
                 throw new Exception($"Http post status {(int)response.StatusCode}: {uri.AbsoluteUri}");
 
-            return new HttpResponse(response);
+            return new HttpResponse(response, requestCookies);
         }
 
         #endregion
