@@ -99,7 +99,7 @@ namespace Kit.Http {
         public static byte[] GetBytes(string url, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) =>
             GetBytesAsync(new Uri(url), cache: cache, cacheKey: cacheKey, repeat: repeat).Result;
 
-        public static HttpResponse Get(string url, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) =>
+        public static IHttpResponse Get(string url, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) =>
             GetAsync(new Uri(url), cache: cache, cacheKey: cacheKey, repeat: repeat).Result;
 
         //
@@ -109,7 +109,7 @@ namespace Kit.Http {
 
         public static async Task<string> GetTextAsync(Uri uri, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) {
             var response = await GetAsync(uri, cache: cache, cacheKey: cacheKey, repeat: repeat);
-            return await response.GetTextAsync();
+            return response.GetText();
         }
 
         public static Task<byte[]> GetBytesAsync(string url, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) =>
@@ -119,15 +119,15 @@ namespace Kit.Http {
 
         public static async Task<byte[]> GetBytesAsync(Uri uri, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) {
             var response = await GetAsync(uri, cache: cache, cacheKey: cacheKey, repeat: repeat);
-            return await response.GetBytesAsync();
+            return response.GetBytes();
         }
 
-        public static Task<HttpResponse> GetAsync(string url, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) =>
+        public static Task<IHttpResponse> GetAsync(string url, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) =>
             GetAsync(new Uri(url), cache: cache, cacheKey: cacheKey, repeat: repeat);
 
         #endregion
 
-        public static async Task<HttpResponse> GetAsync(Uri uri, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) {
+        public static async Task<IHttpResponse> GetAsync(Uri uri, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) {
 
             var response =
                 await GetAsync(uri,
@@ -141,7 +141,7 @@ namespace Kit.Http {
             return response;
         }
 
-        private static async Task<HttpResponse> GetAsync(Uri uri, CacheMode cache, string cacheKey, bool repeat) {
+        private static async Task<IHttpResponse> GetAsync(Uri uri, CacheMode cache, string cacheKey, bool repeat) {
 
             if (!isInitialized)
                 Initialize();
@@ -158,16 +158,15 @@ namespace Kit.Http {
                 LogService.Log($"Http get cached: {uri.AbsoluteUri}");
                 var fileInfo = registry.GetValue(cachedName);
                 bodyFileName = fileInfo.BodyFileName;
+                paddedCount = bodyFileName.Substring(0, 4);
 
-                if (FileClient.Exists(bodyFileName, cacheDirectory)) //todo ... && headersFileName
-                    return new HttpResponse(
+                if (FileClient.Exists(bodyFileName, cacheDirectory)) //todo ... && infoFileName
+                    return new CachedResponse(
                         mimeType: fileInfo.MimeType,
-                        getHeadersAsync: () => throw new NotImplementedException(), //todo
-                        getTextAsync: () => Task.FromResult(FileClient.ReadText(bodyFileName, cacheDirectory)),
-                        getBytesAsync: () => Task.FromResult(FileClient.ReadBytes(bodyFileName, cacheDirectory))
+                        getInfo: () => FileClient.ReadLines($"{paddedCount} {key} info.txt", cacheDirectory),
+                        getText: () => FileClient.ReadText(bodyFileName, cacheDirectory),
+                        getBytes: () => FileClient.ReadBytes(bodyFileName, cacheDirectory)
                     );
-                else
-                    paddedCount = bodyFileName.Substring(0, 4);
             }
             else {
                 paddedCount = (++cacheCounter).ToString().PadLeft(4, '0');
@@ -180,9 +179,9 @@ namespace Kit.Http {
             FileClient.Write(infoFileName, response.FormattedInfo, cacheDirectory);
 
             if (response.IsText)
-                FileClient.Write(bodyFileName, await response.GetTextAsync(), cacheDirectory);
+                FileClient.Write(bodyFileName, response.GetText(), cacheDirectory);
             else
-                FileClient.Write(bodyFileName, await response.GetBytesAsync(), cacheDirectory);
+                FileClient.Write(bodyFileName, response.GetBytes(), cacheDirectory);
 
             FileClient.AppendText(registryFileName, $"{cachedName} | {response.MimeType} | {bodyFileName}", cacheDirectory);
             registry[cachedName] = new CacheInfo { MimeType = response.MimeType, BodyFileName = bodyFileName };
@@ -244,40 +243,37 @@ namespace Kit.Http {
 
         #region Extensions
 
-        public static string PostForm(string url, IEnumerable<KeyValuePair<string, string>> form) =>
+        public static IHttpResponse PostForm(string url, IEnumerable<KeyValuePair<string, string>> form) =>
             PostFormAsync(url, form).Result;
 
-        public static string PostJson(string url, object json) =>
+        public static IHttpResponse PostJson(string url, object json) =>
             PostJsonAsync(url, json).Result;
 
-        public static string PostMultipart(string url, Dictionary<string, string> multipart) =>
+        public static IHttpResponse PostMultipart(string url, Dictionary<string, string> multipart) =>
             PostMultipartAsync(url, multipart).Result;
 
         //
 
-        public static Task<string> PostFormAsync(string url, IEnumerable<KeyValuePair<string, string>> form) =>
+        public static Task<IHttpResponse> PostFormAsync(string url, IEnumerable<KeyValuePair<string, string>> form) =>
             PostFormAsync(new Uri(url), form);
 
-        public static Task<string> PostJsonAsync(string url, object json) =>
+        public static Task<IHttpResponse> PostJsonAsync(string url, object json) =>
             PostJsonAsync(new Uri(url), json);
 
-        public static Task<string> PostMultipartAsync(string url, Dictionary<string, string> multipart) =>
+        public static Task<IHttpResponse> PostMultipartAsync(string url, Dictionary<string, string> multipart) =>
             PostMultipartAsync(new Uri(url), multipart);
 
         #endregion
 
-        public static async Task<string> PostFormAsync(Uri uri, IEnumerable<KeyValuePair<string, string>> form) {
-            var response = await PostBaseAsync(uri, new FormUrlEncodedContent(form));
-            return await response.GetTextAsync();
-        }
+        public static async Task<IHttpResponse> PostFormAsync(Uri uri, IEnumerable<KeyValuePair<string, string>> form) =>
+            await PostBaseAsync(uri, new FormUrlEncodedContent(form));
 
-        public static async Task<string> PostJsonAsync(Uri uri, object json) {
+        public static async Task<IHttpResponse> PostJsonAsync(Uri uri, object json) {
             var serialized = JsonConvert.SerializeObject(json);
-            var response = await PostBaseAsync(uri, new StringContent(serialized, Encoding.UTF8, "application/json"));
-            return await response.GetTextAsync();
+            return await PostBaseAsync(uri, new StringContent(serialized, Encoding.UTF8, "application/json"));
         }
 
-        public static async Task<string> PostMultipartAsync(Uri uri, Dictionary<string, string> multipart) {
+        public static async Task<IHttpResponse> PostMultipartAsync(Uri uri, Dictionary<string, string> multipart) {
 
             var context = new MultipartFormDataContent(
                 "----WebKitFormBoundary" + DateTimeOffset.Now.Ticks.ToString("x"));
@@ -289,8 +285,7 @@ namespace Kit.Http {
                 context.Add(value, $"\"{keyValue.Key}\"");
             }
 
-            var response = await PostBaseAsync(uri, context);
-            return await response.GetTextAsync();
+            return await PostBaseAsync(uri, context);
         }
 
         private static async Task<HttpResponse> PostBaseAsync(Uri uri, HttpContent content) {
