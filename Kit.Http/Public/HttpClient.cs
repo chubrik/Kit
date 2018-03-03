@@ -85,12 +85,39 @@ namespace Kit.Http {
 
         #endregion
 
+        #region Headers
+
         public static void SetHeader(string name, string value) {
+            Debug.Assert(name != null && value != null);
+
+            if (name == null || value == null)
+                throw new InvalidOperationException();
+
             client.DefaultRequestHeaders.Remove(name);
 
             if (value != null)
                 client.DefaultRequestHeaders.TryAddWithoutValidation(name, value);
         }
+
+        public static void AddToHeader(string name, string value) {
+            Debug.Assert(name != null && value != null);
+
+            if (name == null || value == null)
+                throw new InvalidOperationException();
+
+            client.DefaultRequestHeaders.TryAddWithoutValidation(name, value);
+        }
+
+        public static void RemoveHeader(string name) {
+            Debug.Assert(name != null);
+
+            if (name == null)
+                throw new InvalidOperationException();
+
+            client.DefaultRequestHeaders.Remove(name);
+        }
+
+        #endregion
 
         #region Get
 
@@ -133,61 +160,14 @@ namespace Kit.Http {
         public static async Task<IHttpResponse> GetAsync(Uri uri, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) {
 
             var response =
-                await GetAsync(uri,
+                await CacheAsync(uri, "get",
+                    () => GetAsync(uri, repeat: repeat ?? useRepeat),
                     cache: cache ?? cacheMode,
-                    cacheKey: cacheKey ?? HttpClient.cacheKey,
-                    repeat: repeat ?? useRepeat);
+                    cacheKey: cacheKey ?? HttpClient.cacheKey);
 
             if (response.IsHtml)
                 SetHeader("Referer", uri.AbsoluteUri);
 
-            return response;
-        }
-
-        private static async Task<IHttpResponse> GetAsync(Uri uri, CacheMode cache, string cacheKey, bool repeat) {
-
-            if (!isInitialized)
-                Initialize();
-
-            if (cache == CacheMode.Disabled)
-                return await GetAsync(uri, repeat);
-
-            var key = "(" + $"{cacheKey};get".TrimStart(';') + ")";
-            var cachedName = $"{key} {uri.AbsoluteUri}";
-            string paddedCount;
-            string bodyFileName;
-
-            if (cache == CacheMode.Full && registry.ContainsKey(cachedName)) {
-                LogService.Log($"Http get cached: {uri.AbsoluteUri}");
-                var fileInfo = registry.GetValue(cachedName);
-                bodyFileName = fileInfo.BodyFileName;
-                paddedCount = bodyFileName.Substring(0, 4);
-
-                if (FileClient.Exists(bodyFileName, cacheDirectory)) //todo ... && infoFileName
-                    return new CachedResponse(
-                        mimeType: fileInfo.MimeType,
-                        getInfo: () => FileClient.ReadLines($"{paddedCount} {infoFileSuffix}", cacheDirectory),
-                        getText: () => FileClient.ReadText(bodyFileName, cacheDirectory),
-                        getBytes: () => FileClient.ReadBytes(bodyFileName, cacheDirectory)
-                    );
-            }
-            else {
-                paddedCount = (++cacheCounter).ToString().PadLeft(4, '0');
-                bodyFileName = $"{paddedCount} {key} {PathHelper.SafeFileName(uri.AbsoluteUri)}"; // no .ext
-            }
-
-            var response = await GetAsync(uri, repeat);
-            var infoFileName = $"{paddedCount} {infoFileSuffix}";
-            FixCacheFileExtension(response, ref bodyFileName);
-            FileClient.Write(infoFileName, response.FormattedInfo, cacheDirectory);
-
-            if (response.IsText)
-                FileClient.Write(bodyFileName, response.GetText(), cacheDirectory);
-            else
-                FileClient.Write(bodyFileName, response.GetBytes(), cacheDirectory);
-
-            FileClient.AppendText(registryFileName, $"{cachedName} | {response.MimeType} | {bodyFileName}", cacheDirectory);
-            registry[cachedName] = new CacheInfo { MimeType = response.MimeType, BodyFileName = bodyFileName };
             return response;
         }
 
@@ -270,11 +250,11 @@ namespace Kit.Http {
         #endregion
 
         public static async Task<IHttpResponse> PostFormAsync(Uri uri, IEnumerable<KeyValuePair<string, string>> form) =>
-            await PostBaseAsync(uri, new FormUrlEncodedContent(form));
+            await PostAsync(uri, new FormUrlEncodedContent(form));
 
         public static async Task<IHttpResponse> PostJsonAsync(Uri uri, object json) {
             var serialized = JsonConvert.SerializeObject(json);
-            return await PostBaseAsync(uri, new StringContent(serialized, Encoding.UTF8, "application/json"));
+            return await PostAsync(uri, new StringContent(serialized, Encoding.UTF8, "application/json"));
         }
 
         public static async Task<IHttpResponse> PostMultipartAsync(Uri uri, Dictionary<string, string> multipart) {
@@ -289,7 +269,22 @@ namespace Kit.Http {
                 context.Add(value, $"\"{keyValue.Key}\"");
             }
 
-            return await PostBaseAsync(uri, context);
+            return await PostAsync(uri, context);
+        }
+
+        private static async Task<IHttpResponse> PostAsync(
+            Uri uri, HttpContent content, CacheMode? cache = null, string cacheKey = null) {
+
+            var response =
+                await CacheAsync(uri, "post",
+                    () => PostBaseAsync(uri, content),
+                    cache: cache ?? cacheMode,
+                    cacheKey: cacheKey ?? HttpClient.cacheKey);
+
+            if (response.IsHtml)
+                SetHeader("Referer", uri.AbsoluteUri);
+
+            return response;
         }
 
         private static async Task<HttpResponse> PostBaseAsync(Uri uri, HttpContent content) {
@@ -307,18 +302,18 @@ namespace Kit.Http {
             catch (Exception exception) {
                 Debug.Fail(exception.ToString());
                 ExceptionHandler.Register(exception);
-                SetHeader("Cache-Control", null);
+                RemoveHeader("Cache-Control");
                 throw;
             }
             finally {
-                SetHeader("Origin", null);
+                RemoveHeader("Origin");
             }
 
             //todo redirect
             if (response.StatusCode == HttpStatusCode.Found)
                 return await GetBaseAsync(FixRedirectUri(uri, response.Headers.Location));
 
-            SetHeader("Cache-Control", null);
+            RemoveHeader("Cache-Control");
 
             if (!response.IsSuccessStatusCode)
                 throw new Exception($"Http post status {(int)response.StatusCode}: {uri.AbsoluteUri}");
@@ -328,8 +323,55 @@ namespace Kit.Http {
 
         #endregion
 
-        private static Uri FixRedirectUri(Uri original, Uri rawPart) =>
-            new Uri(new Uri($"{original.Scheme}://{original.Host}"), rawPart);
+        #region Cache
+
+        private static async Task<IHttpResponse> CacheAsync(
+            Uri uri, string actionName, Func<Task<HttpResponse>> httpAction, CacheMode cache, string cacheKey) {
+
+            if (!isInitialized)
+                Initialize();
+
+            if (cache == CacheMode.Disabled)
+                return await httpAction();
+
+            var key = "(" + $"{cacheKey};{actionName}".TrimStart(';') + ")";
+            var cachedName = $"{key} {uri.AbsoluteUri}";
+            string paddedCount;
+            string bodyFileName;
+
+            if (cache == CacheMode.Full && registry.ContainsKey(cachedName)) {
+                LogService.Log($"Http {actionName} cached: {uri.AbsoluteUri}");
+                var fileInfo = registry.GetValue(cachedName);
+                bodyFileName = fileInfo.BodyFileName;
+                paddedCount = bodyFileName.Substring(0, 4);
+
+                if (FileClient.Exists(bodyFileName, cacheDirectory)) //todo ... && infoFileName
+                    return new CachedResponse(
+                        mimeType: fileInfo.MimeType,
+                        getInfo: () => FileClient.ReadLines($"{paddedCount} {infoFileSuffix}", cacheDirectory),
+                        getText: () => FileClient.ReadText(bodyFileName, cacheDirectory),
+                        getBytes: () => FileClient.ReadBytes(bodyFileName, cacheDirectory)
+                    );
+            }
+            else {
+                paddedCount = (++cacheCounter).ToString().PadLeft(4, '0');
+                bodyFileName = $"{paddedCount} {key} {PathHelper.SafeFileName(uri.AbsoluteUri)}"; // no .ext
+            }
+
+            var response = await httpAction();
+            var infoFileName = $"{paddedCount} {infoFileSuffix}";
+            FixCacheFileExtension(response, ref bodyFileName);
+            FileClient.Write(infoFileName, response.FormattedInfo, cacheDirectory);
+
+            if (response.IsText)
+                FileClient.Write(bodyFileName, response.GetText(), cacheDirectory);
+            else
+                FileClient.Write(bodyFileName, response.GetBytes(), cacheDirectory);
+
+            FileClient.AppendText(registryFileName, $"{cachedName} | {response.MimeType} | {bodyFileName}", cacheDirectory);
+            registry[cachedName] = new CacheInfo { MimeType = response.MimeType, BodyFileName = bodyFileName };
+            return response;
+        }
 
         private static void FixCacheFileExtension(HttpResponse response, ref string fileName) {
 
@@ -339,5 +381,10 @@ namespace Kit.Http {
             else if (response.IsText && !fileName.EndsWith(".txt"))
                 fileName += ".txt";
         }
+
+        #endregion
+
+        private static Uri FixRedirectUri(Uri original, Uri rawPart) =>
+            new Uri(new Uri($"{original.Scheme}://{original.Host}"), rawPart);
     }
 }

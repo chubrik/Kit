@@ -6,17 +6,20 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="%24*\**" />
-    <EmbeddedResource Remove="%24*\**" />
-    <None Remove="%24*\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Kit.Azure\Kit.Azure.csproj" />
     <ProjectReference Include="..\Kit.Core\Kit.Core.csproj" />
     <ProjectReference Include="..\Kit.Html\Kit.Html.csproj" />
     <ProjectReference Include="..\Kit.Http\Kit.Http.csproj" />
     <ProjectReference Include="..\Kit.Mail\Kit.Mail.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="%24*\**" />
+    <Compile Remove="Properties\**" />
+    <EmbeddedResource Remove="%24*\**" />
+    <EmbeddedResource Remove="Properties\**" />
+    <None Remove="%24*\**" />
+    <None Remove="Properties\**" />
   </ItemGroup>
 
 </Project>

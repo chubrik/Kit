@@ -9,15 +9,12 @@ namespace Kit.Http {
     internal class HttpRequest : IHttpRequest {
 
         internal HttpRequestMessage Original { get; }
-
         public string HttpVersion => Original.Version.ToString();
         public string Method => Original.Method.ToString();
         public Uri RequestUri => Original.RequestUri;
         public string ConnectionString => $"{Method} {RequestUri.AbsoluteUri} HTTP/{HttpVersion}";
 
         #region Headers
-
-        //todo
 
         private IReadOnlyDictionary<string, IReadOnlyList<string>> headers;
 
@@ -33,6 +30,10 @@ namespace Kit.Http {
 
                 foreach (var header in Original.Headers)
                     result.Add(header.Key, header.Value.ToList());
+
+                if (Original.Content != null)
+                    foreach (var header in Original.Content.Headers)
+                        result.Add(header.Key, header.Value.ToList());
 
                 var cookies = new List<string>();
 
@@ -63,6 +64,18 @@ namespace Kit.Http {
                 return rawHeaders = lines.JoinLines();
             }
         }
+
+        #endregion
+
+        #region Content
+
+        public bool HasContent => Original.Content != null;
+
+        private string text;
+        public string GetText() => text ?? (text = Original.Content.ReadAsStringAsync().Result);
+
+        private byte[] bytes;
+        public byte[] GetBytes() => bytes ?? (bytes = Original.Content.ReadAsByteArrayAsync().Result);
 
         #endregion
 

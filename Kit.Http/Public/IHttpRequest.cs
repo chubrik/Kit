@@ -12,6 +12,8 @@ namespace Kit.Http {
         IReadOnlyDictionary<string, IReadOnlyList<string>> Headers { get; }
         string RawHeaders { get; }
 
-        //todo post data
+        bool HasContent { get; }
+        string GetText();
+        byte[] GetBytes();
     }
 }

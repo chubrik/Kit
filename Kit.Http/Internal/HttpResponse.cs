@@ -9,21 +9,13 @@ namespace Kit.Http {
     internal class HttpResponse : IHttpResponse {
 
         internal HttpResponseMessage Original { get; }
-
         public IHttpRequest Request { get; }
-
         public string HttpVersion => Original.Version.ToString();
-
         public int StatusCode => (int)Original.StatusCode;
-
         public string ReasonPhrase => Original.ReasonPhrase;
-
         public string ConnectionString => $"HTTP/{HttpVersion} {StatusCode} {ReasonPhrase}";
-
         public string MimeType => Original.Content.Headers.ContentType.MediaType;
-
         public bool IsText => MimeType.StartsWith("text/");
-
         public bool IsHtml => MimeType == "text/html";
 
         #region Headers
@@ -66,28 +58,41 @@ namespace Kit.Http {
 
         #endregion
 
-        #region Text
+        #region Content
 
         private string text;
-
         public string GetText() => text ?? (text = Original.Content.ReadAsStringAsync().Result);
 
-        #endregion
-
-        #region Bytes
-
         private byte[] bytes;
-
         public byte[] GetBytes() => bytes ?? (bytes = Original.Content.ReadAsByteArrayAsync().Result);
 
         #endregion
 
-        //todo post data
-        public string FormattedInfo =>
-            $"--- REQUEST ---\r\n\r\n{Request.ConnectionString}\r\n" +
-            $"{Request.RawHeaders}\r\n\r\n\r\n" +
-            $"--- RESPONSE ---\r\n\r\n{ConnectionString}\r\n" +
-            $"{RawHeaders}";
+        #region Formatted
+
+        private string formattedInfo;
+
+        public string FormattedInfo {
+            get {
+                if (formattedInfo != null)
+                    return formattedInfo;
+
+                var result =
+                    $"--- RAW REQUEST ---\r\n\r\n{Request.ConnectionString}\r\n" +
+                    $"{Request.RawHeaders}\r\n";
+
+                if (Request.HasContent)
+                    result += Request.GetText() + "\r\n\r\n";
+
+                result +=
+                    $"\r\n\r\n--- RESPONSE HEADERS ---\r\n\r\n{ConnectionString}\r\n" +
+                    $"{RawHeaders}";
+
+                return formattedInfo = result;
+            }
+        }
+
+        #endregion
 
         public HttpResponse(HttpResponseMessage response, CookieCollection requestCookies) {
             Debug.Assert(response != null);
