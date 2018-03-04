@@ -5,41 +5,45 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Kit.Http {
     public class HttpClient : IDisposable {
-        
-        private readonly System.Net.Http.HttpClient client;
-        private CookieContainer cookieContainer = new CookieContainer();
-        private string cacheDirectory = "$http-cache";
+
         private const string registryFileName = "$registry.txt";
         private const string infoFileSuffix = "$.txt";
-        private CacheMode cacheMode = CacheMode.Disabled;
-        private string cacheKey = string.Empty;
-        private bool useRepeat = true;
-        private static Dictionary<string, CacheInfo> registry = new Dictionary<string, CacheInfo>();
-        private static int cacheCounter = 0;
+        private static string cacheDirectory = "$http-cache";
+        private static CacheMode globalCacheMode = CacheMode.Disabled;
+        private static bool globalUseRepeat = true;
 
-        #region Consructor
+        private readonly System.Net.Http.HttpClient client;
+        private CookieContainer cookieContainer = new CookieContainer();
+        private CacheMode cacheMode;
+        private string cacheKey;
+        private bool useRepeat;
 
-        public HttpClient(
-            bool? repeat = null,
-            CacheMode? cache = null,
+        #region Setup & Consructor
+
+        public static void Setup(
             string cacheDirectory = null,
-            string cacheKey = null) {
-
-            if (repeat != null)
-                useRepeat = (bool)repeat;
-
-            if (cache != null)
-                cacheMode = (CacheMode)cache;
+            CacheMode? cache = null,
+            bool? repeat = null) {
 
             if (cacheDirectory != null)
-                this.cacheDirectory = cacheDirectory;
+                HttpClient.cacheDirectory = cacheDirectory;
 
-            if (cacheKey != null)
-                this.cacheKey = cacheKey;
+            if (cache != null)
+                globalCacheMode = (CacheMode)cache;
+
+            if (repeat != null)
+                globalUseRepeat = (bool)repeat;
+        }
+
+        public HttpClient(CacheMode? cache = null, string cacheKey = null, bool? repeat = null) {
+            cacheMode = cache ?? globalCacheMode;
+            this.cacheKey = cacheKey ?? string.Empty;
+            useRepeat = repeat ?? globalUseRepeat;
 
             var handler = new HttpClientHandler {
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
@@ -53,20 +57,6 @@ namespace Kit.Http {
             SetHeader("Accept-Language", "ru,en;q=0.9");
             SetHeader("Upgrade-Insecure-Requests", "1");
             SetHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36");
-
-            if (FileClient.Exists(registryFileName, cacheDirectory)) {
-                var lines = FileClient.ReadLines(registryFileName, cacheDirectory);
-
-                foreach (var line in lines) {
-                    var splitted = line.Split('|');
-
-                    registry[splitted[0].Trim()] =
-                        new CacheInfo {
-                            MimeType = splitted[1].Trim(),
-                            BodyFileName = splitted[2].Trim()
-                        };
-                }
-            }
         }
 
         public void Dispose() => client.Dispose();
@@ -82,9 +72,7 @@ namespace Kit.Http {
                 throw new InvalidOperationException();
 
             client.DefaultRequestHeaders.Remove(name);
-
-            if (value != null)
-                client.DefaultRequestHeaders.TryAddWithoutValidation(name, value);
+            client.DefaultRequestHeaders.TryAddWithoutValidation(name, value);
         }
 
         public void AddToHeader(string name, string value) {
@@ -108,7 +96,7 @@ namespace Kit.Http {
         #endregion
 
         #region Get
-        
+
         public async Task<IHttpResponse> GetAsync(Uri uri, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) {
 
             var response =
@@ -176,7 +164,7 @@ namespace Kit.Http {
         #endregion
 
         #region Post
-        
+
         public async Task<IHttpResponse> PostFormAsync(Uri uri, IEnumerable<KeyValuePair<string, string>> form) =>
             await PostAsync(uri, new FormUrlEncodedContent(form));
 
@@ -253,11 +241,19 @@ namespace Kit.Http {
 
         #region Cache
 
+        private static bool isCacheInitialized;
+        private static Queue<Action> cacheQueue;
+        private static Dictionary<string, CacheInfo> registry;
+        private static int cacheCounter = 0;
+
         private async Task<IHttpResponse> CacheAsync(
             Uri uri, string actionName, Func<Task<HttpResponse>> httpAction, CacheMode cache, string cacheKey) {
-            
+
             if (cache == CacheMode.Disabled)
                 return await httpAction();
+
+            if (!isCacheInitialized)
+                CacheInitialize();
 
             var key = "(" + $"{cacheKey};{actionName}".TrimStart(';') + ")";
             var cachedName = $"{key} {uri.AbsoluteUri}";
@@ -280,7 +276,7 @@ namespace Kit.Http {
             }
             else {
                 paddedCount = (++cacheCounter).ToString().PadLeft(4, '0');
-                bodyFileName = $"{paddedCount} {key} {PathHelper.SafeFileName(uri.AbsoluteUri)}"; // no .ext
+                bodyFileName = PathHelper.SafeFileName($"{paddedCount} {key} {uri.AbsoluteUri}"); // no .ext
             }
 
             var response = await httpAction();
@@ -293,9 +289,53 @@ namespace Kit.Http {
             else
                 FileClient.Write(bodyFileName, response.GetBytes(), cacheDirectory);
 
-            FileClient.AppendText(registryFileName, $"{cachedName} | {response.MimeType} | {bodyFileName}", cacheDirectory);
+            cacheQueue.Enqueue(() => {
+                FileClient.AppendText(registryFileName, $"{cachedName} | {response.MimeType} | {bodyFileName}", cacheDirectory);
+            });
+            
             registry[cachedName] = new CacheInfo { MimeType = response.MimeType, BodyFileName = bodyFileName };
             return response;
+        }
+
+        private static void CacheInitialize() {
+            Debug.Assert(!isCacheInitialized);
+
+            if (isCacheInitialized)
+                throw new InvalidOperationException();
+
+            isCacheInitialized = true;
+            cacheQueue = new Queue<Action>();
+            registry = new Dictionary<string, CacheInfo>();
+            
+            if (FileClient.Exists(registryFileName, cacheDirectory)) {
+                var lines = FileClient.ReadLines(registryFileName, cacheDirectory);
+
+                foreach (var line in lines) {
+                    var splitted = line.Split('|');
+
+                    registry[splitted[0].Trim()] =
+                        new CacheInfo {
+                            MimeType = splitted[1].Trim(),
+                            BodyFileName = splitted[2].Trim()
+                        };
+                }
+            }
+
+            new Thread(new ThreadStart(async () => {
+                try {
+                    while (true) {
+                        if (cacheQueue.Count > 0)
+                            cacheQueue.Dequeue()?.Invoke();
+                        else
+                            await Task.Delay(50, Kit.CancellationToken);
+                    }
+                }
+                catch (TaskCanceledException) {
+                    LogService.Log("Http cache thread stopped");
+                }
+            })).Start();
+
+            LogService.Log("Http cache thread started");
         }
 
         private static void FixCacheFileExtension(HttpResponse response, ref string fileName) {

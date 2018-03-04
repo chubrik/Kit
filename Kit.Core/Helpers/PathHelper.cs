@@ -27,7 +27,7 @@ namespace Kit {
         public static string SafeFileName(string fileName) {
             var safeName = fileName.Replace('\"', '\'');
             safeName = Regex.Replace(safeName, @"[\\/:*?""<>|]", "_", RegexOptions.IgnoreCase);
-            return safeName;
+            return safeName.Length > 250 ? safeName.Substring(0, 250) : safeName;
         }
     }
 }

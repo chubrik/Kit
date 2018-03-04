@@ -6,23 +6,23 @@ using System.Threading.Tasks;
 namespace Kit.Html {
     public static class HttpExtensions {
 
-        public static HtmlDocument GetHtml(
+        public static HtmlDocument GetHtmlDoc(
             this HttpClient client, string url, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) =>
-            GetHtmlAsync(client, url, cache: cache, cacheKey: cacheKey, repeat: repeat).Result;
+            GetHtmlDocAsync(client, url, cache: cache, cacheKey: cacheKey, repeat: repeat).Result;
 
-        public static HtmlDocument GetHtml(
+        public static HtmlDocument GetHtmlDoc(
             this HttpClient client, Uri uri, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) =>
-            GetHtmlAsync(client, uri, cache: cache, cacheKey: cacheKey, repeat: repeat).Result;
+            GetHtmlDocAsync(client, uri, cache: cache, cacheKey: cacheKey, repeat: repeat).Result;
 
-        public static Task<HtmlDocument> GetHtmlAsync(
+        public static Task<HtmlDocument> GetHtmlDocAsync(
             this HttpClient client, string url, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) =>
-            GetHtmlAsync(client, new Uri(url), cache: cache, cacheKey: cacheKey, repeat: repeat);
+            GetHtmlDocAsync(client, new Uri(url), cache: cache, cacheKey: cacheKey, repeat: repeat);
 
-        public static async Task<HtmlDocument> GetHtmlAsync(
+        public static async Task<HtmlDocument> GetHtmlDocAsync(
             this HttpClient client, Uri uri, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) =>
-            GetHtml(await client.GetAsync(uri, cache: cache, cacheKey: cacheKey, repeat: repeat));
+            GetHtmlDoc(await client.GetAsync(uri, cache: cache, cacheKey: cacheKey, repeat: repeat));
 
-        public static HtmlDocument GetHtml(this IHttpResponse httpResponse) =>
-            httpResponse.GetText().ToHtml();
+        public static HtmlDocument GetHtmlDoc(this IHttpResponse httpResponse) =>
+            httpResponse.GetText().ToHtmlDoc();
     }
 }
