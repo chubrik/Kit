@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Kit {
     public class ConsoleClient : ILogClient {
@@ -8,13 +11,45 @@ namespace Kit {
         public static ConsoleClient Instance => instance ?? (instance = new ConsoleClient());
         private ConsoleClient() { }
 
+        private static bool isInitialized;
+        private static Queue<Action> queue = new Queue<Action>();
+        public static ConsolePosition Position = new ConsolePosition(0, 0);
         private static LogLevel minLevel = LogLevel.Info;
+
+        #region Setup & Initialize
 
         public static void Setup(LogLevel? minLevel = null) {
 
             if (minLevel != null)
                 ConsoleClient.minLevel = (LogLevel)minLevel;
         }
+
+        private static void Initialize() {
+            Debug.Assert(!isInitialized);
+
+            if (isInitialized)
+                throw new InvalidOperationException();
+
+            isInitialized = true;
+
+            new Thread(new ThreadStart(async () => {
+                try {
+                    while (true) {
+                        if (queue.Count > 0)
+                            queue.Dequeue()?.Invoke();
+                        else
+                            await Task.Delay(50, Kit.CancellationToken);
+                    }
+                }
+                catch (TaskCanceledException) {
+                    LogService.Log("Console thread stopped");
+                }
+            })).Start();
+
+            LogService.Log("Console thread started");
+        }
+
+        #endregion
 
         #region ILogClient
 
@@ -52,29 +87,54 @@ namespace Kit {
                     throw new ArgumentOutOfRangeException(nameof(level));
             }
 
+            var fullMessage = $"{DateTimeOffset.Now.ToString("HH:mm:ss")} - {message}";
             WriteLine(message, color);
         }
 
         #endregion
 
-        public static void WriteLine(string message, ConsoleColor? color = null) =>
-            Write($"{message}\r\n", color);
+        public static ConsolePosition WriteLine() => WriteLine(string.Empty);
 
-        public static void Write(string message, ConsoleColor? color = null) {
-            var time = DateTimeOffset.Now.ToString("HH:mm:ss");
-            var origColor = Console.ForegroundColor;
+        public static ConsolePosition WriteLine(string text, ConsoleColor? color = null, ConsolePosition position = null) {
+            var startPosition = position ?? Position;
+            WriteBase($"{text}\r\n", color, startPosition);
+            return Position = new ConsolePosition(startPosition.Top + 1, 0);
+        }
 
-            if (color != null)
-                Console.ForegroundColor = (ConsoleColor)color;
+        public static ConsolePosition Write(string text, ConsoleColor? color = null, ConsolePosition position = null) {
+            var startPosition = position ?? Position;
+            WriteBase(text, color, startPosition);
+            return Position = new ConsolePosition(startPosition.Top, startPosition.Left + text.Length);
+        }
 
-            if (message.StartsWith("\r")) {
-                message = message.Substring(1);
-                Console.Write($"\r{time} - {message}");
-            }
-            else
-                Console.Write($"{time} - {message}");
+        private static void WriteBase(string text, ConsoleColor? color, ConsolePosition position) {
 
-            Console.ForegroundColor = origColor;
+            if (!isInitialized)
+                Initialize();
+
+            queue.Enqueue(() => {
+                var originalColor = Console.ForegroundColor;
+                var originalTop = Console.CursorTop;
+                var originalLeft = Console.CursorLeft;
+
+                if (color != null)
+                    Console.ForegroundColor = (ConsoleColor)color;
+
+                try {
+                    Console.CursorTop = position.Top;
+                    Console.CursorLeft = position.Left;
+                    Console.Write(text);
+                }
+                catch (ArgumentOutOfRangeException) {
+                    //todo
+                }
+                finally {
+                    //Console.CursorTop = originalTop;
+                    //Console.CursorLeft = originalLeft;
+                }
+
+                Console.ForegroundColor = originalColor;
+            });
         }
     }
 }
