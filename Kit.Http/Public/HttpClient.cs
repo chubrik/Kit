@@ -8,27 +8,22 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Kit.Http {
-    public class HttpClient {
-
-        private static HttpClient instance;
-        public static HttpClient Instance => instance ?? (instance = new HttpClient());
-        private HttpClient() { }
-
-        private static bool isInitialized = false;
-        private static System.Net.Http.HttpClient client; //todo dispose
-        private static string cacheDirectory = "$http-cache";
+    public class HttpClient : IDisposable {
+        
+        private readonly System.Net.Http.HttpClient client;
+        private CookieContainer cookieContainer = new CookieContainer();
+        private string cacheDirectory = "$http-cache";
         private const string registryFileName = "$registry.txt";
         private const string infoFileSuffix = "$.txt";
-        private static CacheMode cacheMode = CacheMode.Disabled;
-        private static string cacheKey = string.Empty;
-        private static bool useRepeat = true;
-        private static int cacheCounter = 0;
+        private CacheMode cacheMode = CacheMode.Disabled;
+        private string cacheKey = string.Empty;
+        private bool useRepeat = true;
         private static Dictionary<string, CacheInfo> registry = new Dictionary<string, CacheInfo>();
-        private static CookieContainer cookieContainer = new CookieContainer();
+        private static int cacheCounter = 0;
 
-        #region Setup & Initialize
+        #region Consructor
 
-        public static void Setup(
+        public HttpClient(
             bool? repeat = null,
             CacheMode? cache = null,
             string cacheDirectory = null,
@@ -41,17 +36,10 @@ namespace Kit.Http {
                 cacheMode = (CacheMode)cache;
 
             if (cacheDirectory != null)
-                HttpClient.cacheDirectory = cacheDirectory;
+                this.cacheDirectory = cacheDirectory;
 
             if (cacheKey != null)
-                HttpClient.cacheKey = cacheKey;
-        }
-
-        private static void Initialize() {
-            Debug.Assert(!isInitialized);
-
-            if (isInitialized)
-                throw new InvalidOperationException();
+                this.cacheKey = cacheKey;
 
             var handler = new HttpClientHandler {
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
@@ -79,15 +67,15 @@ namespace Kit.Http {
                         };
                 }
             }
-
-            isInitialized = true;
         }
+
+        public void Dispose() => client.Dispose();
 
         #endregion
 
         #region Headers
 
-        public static void SetHeader(string name, string value) {
+        public void SetHeader(string name, string value) {
             Debug.Assert(name != null && value != null);
 
             if (name == null || value == null)
@@ -99,7 +87,7 @@ namespace Kit.Http {
                 client.DefaultRequestHeaders.TryAddWithoutValidation(name, value);
         }
 
-        public static void AddToHeader(string name, string value) {
+        public void AddToHeader(string name, string value) {
             Debug.Assert(name != null && value != null);
 
             if (name == null || value == null)
@@ -108,7 +96,7 @@ namespace Kit.Http {
             client.DefaultRequestHeaders.TryAddWithoutValidation(name, value);
         }
 
-        public static void RemoveHeader(string name) {
+        public void RemoveHeader(string name) {
             Debug.Assert(name != null);
 
             if (name == null)
@@ -120,50 +108,14 @@ namespace Kit.Http {
         #endregion
 
         #region Get
-
-        #region Extensions
-
-        public static string GetText(string url, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) =>
-            GetTextAsync(url, cache: cache, cacheKey: cacheKey, repeat: repeat).Result;
-
-        public static byte[] GetBytes(string url, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) =>
-            GetBytesAsync(new Uri(url), cache: cache, cacheKey: cacheKey, repeat: repeat).Result;
-
-        public static IHttpResponse Get(string url, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) =>
-            GetAsync(new Uri(url), cache: cache, cacheKey: cacheKey, repeat: repeat).Result;
-
-        //
-
-        public static Task<string> GetTextAsync(string url, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) =>
-            GetTextAsync(new Uri(url), cache: cache, cacheKey: cacheKey, repeat: repeat);
-
-        public static async Task<string> GetTextAsync(Uri uri, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) {
-            var response = await GetAsync(uri, cache: cache, cacheKey: cacheKey, repeat: repeat);
-            return response.GetText();
-        }
-
-        public static Task<byte[]> GetBytesAsync(string url, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) =>
-            GetBytesAsync(new Uri(url), cache: cache, cacheKey: cacheKey, repeat: repeat);
-
-        //
-
-        public static async Task<byte[]> GetBytesAsync(Uri uri, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) {
-            var response = await GetAsync(uri, cache: cache, cacheKey: cacheKey, repeat: repeat);
-            return response.GetBytes();
-        }
-
-        public static Task<IHttpResponse> GetAsync(string url, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) =>
-            GetAsync(new Uri(url), cache: cache, cacheKey: cacheKey, repeat: repeat);
-
-        #endregion
-
-        public static async Task<IHttpResponse> GetAsync(Uri uri, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) {
+        
+        public async Task<IHttpResponse> GetAsync(Uri uri, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) {
 
             var response =
                 await CacheAsync(uri, "get",
                     () => GetAsync(uri, repeat: repeat ?? useRepeat),
                     cache: cache ?? cacheMode,
-                    cacheKey: cacheKey ?? HttpClient.cacheKey);
+                    cacheKey: cacheKey ?? this.cacheKey);
 
             if (response.IsHtml)
                 SetHeader("Referer", uri.AbsoluteUri);
@@ -171,7 +123,7 @@ namespace Kit.Http {
             return response;
         }
 
-        private static async Task<HttpResponse> GetAsync(Uri uri, bool repeat) {
+        private async Task<HttpResponse> GetAsync(Uri uri, bool repeat) {
 
             if (!repeat)
                 return await GetBaseAsync(uri);
@@ -185,7 +137,7 @@ namespace Kit.Http {
             return response;
         }
 
-        private static async Task<HttpResponse> GetBaseAsync(Uri uri) {
+        private async Task<HttpResponse> GetBaseAsync(Uri uri) {
             HttpResponseMessage response;
             var requestCookies = cookieContainer.GetCookies(uri);
 
@@ -224,40 +176,16 @@ namespace Kit.Http {
         #endregion
 
         #region Post
-
-        #region Extensions
-
-        public static IHttpResponse PostForm(string url, IEnumerable<KeyValuePair<string, string>> form) =>
-            PostFormAsync(url, form).Result;
-
-        public static IHttpResponse PostJson(string url, object json) =>
-            PostJsonAsync(url, json).Result;
-
-        public static IHttpResponse PostMultipart(string url, Dictionary<string, string> multipart) =>
-            PostMultipartAsync(url, multipart).Result;
-
-        //
-
-        public static Task<IHttpResponse> PostFormAsync(string url, IEnumerable<KeyValuePair<string, string>> form) =>
-            PostFormAsync(new Uri(url), form);
-
-        public static Task<IHttpResponse> PostJsonAsync(string url, object json) =>
-            PostJsonAsync(new Uri(url), json);
-
-        public static Task<IHttpResponse> PostMultipartAsync(string url, Dictionary<string, string> multipart) =>
-            PostMultipartAsync(new Uri(url), multipart);
-
-        #endregion
-
-        public static async Task<IHttpResponse> PostFormAsync(Uri uri, IEnumerable<KeyValuePair<string, string>> form) =>
+        
+        public async Task<IHttpResponse> PostFormAsync(Uri uri, IEnumerable<KeyValuePair<string, string>> form) =>
             await PostAsync(uri, new FormUrlEncodedContent(form));
 
-        public static async Task<IHttpResponse> PostJsonAsync(Uri uri, object json) {
+        public async Task<IHttpResponse> PostJsonAsync(Uri uri, object json) {
             var serialized = JsonConvert.SerializeObject(json);
             return await PostAsync(uri, new StringContent(serialized, Encoding.UTF8, "application/json"));
         }
 
-        public static async Task<IHttpResponse> PostMultipartAsync(Uri uri, Dictionary<string, string> multipart) {
+        public async Task<IHttpResponse> PostMultipartAsync(Uri uri, Dictionary<string, string> multipart) {
 
             var context = new MultipartFormDataContent(
                 "----WebKitFormBoundary" + DateTimeOffset.Now.Ticks.ToString("x"));
@@ -272,14 +200,14 @@ namespace Kit.Http {
             return await PostAsync(uri, context);
         }
 
-        private static async Task<IHttpResponse> PostAsync(
+        private async Task<IHttpResponse> PostAsync(
             Uri uri, HttpContent content, CacheMode? cache = null, string cacheKey = null) {
 
             var response =
                 await CacheAsync(uri, "post",
                     () => PostBaseAsync(uri, content),
                     cache: cache ?? cacheMode,
-                    cacheKey: cacheKey ?? HttpClient.cacheKey);
+                    cacheKey: cacheKey ?? this.cacheKey);
 
             if (response.IsHtml)
                 SetHeader("Referer", uri.AbsoluteUri);
@@ -287,7 +215,7 @@ namespace Kit.Http {
             return response;
         }
 
-        private static async Task<HttpResponse> PostBaseAsync(Uri uri, HttpContent content) {
+        private async Task<HttpResponse> PostBaseAsync(Uri uri, HttpContent content) {
             HttpResponseMessage response;
             var requestCookies = cookieContainer.GetCookies(uri);
 
@@ -325,12 +253,9 @@ namespace Kit.Http {
 
         #region Cache
 
-        private static async Task<IHttpResponse> CacheAsync(
+        private async Task<IHttpResponse> CacheAsync(
             Uri uri, string actionName, Func<Task<HttpResponse>> httpAction, CacheMode cache, string cacheKey) {
-
-            if (!isInitialized)
-                Initialize();
-
+            
             if (cache == CacheMode.Disabled)
                 return await httpAction();
 
