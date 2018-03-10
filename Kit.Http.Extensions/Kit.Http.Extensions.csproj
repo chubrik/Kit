@@ -5,8 +5,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Kit.Abstractions\Kit.Abstractions.csproj" />
-    <ProjectReference Include="..\Kit.Core\Kit.Core.csproj" />
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Kit.Http\Kit.Http.csproj" />
   </ItemGroup>
 
 </Project>

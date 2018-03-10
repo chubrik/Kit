@@ -1,8 +1,6 @@
-﻿using MimeTypes.Core;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Net;
 using System.Net.Mail;
 using System.Net.Mime;
@@ -91,7 +89,7 @@ namespace Kit.Mail {
             if (attachmentPaths != null)
                 foreach (var attachmentPath in attachmentPaths) {
 
-                    var attachment = new Attachment(FileClient.FullPath(attachmentPath), MimeType(attachmentPath)) {
+                    var attachment = new Attachment(FileClient.FullPath(attachmentPath), "application/octet-stream") {
                         ContentId = new Guid().ToString(),
                         ContentDisposition = {
                             Inline = true,
@@ -125,8 +123,5 @@ namespace Kit.Mail {
         }
 
         #endregion
-
-        private static string MimeType(string path) =>
-            MimeTypeMap.GetMimeType(Path.GetExtension(path));
     }
 }

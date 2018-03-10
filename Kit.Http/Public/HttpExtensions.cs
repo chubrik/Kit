@@ -54,13 +54,13 @@ namespace Kit.Http {
             var response = await client.GetAsync(uri, cache: cache, cacheKey: cacheKey, repeat: repeat);
             return response.GetText();
         }
-        
+
         public static async Task<byte[]> GetBytesAsync(
             this HttpClient client, Uri uri, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) {
             var response = await client.GetAsync(uri, cache: cache, cacheKey: cacheKey, repeat: repeat);
             return response.GetBytes();
         }
-        
+
         #endregion
 
         #region Post
@@ -69,12 +69,13 @@ namespace Kit.Http {
             this HttpClient client, string url, IEnumerable<KeyValuePair<string, string>> form) =>
             PostFormAsync(client, url, form).Result;
 
-        public static IHttpResponse PostJson(this HttpClient client, string url, object json) =>
-            PostJsonAsync(client, url, json).Result;
-
         public static IHttpResponse PostMultipart(
             this HttpClient client, string url, Dictionary<string, string> multipart) =>
             PostMultipartAsync(client, url, multipart).Result;
+
+        public static IHttpResponse PostSerializedJson(
+            this HttpClient client, string url, string serializedJson) =>
+            PostSerializedJsonAsync(client, url, serializedJson).Result;
 
         //
 
@@ -82,12 +83,13 @@ namespace Kit.Http {
             this HttpClient client, Uri uri, IEnumerable<KeyValuePair<string, string>> form) =>
             client.PostFormAsync(uri, form).Result;
 
-        public static IHttpResponse PostJson(this HttpClient client, Uri uri, object json) =>
-            client.PostJsonAsync(uri, json).Result;
-
         public static IHttpResponse PostMultipart(
             this HttpClient client, Uri uri, Dictionary<string, string> multipart) =>
             client.PostMultipartAsync(uri, multipart).Result;
+
+        public static IHttpResponse PostSerializedJson(
+            this HttpClient client, Uri uri, string serializedJson) =>
+            client.PostSerializedJsonAsync(uri, serializedJson).Result;
 
         //
 
@@ -95,12 +97,13 @@ namespace Kit.Http {
             this HttpClient client, string url, IEnumerable<KeyValuePair<string, string>> form) =>
             client.PostFormAsync(new Uri(url), form);
 
-        public static Task<IHttpResponse> PostJsonAsync(this HttpClient client, string url, object json) =>
-            client.PostJsonAsync(new Uri(url), json);
-
         public static Task<IHttpResponse> PostMultipartAsync(
             this HttpClient client, string url, Dictionary<string, string> multipart) =>
             client.PostMultipartAsync(new Uri(url), multipart);
+
+        public static Task<IHttpResponse> PostSerializedJsonAsync(
+            this HttpClient client, string url, string serializedJson) =>
+            client.PostSerializedJsonAsync(new Uri(url), serializedJson);
 
         #endregion
     }

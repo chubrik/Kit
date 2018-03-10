@@ -121,16 +121,15 @@ namespace Kit {
                     Console.ForegroundColor = (ConsoleColor)color;
 
                 try {
-                    Console.CursorTop = position.Top;
-                    Console.CursorLeft = position.Left;
+                    Console.SetCursorPosition(position.Left, position.Top);
                     Console.Write(text);
                 }
-                catch (ArgumentOutOfRangeException) {
-                    //todo
+                catch (ArgumentOutOfRangeException exception) {
+                    Debug.Fail(exception.ToString());
+                    ExceptionHandler.Register(exception);
                 }
                 finally {
-                    //Console.CursorTop = originalTop;
-                    //Console.CursorLeft = originalLeft;
+                    Console.SetCursorPosition(originalLeft, originalTop);
                 }
 
                 Console.ForegroundColor = originalColor;

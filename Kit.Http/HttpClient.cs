@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
@@ -168,11 +167,6 @@ namespace Kit.Http {
         public async Task<IHttpResponse> PostFormAsync(Uri uri, IEnumerable<KeyValuePair<string, string>> form) =>
             await PostAsync(uri, new FormUrlEncodedContent(form));
 
-        public async Task<IHttpResponse> PostJsonAsync(Uri uri, object json) {
-            var serialized = JsonConvert.SerializeObject(json);
-            return await PostAsync(uri, new StringContent(serialized, Encoding.UTF8, "application/json"));
-        }
-
         public async Task<IHttpResponse> PostMultipartAsync(Uri uri, Dictionary<string, string> multipart) {
 
             var context = new MultipartFormDataContent(
@@ -187,6 +181,9 @@ namespace Kit.Http {
 
             return await PostAsync(uri, context);
         }
+
+        public async Task<IHttpResponse> PostSerializedJsonAsync(Uri uri, string serializedJson) =>
+            await PostAsync(uri, new StringContent(serializedJson, Encoding.UTF8, "application/json"));
 
         private async Task<IHttpResponse> PostAsync(
             Uri uri, HttpContent content, CacheMode? cache = null, string cacheKey = null) {
@@ -292,7 +289,7 @@ namespace Kit.Http {
             cacheQueue.Enqueue(() => {
                 FileClient.AppendText(registryFileName, $"{cachedName} | {response.MimeType} | {bodyFileName}", cacheDirectory);
             });
-            
+
             registry[cachedName] = new CacheInfo { MimeType = response.MimeType, BodyFileName = bodyFileName };
             return response;
         }
@@ -306,7 +303,7 @@ namespace Kit.Http {
             isCacheInitialized = true;
             cacheQueue = new Queue<Action>();
             registry = new Dictionary<string, CacheInfo>();
-            
+
             if (FileClient.Exists(registryFileName, cacheDirectory)) {
                 var lines = FileClient.ReadLines(registryFileName, cacheDirectory);
 
