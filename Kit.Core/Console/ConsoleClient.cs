@@ -1,52 +1,23 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Kit {
     public class ConsoleClient : ILogClient {
 
         private static ConsoleClient instance;
         public static ConsoleClient Instance => instance ?? (instance = new ConsoleClient());
+
         private ConsoleClient() { }
 
-        private static bool isInitialized;
-        private static Queue<Action> queue = new Queue<Action>();
-        public static ConsolePosition Position = new ConsolePosition(0, 0);
+        public static ConsolePosition Position { get; private set; } = new ConsolePosition(0, 0);
         private static LogLevel minLevel = LogLevel.Info;
 
-        #region Setup & Initialize
+        #region Setup
 
         public static void Setup(LogLevel? minLevel = null) {
 
             if (minLevel != null)
                 ConsoleClient.minLevel = (LogLevel)minLevel;
-        }
-
-        private static void Initialize() {
-            Debug.Assert(!isInitialized);
-
-            if (isInitialized)
-                throw new InvalidOperationException();
-
-            isInitialized = true;
-
-            new Thread(new ThreadStart(async () => {
-                try {
-                    while (true) {
-                        if (queue.Count > 0)
-                            queue.Dequeue()?.Invoke();
-                        else
-                            await Task.Delay(50, Kit.CancellationToken);
-                    }
-                }
-                catch (TaskCanceledException) {
-                    LogService.Log("Console thread stopped");
-                }
-            })).Start();
-
-            LogService.Log("Console thread started");
         }
 
         #endregion
@@ -107,20 +78,18 @@ namespace Kit {
             return Position = new ConsolePosition(startPosition.Top, startPosition.Left + text.Length);
         }
 
+        private static readonly object _lock = new object();
+
         private static void WriteBase(string text, ConsoleColor? color, ConsolePosition position) {
-
-            if (!isInitialized)
-                Initialize();
-
-            queue.Enqueue(() => {
+            lock (_lock) {
                 var originalColor = Console.ForegroundColor;
                 var originalTop = Console.CursorTop;
                 var originalLeft = Console.CursorLeft;
 
-                if (color != null)
-                    Console.ForegroundColor = (ConsoleColor)color;
-
                 try {
+                    if (color != null)
+                        Console.ForegroundColor = (ConsoleColor)color;
+
                     Console.SetCursorPosition(position.Left, position.Top);
                     Console.Write(text);
                 }
@@ -130,10 +99,9 @@ namespace Kit {
                 }
                 finally {
                     Console.SetCursorPosition(originalLeft, originalTop);
+                    Console.ForegroundColor = originalColor;
                 }
-
-                Console.ForegroundColor = originalColor;
-            });
+            }
         }
     }
 }

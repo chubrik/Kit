@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Kit {
     public class FileClient : IDataClient, IReportClient, ILogClient {
@@ -47,7 +45,6 @@ namespace Kit {
         #region ILogClient
 
         private bool isLogInitialized;
-        private Queue<Action> logQueue;
         private string logFullPath;
         private bool logIndent = false;
 
@@ -56,45 +53,42 @@ namespace Kit {
             if (!isLogInitialized)
                 LogInitialize();
 
-            if (level == LogLevel.Log) {
+            lock (this) {
 
-                logQueue.Enqueue(() => {
+                if (level == LogLevel.Log) {
                     File.AppendAllText(logFullPath, logIndent ? $"\r\n{MessageLine(message)}" : MessageLine(message));
                     logIndent = false;
-                });
+                    return;
+                }
 
-                return;
-            }
+                string header;
 
-            string header;
+                switch (level) {
 
-            switch (level) {
+                    case LogLevel.Info:
+                        header = "INFO";
+                        break;
 
-                case LogLevel.Info:
-                    header = "INFO";
-                    break;
+                    case LogLevel.Success:
+                        header = "SUCCESS";
+                        break;
 
-                case LogLevel.Success:
-                    header = "SUCCESS";
-                    break;
+                    case LogLevel.Warning:
+                        header = "WARNING";
+                        break;
 
-                case LogLevel.Warning:
-                    header = "WARNING";
-                    break;
+                    case LogLevel.Error:
+                        header = "ERROR";
+                        break;
 
-                case LogLevel.Error:
-                    header = "ERROR";
-                    break;
+                    default:
+                        Debug.Fail(string.Empty);
+                        throw new ArgumentOutOfRangeException(nameof(level));
+                }
 
-                default:
-                    Debug.Fail(string.Empty);
-                    throw new ArgumentOutOfRangeException(nameof(level));
-            }
-
-            logQueue.Enqueue(() => {
                 File.AppendAllText(logFullPath, $"\r\n--- {header} ---\r\n{MessageLine(message)}");
                 logIndent = true;
-            });
+            }
         }
 
         private void LogInitialize() {
@@ -104,25 +98,8 @@ namespace Kit {
                 throw new InvalidOperationException();
 
             isLogInitialized = true;
-            logQueue = new Queue<Action>();
             logFullPath = FullPath(LogService.LogFileName, Kit.DiagnisticsCurrentDirectory);
             CreateDir(logFullPath);
-
-            new Thread(new ThreadStart(async () => {
-                try {
-                    while (true) {
-                        if (logQueue.Count > 0)
-                            logQueue.Dequeue()?.Invoke();
-                        else
-                            await Task.Delay(50, Kit.CancellationToken);
-                    }
-                }
-                catch (TaskCanceledException) {
-                    File.AppendAllText(logFullPath, MessageLine("File log thread stopped"));
-                }
-            })).Start();
-
-            LogService.Log("File log thread started");
         }
 
         private static string MessageLine(string message) =>

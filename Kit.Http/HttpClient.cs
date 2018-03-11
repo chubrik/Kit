@@ -239,7 +239,6 @@ namespace Kit.Http {
         #region Cache
 
         private static bool isCacheInitialized;
-        private static Queue<Action> cacheQueue;
         private static Dictionary<string, CacheInfo> registry;
         private static int cacheCounter = 0;
 
@@ -286,9 +285,8 @@ namespace Kit.Http {
             else
                 FileClient.Write(bodyFileName, response.GetBytes(), cacheDirectory);
 
-            cacheQueue.Enqueue(() => {
+            lock (this)
                 FileClient.AppendText(registryFileName, $"{cachedName} | {response.MimeType} | {bodyFileName}", cacheDirectory);
-            });
 
             registry[cachedName] = new CacheInfo { MimeType = response.MimeType, BodyFileName = bodyFileName };
             return response;
@@ -301,7 +299,6 @@ namespace Kit.Http {
                 throw new InvalidOperationException();
 
             isCacheInitialized = true;
-            cacheQueue = new Queue<Action>();
             registry = new Dictionary<string, CacheInfo>();
 
             if (FileClient.Exists(registryFileName, cacheDirectory)) {
@@ -317,22 +314,6 @@ namespace Kit.Http {
                         };
                 }
             }
-
-            new Thread(new ThreadStart(async () => {
-                try {
-                    while (true) {
-                        if (cacheQueue.Count > 0)
-                            cacheQueue.Dequeue()?.Invoke();
-                        else
-                            await Task.Delay(50, Kit.CancellationToken);
-                    }
-                }
-                catch (TaskCanceledException) {
-                    LogService.Log("Http cache thread stopped");
-                }
-            })).Start();
-
-            LogService.Log("Http cache thread started");
         }
 
         private static void FixCacheFileExtension(HttpResponse response, ref string fileName) {
