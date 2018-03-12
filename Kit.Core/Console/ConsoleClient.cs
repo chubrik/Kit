@@ -6,10 +6,11 @@ namespace Kit {
 
         private static ConsoleClient instance;
         public static ConsoleClient Instance => instance ?? (instance = new ConsoleClient());
-
         private ConsoleClient() { }
 
-        public static ConsolePosition Position { get; private set; } = new ConsolePosition(0, 0);
+        private static ConsolePosition _position = new ConsolePosition(0, 0);
+        public static ConsolePosition Position => _position;
+
         private static LogLevel minLevel = LogLevel.Info;
 
         #region Setup
@@ -64,33 +65,33 @@ namespace Kit {
 
         #endregion
 
+        #region Write
+
         public static ConsolePosition WriteLine() => WriteLine(string.Empty);
 
-        public static ConsolePosition WriteLine(string text, ConsoleColor? color = null, ConsolePosition position = null) {
-            var startPosition = position ?? Position;
-            WriteBase($"{text}\r\n", color, startPosition);
-            return Position = new ConsolePosition(startPosition.Top + 1, 0);
-        }
+        public static ConsolePosition WriteLine(
+            string text, ConsoleColor? color = null, ConsolePosition position = null) =>
+            Write($"{text}\r\n", color, position);
 
-        public static ConsolePosition Write(string text, ConsoleColor? color = null, ConsolePosition position = null) {
-            var startPosition = position ?? Position;
-            WriteBase(text, color, startPosition);
-            return Position = new ConsolePosition(startPosition.Top, startPosition.Left + text.Length);
-        }
+        public static ConsolePosition Write(
+            string text, ConsoleColor? color = null, ConsolePosition position = null) {
 
-        private static readonly object _lock = new object();
-
-        private static void WriteBase(string text, ConsoleColor? color, ConsolePosition position) {
-            lock (_lock) {
-                var originalColor = Console.ForegroundColor;
-                var originalTop = Console.CursorTop;
-                var originalLeft = Console.CursorLeft;
+            lock (Position) {
+                var origColor = Console.ForegroundColor;
+                var origTop = Console.CursorTop;
+                var origLeft = Console.CursorLeft;
+                var isMoved = position != null && !position.Equals(Position);
+                ConsolePosition endPosition;
 
                 try {
                     if (color != null)
                         Console.ForegroundColor = (ConsoleColor)color;
 
-                    Console.SetCursorPosition(position.Left, position.Top);
+                    if (isMoved) {
+                        Console.CursorVisible = false;
+                        Console.SetCursorPosition(position.Left, position.Top);
+                    }
+
                     Console.Write(text);
                 }
                 catch (ArgumentOutOfRangeException exception) {
@@ -98,10 +99,21 @@ namespace Kit {
                     ExceptionHandler.Register(exception);
                 }
                 finally {
-                    Console.SetCursorPosition(originalLeft, originalTop);
-                    Console.ForegroundColor = originalColor;
+                    Console.ForegroundColor = origColor;
+                    endPosition = new ConsolePosition(Console.CursorTop, Console.CursorLeft);
+
+                    if (isMoved) {
+                        Console.SetCursorPosition(origLeft, origTop);
+                        Console.CursorVisible = true;
+                    }
+                    else
+                        _position = endPosition;
                 }
+
+                return endPosition;
             }
         }
+
+        #endregion
     }
 }
