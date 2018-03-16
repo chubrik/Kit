@@ -20,12 +20,12 @@ namespace Kit.Http {
 
         #region Headers
 
-        private Dictionary<string, IReadOnlyList<string>> headers;
+        private Dictionary<string, IReadOnlyList<string>> _headers;
 
         public IReadOnlyDictionary<string, IReadOnlyList<string>> Headers {
             get {
-                if (headers != null)
-                    return headers;
+                if (_headers != null)
+                    return _headers;
 
                 var result = new Dictionary<string, IReadOnlyList<string>>();
 
@@ -35,16 +35,16 @@ namespace Kit.Http {
                 foreach (var header in Original.Content.Headers)
                     result.Add(header.Key, header.Value.ToList());
 
-                return headers = result.OrderBy(i => i.Key).ToDictionary(i => i.Key, i => i.Value);
+                return _headers = result.OrderBy(i => i.Key).ToDictionary(i => i.Key, i => i.Value);
             }
         }
 
-        private string rawHeaders;
+        private string _rawHeaders;
 
         public string RawHeaders {
             get {
-                if (rawHeaders != null)
-                    return rawHeaders;
+                if (_rawHeaders != null)
+                    return _rawHeaders;
 
                 var lines = new List<string>();
 
@@ -52,7 +52,7 @@ namespace Kit.Http {
                     foreach (var item in header.Value)
                         lines.Add($"{header.Key}: {item}");
 
-                return rawHeaders = lines.JoinLines();
+                return _rawHeaders = lines.JoinLines();
             }
         }
 
@@ -60,22 +60,22 @@ namespace Kit.Http {
 
         #region Content
 
-        private string text;
-        public string GetText() => text ?? (text = Original.Content.ReadAsStringAsync().Result);
+        private string _text;
+        public string GetText() => _text ?? (_text = Original.Content.ReadAsStringAsync().Result);
 
-        private byte[] bytes;
-        public byte[] GetBytes() => bytes ?? (bytes = Original.Content.ReadAsByteArrayAsync().Result);
+        private byte[] _bytes;
+        public byte[] GetBytes() => _bytes ?? (_bytes = Original.Content.ReadAsByteArrayAsync().Result);
 
         #endregion
 
         #region Formatted
 
-        private string formattedInfo;
+        private string _formattedInfo;
 
         public string FormattedInfo {
             get {
-                if (formattedInfo != null)
-                    return formattedInfo;
+                if (_formattedInfo != null)
+                    return _formattedInfo;
 
                 var result =
                     $"--- RAW REQUEST ---\r\n\r\n{Request.ConnectionString}\r\n" +
@@ -88,7 +88,7 @@ namespace Kit.Http {
                     $"\r\n\r\n--- RESPONSE HEADERS ---\r\n\r\n{ConnectionString}\r\n" +
                     $"{RawHeaders}";
 
-                return formattedInfo = result;
+                return _formattedInfo = result;
             }
         }
 

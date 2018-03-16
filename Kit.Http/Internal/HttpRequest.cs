@@ -16,12 +16,12 @@ namespace Kit.Http {
 
         #region Headers
 
-        private IReadOnlyDictionary<string, IReadOnlyList<string>> headers;
+        private IReadOnlyDictionary<string, IReadOnlyList<string>> _headers;
 
         public IReadOnlyDictionary<string, IReadOnlyList<string>> Headers {
             get {
-                if (headers != null)
-                    return headers;
+                if (_headers != null)
+                    return _headers;
 
                 var result = new Dictionary<string, IReadOnlyList<string>> {
                     { "Connection", new List<string> { "Keep-Alive" } },
@@ -43,16 +43,16 @@ namespace Kit.Http {
                 if (cookies.Count > 0)
                     result.Add("Cookie", cookies);
 
-                return headers = result.OrderBy(i => i.Key).ToDictionary(i => i.Key, i => i.Value);
+                return _headers = result.OrderBy(i => i.Key).ToDictionary(i => i.Key, i => i.Value);
             }
         }
 
-        private string rawHeaders;
+        private string _rawHeaders;
 
         public string RawHeaders {
             get {
-                if (rawHeaders != null)
-                    return rawHeaders;
+                if (_rawHeaders != null)
+                    return _rawHeaders;
 
                 var lines = new List<string>();
 
@@ -61,7 +61,7 @@ namespace Kit.Http {
                     lines.Add($"{header.Key}: {header.Value.Join(separator)}");
                 }
 
-                return rawHeaders = lines.JoinLines();
+                return _rawHeaders = lines.JoinLines();
             }
         }
 
@@ -71,11 +71,11 @@ namespace Kit.Http {
 
         public bool HasContent => Original.Content != null;
 
-        private string text;
-        public string GetText() => text ?? (text = Original.Content.ReadAsStringAsync().Result);
+        private string _text;
+        public string GetText() => _text ?? (_text = Original.Content.ReadAsStringAsync().Result);
 
-        private byte[] bytes;
-        public byte[] GetBytes() => bytes ?? (bytes = Original.Content.ReadAsByteArrayAsync().Result);
+        private byte[] _bytes;
+        public byte[] GetBytes() => _bytes ?? (_bytes = Original.Content.ReadAsByteArrayAsync().Result);
 
         #endregion
 

@@ -6,7 +6,7 @@ namespace Kit {
 
         private ReportService() { }
 
-        private const string reportsDirectory = "reports";
+        private const string _reportsDirectory = "reports";
 
         public static readonly List<IReportClient> Clients = new List<IReportClient> {
             FileClient.Instance
@@ -48,7 +48,7 @@ namespace Kit {
 
             foreach (var client in Clients)
                 client.PushToReport(
-                    subject, body, attachmentPaths, PathHelper.Combine(Kit.DiagnisticsCurrentDirectory, reportsDirectory));
+                    subject, body, attachmentPaths, PathHelper.Combine(Kit.DiagnisticsCurrentDirectory, _reportsDirectory));
 
             LogService.Log($"Report completed at {TimeHelper.FormattedLatency(startTime)}");
         }

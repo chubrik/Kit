@@ -23,7 +23,7 @@ namespace Kit.Http {
 
         #region MyRegion
 
-        private Func<List<string>> getInfo;
+        private Func<List<string>> _getInfo;
 
         public IReadOnlyDictionary<string, IReadOnlyList<string>> Headers =>
             throw new NotImplementedException();
@@ -34,21 +34,21 @@ namespace Kit.Http {
 
         #region Text
 
-        private Func<string> getText;
+        private Func<string> _getText;
 
-        private string text;
+        private string _text;
 
-        public string GetText() => text ?? (text = getText());
+        public string GetText() => _text ?? (_text = _getText());
 
         #endregion
 
         #region Bytes
 
-        private Func<byte[]> getBytes;
+        private Func<byte[]> _getBytes;
 
-        private byte[] bytes;
+        private byte[] _bytes;
 
-        public byte[] GetBytes() => bytes ?? (bytes = getBytes());
+        public byte[] GetBytes() => _bytes ?? (_bytes = _getBytes());
 
         #endregion
 
@@ -62,13 +62,13 @@ namespace Kit.Http {
             MimeType = mimeType ?? throw new ArgumentNullException(nameof(mimeType));
 
             Debug.Assert(getInfo != null);
-            this.getInfo = getInfo ?? throw new ArgumentNullException(nameof(getInfo));
+            _getInfo = getInfo ?? throw new ArgumentNullException(nameof(getInfo));
 
             Debug.Assert(getText != null);
-            this.getText = getText ?? throw new ArgumentNullException(nameof(getText));
+            _getText = getText ?? throw new ArgumentNullException(nameof(getText));
 
             Debug.Assert(getBytes != null);
-            this.getBytes = getBytes ?? throw new ArgumentNullException(nameof(getBytes));
+            _getBytes = getBytes ?? throw new ArgumentNullException(nameof(getBytes));
         }
     }
 }

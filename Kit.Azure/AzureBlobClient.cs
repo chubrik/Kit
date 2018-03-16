@@ -10,16 +10,15 @@ using System.Threading.Tasks;
 namespace Kit.Azure {
     public class AzureBlobClient : IDataClient, IReportClient {
 
-        private static AzureBlobClient instance;
-        public static AzureBlobClient Instance => instance ?? (instance = new AzureBlobClient());
+        private static AzureBlobClient _instance;
+        public static AzureBlobClient Instance => _instance ?? (_instance = new AzureBlobClient());
         private AzureBlobClient() { }
 
-        private static readonly AccessCondition accessCondition = new AccessCondition();
-        private static readonly BlobRequestOptions options = new BlobRequestOptions();
-        private static readonly OperationContext operationContext = new OperationContext();
-
-        private static CloudBlobContainer container;
-        private static string workingDirectory = string.Empty;
+        private static readonly AccessCondition _accessCondition = new AccessCondition();
+        private static readonly BlobRequestOptions _options = new BlobRequestOptions();
+        private static readonly OperationContext _operationContext = new OperationContext();
+        private static CloudBlobContainer _container;
+        private static string _workingDirectory = string.Empty;
 
         #region Setup
 
@@ -33,10 +32,10 @@ namespace Kit.Azure {
                 $"DefaultEndpointsProtocol=https;AccountName={accountName};AccountKey={accountKey}");
 
             var client = account.CreateCloudBlobClient();
-            container = client.GetContainerReference(containerName);
+            _container = client.GetContainerReference(containerName);
 
             if (workingDirectory != null)
-                AzureBlobClient.workingDirectory = workingDirectory;
+                _workingDirectory = workingDirectory;
 
             ExceptionHandler.DataClients.Add(Instance);
             ReportService.Clients.Add(Instance);
@@ -53,7 +52,7 @@ namespace Kit.Azure {
 
         #region IReportClient
 
-        private static int reportCounter = 0;
+        private static int _reportCounter = 0;
 
         public void PushToReport(string subject, string body, IEnumerable<string> attachmentPaths, string targetDirectory) {
             Debug.Assert(attachmentPaths != null);
@@ -61,8 +60,8 @@ namespace Kit.Azure {
             if (attachmentPaths == null)
                 throw new InvalidOperationException();
 
-            reportCounter++;
-            var paddedCount = reportCounter.ToString().PadLeft(3, '0');
+            _reportCounter++;
+            var paddedCount = _reportCounter.ToString().PadLeft(3, '0');
             var fileName = PathHelper.SafeFileName($"{paddedCount} {subject}.txt");
             WriteAsync(fileName, $"{subject}\r\n\r\n{body}\r\n", targetDirectory: targetDirectory).Wait(); //todo queue
             var attachmentCounter = 0;
@@ -95,7 +94,7 @@ namespace Kit.Azure {
 
         public static Task<string> ReadTextAsync(string path, string targetDirectory = null) =>
             ReadBaseAsync(path, (fullPath, blob) =>
-                blob.DownloadTextAsync(Encoding.UTF8, accessCondition, options, operationContext, Kit.CancellationToken),
+                blob.DownloadTextAsync(Encoding.UTF8, _accessCondition, _options, _operationContext, Kit.CancellationToken),
                 targetDirectory: targetDirectory);
 
         public static Task<List<string>> ReadLinesAsync(string path, string targetDirectory = null) =>
@@ -107,10 +106,10 @@ namespace Kit.Azure {
         public static async Task ReadAsync(string path, Stream target, string targetDirectory = null) {
             try {
                 var startTime = DateTimeOffset.Now;
-                var fullPath = PathHelper.Combine(targetDirectory ?? workingDirectory, path);
+                var fullPath = PathHelper.Combine(targetDirectory ?? _workingDirectory, path);
                 LogService.Log($"Download blob started: {fullPath}");
-                var blob = container.GetBlockBlobReference(fullPath);
-                await blob.DownloadToStreamAsync(target, accessCondition, options, operationContext, Kit.CancellationToken);
+                var blob = _container.GetBlockBlobReference(fullPath);
+                await blob.DownloadToStreamAsync(target, _accessCondition, _options, _operationContext, Kit.CancellationToken);
                 LogService.Log($"Download blob completed at {TimeHelper.FormattedLatency(startTime)}");
             }
             catch (Exception exception) {
@@ -126,9 +125,9 @@ namespace Kit.Azure {
             string path, Func<string, CloudBlockBlob, Task<T>> action, string targetDirectory) {
             try {
                 var startTime = DateTimeOffset.Now;
-                var fullPath = PathHelper.Combine(targetDirectory ?? workingDirectory, path);
+                var fullPath = PathHelper.Combine(targetDirectory ?? _workingDirectory, path);
                 LogService.Log($"Download blob started: {fullPath}");
-                var blob = container.GetBlockBlobReference(fullPath);
+                var blob = _container.GetBlockBlobReference(fullPath);
                 var result = await action(fullPath, blob);
                 LogService.Log($"Download blob completed at {TimeHelper.FormattedLatency(startTime)}");
                 return result;
@@ -162,7 +161,7 @@ namespace Kit.Azure {
 
         public static Task WriteAsync(string path, string text, string targetDirectory = null) {
             return WriteBaseAsync(path, blob =>
-                blob.UploadTextAsync(text, Encoding.UTF8, accessCondition, options, operationContext, Kit.CancellationToken),
+                blob.UploadTextAsync(text, Encoding.UTF8, _accessCondition, _options, _operationContext, Kit.CancellationToken),
                 targetDirectory: targetDirectory);
         }
 
@@ -175,10 +174,10 @@ namespace Kit.Azure {
         public static async Task WriteAsync(string path, Stream source, string targetDirectory = null) {
             try {
                 var startTime = DateTimeOffset.Now;
-                var fullPath = PathHelper.Combine(targetDirectory ?? workingDirectory, path);
+                var fullPath = PathHelper.Combine(targetDirectory ?? _workingDirectory, path);
                 LogService.Log($"Upload blob started: {fullPath}");
-                var blob = container.GetBlockBlobReference(fullPath);
-                await blob.UploadFromStreamAsync(source, accessCondition, options, operationContext, Kit.CancellationToken);
+                var blob = _container.GetBlockBlobReference(fullPath);
+                await blob.UploadFromStreamAsync(source, _accessCondition, _options, _operationContext, Kit.CancellationToken);
                 LogService.Log($"Upload blob completed at {TimeHelper.FormattedLatency(startTime)}");
             }
             catch (Exception exception) {
@@ -195,9 +194,9 @@ namespace Kit.Azure {
 
             try {
                 var startTime = DateTimeOffset.Now;
-                var fullPath = PathHelper.Combine(targetDirectory ?? workingDirectory, path);
+                var fullPath = PathHelper.Combine(targetDirectory ?? _workingDirectory, path);
                 LogService.Log($"Upload blob started: {fullPath}");
-                var blob = container.GetBlockBlobReference(fullPath);
+                var blob = _container.GetBlockBlobReference(fullPath);
                 await action(blob);
                 LogService.Log($"Upload blob completed at {TimeHelper.FormattedLatency(startTime)}");
             }

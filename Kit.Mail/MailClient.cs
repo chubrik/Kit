@@ -9,16 +9,16 @@ using System.Threading.Tasks;
 namespace Kit.Mail {
     public class MailClient : IReportClient {
 
-        private static MailClient instance;
-        public static MailClient Instance => instance ?? (instance = new MailClient());
+        private static MailClient _instance;
+        public static MailClient Instance => _instance ?? (_instance = new MailClient());
         private MailClient() { }
 
-        private static bool isEnable = true;
-        private static string host;
-        private static int port;
-        private static NetworkCredential credentials;
-        private static string from;
-        private static string to;
+        private static bool _isEnable = true;
+        private static string _host;
+        private static int _port;
+        private static NetworkCredential _credentials;
+        private static string _from;
+        private static string _to;
 
         #region Setup
 
@@ -32,22 +32,22 @@ namespace Kit.Mail {
             string to = null) {
 
             if (isEnable != null)
-                MailClient.isEnable = (bool)isEnable;
+                _isEnable = (bool)isEnable;
 
             if (host != null)
-                MailClient.host = host;
+                _host = host;
 
             if (port != null)
-                MailClient.port = (int)port;
+                _port = (int)port;
 
             if (userName != null && password != null)
-                credentials = new NetworkCredential(userName, password);
+                _credentials = new NetworkCredential(userName, password);
 
             if (from != null)
-                MailClient.from = from;
+                _from = from;
 
             if (to != null)
-                MailClient.to = to;
+                _to = to;
 
             ReportService.Clients.Add(Instance);
         }
@@ -79,12 +79,12 @@ namespace Kit.Mail {
         //todo attachments
         public static async Task SendAsync(string subject, string body, IEnumerable<string> attachmentPaths) {
 
-            if (!isEnable)
+            if (!_isEnable)
                 return;
 
             var startTime = DateTimeOffset.Now;
             LogService.Log($"Mail send started: {subject}");
-            var message = new MailMessage(from, to, subject, body);
+            var message = new MailMessage(_from, _to, subject, body);
 
             if (attachmentPaths != null)
                 foreach (var attachmentPath in attachmentPaths) {
@@ -104,9 +104,9 @@ namespace Kit.Mail {
                 }
 
             try {
-                using (var smtp = new SmtpClient(host, port)) {
+                using (var smtp = new SmtpClient(_host, _port)) {
                     smtp.EnableSsl = true;
-                    smtp.Credentials = credentials;
+                    smtp.Credentials = _credentials;
                     await smtp.SendMailAsync(message); //todo cancellationToken
                 }
             }

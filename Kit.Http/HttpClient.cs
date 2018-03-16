@@ -4,23 +4,22 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Kit.Http {
     public class HttpClient : IDisposable {
 
-        private const string registryFileName = "$registry.txt";
-        private const string infoFileSuffix = "$.txt";
-        private static string cacheDirectory = "$http-cache";
-        private static CacheMode globalCacheMode = CacheMode.Disabled;
-        private static bool globalUseRepeat = true;
+        private const string _registryFileName = "$registry.txt";
+        private const string _infoFileSuffix = "$.txt";
+        private static string _cacheDirectory = "$http-cache";
+        private static CacheMode _globalCacheMode = CacheMode.Disabled;
+        private static bool _globalUseRepeat = true;
 
-        private readonly System.Net.Http.HttpClient client;
-        private CookieContainer cookieContainer = new CookieContainer();
-        private CacheMode cacheMode;
-        private string cacheKey;
-        private bool useRepeat;
+        private readonly System.Net.Http.HttpClient _client;
+        private CookieContainer _cookieContainer = new CookieContainer();
+        private CacheMode _cacheMode;
+        private string _cacheKey;
+        private bool _useRepeat;
 
         #region Setup & Consructor
 
@@ -30,27 +29,27 @@ namespace Kit.Http {
             bool? repeat = null) {
 
             if (cacheDirectory != null)
-                HttpClient.cacheDirectory = cacheDirectory;
+                _cacheDirectory = cacheDirectory;
 
             if (cache != null)
-                globalCacheMode = (CacheMode)cache;
+                _globalCacheMode = (CacheMode)cache;
 
             if (repeat != null)
-                globalUseRepeat = (bool)repeat;
+                _globalUseRepeat = (bool)repeat;
         }
 
         public HttpClient(CacheMode? cache = null, string cacheKey = null, bool? repeat = null) {
-            cacheMode = cache ?? globalCacheMode;
-            this.cacheKey = cacheKey ?? string.Empty;
-            useRepeat = repeat ?? globalUseRepeat;
+            _cacheMode = cache ?? _globalCacheMode;
+            _cacheKey = cacheKey ?? string.Empty;
+            _useRepeat = repeat ?? _globalUseRepeat;
 
             var handler = new HttpClientHandler {
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                CookieContainer = cookieContainer
+                CookieContainer = _cookieContainer
                 //AllowAutoRedirect = false //todo redirect
             };
 
-            client = new System.Net.Http.HttpClient(handler);
+            _client = new System.Net.Http.HttpClient(handler);
             SetHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8");
             SetHeader("Accept-Encoding", "gzip, deflate");
             SetHeader("Accept-Language", "ru,en;q=0.9");
@@ -58,7 +57,7 @@ namespace Kit.Http {
             SetHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36");
         }
 
-        public void Dispose() => client.Dispose();
+        public void Dispose() => _client.Dispose();
 
         #endregion
 
@@ -70,8 +69,8 @@ namespace Kit.Http {
             if (name == null || value == null)
                 throw new InvalidOperationException();
 
-            client.DefaultRequestHeaders.Remove(name);
-            client.DefaultRequestHeaders.TryAddWithoutValidation(name, value);
+            _client.DefaultRequestHeaders.Remove(name);
+            _client.DefaultRequestHeaders.TryAddWithoutValidation(name, value);
         }
 
         public void AddToHeader(string name, string value) {
@@ -80,7 +79,7 @@ namespace Kit.Http {
             if (name == null || value == null)
                 throw new InvalidOperationException();
 
-            client.DefaultRequestHeaders.TryAddWithoutValidation(name, value);
+            _client.DefaultRequestHeaders.TryAddWithoutValidation(name, value);
         }
 
         public void RemoveHeader(string name) {
@@ -89,7 +88,7 @@ namespace Kit.Http {
             if (name == null)
                 throw new InvalidOperationException();
 
-            client.DefaultRequestHeaders.Remove(name);
+            _client.DefaultRequestHeaders.Remove(name);
         }
 
         #endregion
@@ -100,9 +99,9 @@ namespace Kit.Http {
 
             var response =
                 await CacheAsync(uri, "get",
-                    () => GetAsync(uri, repeat: repeat ?? useRepeat),
-                    cache: cache ?? cacheMode,
-                    cacheKey: cacheKey ?? this.cacheKey);
+                    () => GetAsync(uri, repeat: repeat ?? _useRepeat),
+                    cache: cache ?? _cacheMode,
+                    cacheKey: cacheKey ?? _cacheKey);
 
             if (response.IsHtml)
                 SetHeader("Referer", uri.AbsoluteUri);
@@ -126,12 +125,12 @@ namespace Kit.Http {
 
         private async Task<HttpResponse> GetBaseAsync(Uri uri) {
             HttpResponseMessage response;
-            var requestCookies = cookieContainer.GetCookies(uri);
+            var requestCookies = _cookieContainer.GetCookies(uri);
 
             try {
                 var startTime = DateTimeOffset.Now;
                 LogService.Log($"Http get started: {uri.AbsoluteUri}");
-                response = await client.GetAsync(uri, Kit.CancellationToken);
+                response = await _client.GetAsync(uri, Kit.CancellationToken);
                 LogService.Log($"Http get completed at {TimeHelper.FormattedLatency(startTime)}");
             }
             catch (Exception exception) {
@@ -191,8 +190,8 @@ namespace Kit.Http {
             var response =
                 await CacheAsync(uri, "post",
                     () => PostBaseAsync(uri, content),
-                    cache: cache ?? cacheMode,
-                    cacheKey: cacheKey ?? this.cacheKey);
+                    cache: cache ?? _cacheMode,
+                    cacheKey: cacheKey ?? _cacheKey);
 
             if (response.IsHtml)
                 SetHeader("Referer", uri.AbsoluteUri);
@@ -202,14 +201,14 @@ namespace Kit.Http {
 
         private async Task<HttpResponse> PostBaseAsync(Uri uri, HttpContent content) {
             HttpResponseMessage response;
-            var requestCookies = cookieContainer.GetCookies(uri);
+            var requestCookies = _cookieContainer.GetCookies(uri);
 
             try {
                 var startTime = DateTimeOffset.Now;
                 LogService.Log($"Http post started: {uri.AbsoluteUri}");
                 SetHeader("Cache-Control", "max-age=0");
                 SetHeader("Origin", $"{uri.Scheme}://{uri.Host}");
-                response = await client.PostAsync(uri, content, Kit.CancellationToken);
+                response = await _client.PostAsync(uri, content, Kit.CancellationToken);
                 LogService.Log($"Http post completed at {TimeHelper.FormattedLatency(startTime)}");
             }
             catch (Exception exception) {
@@ -238,9 +237,9 @@ namespace Kit.Http {
 
         #region Cache
 
-        private static bool isCacheInitialized;
-        private static Dictionary<string, CacheInfo> registry;
-        private static int cacheCounter = 0;
+        private static bool _isCacheInitialized;
+        private static Dictionary<string, CacheInfo> _registry;
+        private static int _cacheCounter = 0;
 
         private async Task<IHttpResponse> CacheAsync(
             Uri uri, string actionName, Func<Task<HttpResponse>> httpAction, CacheMode cache, string cacheKey) {
@@ -248,7 +247,7 @@ namespace Kit.Http {
             if (cache == CacheMode.Disabled)
                 return await httpAction();
 
-            if (!isCacheInitialized)
+            if (!_isCacheInitialized)
                 CacheInitialize();
 
             var key = "(" + $"{cacheKey};{actionName}".TrimStart(';') + ")";
@@ -256,58 +255,58 @@ namespace Kit.Http {
             string paddedCount;
             string bodyFileName;
 
-            if (cache == CacheMode.Full && registry.ContainsKey(cachedName)) {
+            if (cache == CacheMode.Full && _registry.ContainsKey(cachedName)) {
                 LogService.Log($"Http {actionName} cached: {uri.AbsoluteUri}");
-                var fileInfo = registry.GetValue(cachedName);
+                var fileInfo = _registry.GetValue(cachedName);
                 bodyFileName = fileInfo.BodyFileName;
                 paddedCount = bodyFileName.Substring(0, 4);
 
-                if (FileClient.Exists(bodyFileName, cacheDirectory)) //todo ... && infoFileName
+                if (FileClient.Exists(bodyFileName, _cacheDirectory)) //todo ... && infoFileName
                     return new CachedResponse(
                         mimeType: fileInfo.MimeType,
-                        getInfo: () => FileClient.ReadLines($"{paddedCount} {infoFileSuffix}", cacheDirectory),
-                        getText: () => FileClient.ReadText(bodyFileName, cacheDirectory),
-                        getBytes: () => FileClient.ReadBytes(bodyFileName, cacheDirectory)
+                        getInfo: () => FileClient.ReadLines($"{paddedCount} {_infoFileSuffix}", _cacheDirectory),
+                        getText: () => FileClient.ReadText(bodyFileName, _cacheDirectory),
+                        getBytes: () => FileClient.ReadBytes(bodyFileName, _cacheDirectory)
                     );
             }
             else {
-                paddedCount = (++cacheCounter).ToString().PadLeft(4, '0');
+                paddedCount = (++_cacheCounter).ToString().PadLeft(4, '0');
                 bodyFileName = PathHelper.SafeFileName($"{paddedCount} {key} {uri.AbsoluteUri}"); // no .ext
             }
 
             var response = await httpAction();
-            var infoFileName = $"{paddedCount} {infoFileSuffix}";
+            var infoFileName = $"{paddedCount} {_infoFileSuffix}";
             FixCacheFileExtension(response, ref bodyFileName);
-            FileClient.Write(infoFileName, response.FormattedInfo, cacheDirectory);
+            FileClient.Write(infoFileName, response.FormattedInfo, _cacheDirectory);
 
             if (response.IsText)
-                FileClient.Write(bodyFileName, response.GetText(), cacheDirectory);
+                FileClient.Write(bodyFileName, response.GetText(), _cacheDirectory);
             else
-                FileClient.Write(bodyFileName, response.GetBytes(), cacheDirectory);
+                FileClient.Write(bodyFileName, response.GetBytes(), _cacheDirectory);
 
             lock (this)
-                FileClient.AppendText(registryFileName, $"{cachedName} | {response.MimeType} | {bodyFileName}", cacheDirectory);
+                FileClient.AppendText(_registryFileName, $"{cachedName} | {response.MimeType} | {bodyFileName}", _cacheDirectory);
 
-            registry[cachedName] = new CacheInfo { MimeType = response.MimeType, BodyFileName = bodyFileName };
+            _registry[cachedName] = new CacheInfo { MimeType = response.MimeType, BodyFileName = bodyFileName };
             return response;
         }
 
         private static void CacheInitialize() {
-            Debug.Assert(!isCacheInitialized);
+            Debug.Assert(!_isCacheInitialized);
 
-            if (isCacheInitialized)
+            if (_isCacheInitialized)
                 throw new InvalidOperationException();
 
-            isCacheInitialized = true;
-            registry = new Dictionary<string, CacheInfo>();
+            _isCacheInitialized = true;
+            _registry = new Dictionary<string, CacheInfo>();
 
-            if (FileClient.Exists(registryFileName, cacheDirectory)) {
-                var lines = FileClient.ReadLines(registryFileName, cacheDirectory);
+            if (FileClient.Exists(_registryFileName, _cacheDirectory)) {
+                var lines = FileClient.ReadLines(_registryFileName, _cacheDirectory);
 
                 foreach (var line in lines) {
                     var splitted = line.Split('|');
 
-                    registry[splitted[0].Trim()] =
+                    _registry[splitted[0].Trim()] =
                         new CacheInfo {
                             MimeType = splitted[1].Trim(),
                             BodyFileName = splitted[2].Trim()

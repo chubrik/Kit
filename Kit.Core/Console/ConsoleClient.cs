@@ -4,21 +4,21 @@ using System.Diagnostics;
 namespace Kit {
     public class ConsoleClient : ILogClient {
 
-        private static ConsoleClient instance;
-        public static ConsoleClient Instance => instance ?? (instance = new ConsoleClient());
+        private static ConsoleClient _instance;
+        public static ConsoleClient Instance => _instance ?? (_instance = new ConsoleClient());
         private ConsoleClient() { }
 
         private static ConsolePosition _position = new ConsolePosition(0, 0);
         public static ConsolePosition Position => _position;
 
-        private static LogLevel minLevel = LogLevel.Info;
+        private static LogLevel _minLevel = LogLevel.Info;
 
         #region Setup
 
         public static void Setup(LogLevel? minLevel = null) {
 
             if (minLevel != null)
-                ConsoleClient.minLevel = (LogLevel)minLevel;
+                _minLevel = (LogLevel)minLevel;
         }
 
         #endregion
@@ -27,7 +27,7 @@ namespace Kit {
 
         public void PushToLog(string message, LogLevel level = LogLevel.Log) {
 
-            if (level < minLevel)
+            if (level < _minLevel)
                 return;
 
             ConsoleColor? color;

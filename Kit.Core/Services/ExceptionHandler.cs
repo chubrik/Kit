@@ -7,7 +7,7 @@ namespace Kit {
 
         private ExceptionHandler() { }
 
-        private static int counter = 0;
+        private static int _counter = 0;
 
         public static readonly List<IDataClient> DataClients = new List<IDataClient> {
             FileClient.Instance
@@ -25,10 +25,10 @@ namespace Kit {
             if (match.Success)
                 message += $" ({match.Groups[1].Value}:{match.Groups[2].Value})";
 
-            counter++;
-            var paddedCount = counter.ToString().PadLeft(3, '0');
+            _counter++;
+            var paddedCount = _counter.ToString().PadLeft(3, '0');
             LogService.Log($"Exception {paddedCount}: {message}", level);
-            var text = $"Exception #{counter}\n{message}\n\n";
+            var text = $"Exception #{_counter}\n{message}\n\n";
 
             var thisException = exception;
 

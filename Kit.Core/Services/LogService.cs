@@ -5,7 +5,7 @@ namespace Kit {
 
         private LogService() { }
 
-        internal const string LogFileName = "$log.txt";
+        internal const string _logFileName = "$log.txt";
 
         public static readonly List<ILogClient> Clients = new List<ILogClient> {
             ConsoleClient.Instance,

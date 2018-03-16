@@ -6,15 +6,15 @@ using System.Threading.Tasks;
 namespace Kit {
     public class Kit {
 
-        private static readonly CancellationTokenSource сancellationTokenSource = new CancellationTokenSource();
-        public static CancellationToken CancellationToken => сancellationTokenSource.Token;
-        private static readonly string formattedStartTime = DateTimeOffset.Now.ToString("dd.MM.yyyy HH.mm.ss");
-        internal static string BaseDirectory = "$work";
-        internal static string WorkingDirectory = string.Empty;
-        private static string diagnosticsDirectory = "$diagnostics";
+        private static readonly CancellationTokenSource _сancellationTokenSource = new CancellationTokenSource();
+        public static CancellationToken CancellationToken => _сancellationTokenSource.Token;
+        private static readonly string _formattedStartTime = DateTimeOffset.Now.ToString("dd.MM.yyyy HH.mm.ss");
+        internal static string _baseDirectory = "$work";
+        internal static string _workingDirectory = string.Empty;
+        private static string _diagnosticsDirectory = "$diagnostics";
 
         internal static string DiagnisticsCurrentDirectory =>
-            PathHelper.Combine(diagnosticsDirectory, formattedStartTime);
+            PathHelper.Combine(_diagnosticsDirectory, _formattedStartTime);
 
         #region Setup & Initialize
 
@@ -24,13 +24,13 @@ namespace Kit {
             string diagnosticsDirectory = null) {
 
             if (baseDirectory != null)
-                BaseDirectory = baseDirectory;
+                _baseDirectory = baseDirectory;
 
             if (workingDirectory != null)
-                WorkingDirectory = workingDirectory;
+                _workingDirectory = workingDirectory;
 
             if (diagnosticsDirectory != null)
-                Kit.diagnosticsDirectory = diagnosticsDirectory;
+                _diagnosticsDirectory = diagnosticsDirectory;
         }
 
         private static void Initialize() {
@@ -83,6 +83,6 @@ namespace Kit {
             Console.ReadKey(true);
         }
 
-        public static void Exit() => сancellationTokenSource.Cancel();
+        public static void Exit() => _сancellationTokenSource.Cancel();
     }
 }

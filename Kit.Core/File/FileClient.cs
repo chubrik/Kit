@@ -7,8 +7,8 @@ using System.Linq;
 namespace Kit {
     public class FileClient : IDataClient, IReportClient, ILogClient {
 
-        private static FileClient instance;
-        public static FileClient Instance => instance ?? (instance = new FileClient());
+        private static FileClient _instance;
+        public static FileClient Instance => _instance ?? (_instance = new FileClient());
         private FileClient() { }
 
         #region IDataClient
@@ -20,7 +20,7 @@ namespace Kit {
 
         #region IReportClient
 
-        private static int reportCounter = 0;
+        private static int _reportCounter = 0;
 
         public void PushToReport(string subject, string body, IEnumerable<string> attachmentPaths, string targetDirectory) {
             Debug.Assert(attachmentPaths != null);
@@ -28,8 +28,8 @@ namespace Kit {
             if (attachmentPaths == null)
                 throw new InvalidOperationException();
 
-            reportCounter++;
-            var paddedCount = reportCounter.ToString().PadLeft(3, '0');
+            _reportCounter++;
+            var paddedCount = _reportCounter.ToString().PadLeft(3, '0');
             var fileName = PathHelper.SafeFileName($"{paddedCount} {subject}.txt");
             Write(fileName, $"{subject}\r\n\r\n{body}\r\n", targetDirectory);
             var attachmentCounter = 0;
@@ -44,20 +44,20 @@ namespace Kit {
 
         #region ILogClient
 
-        private bool isLogInitialized;
-        private string logFullPath;
-        private bool logIndent = false;
+        private bool _isLogInitialized;
+        private string _logFullPath;
+        private bool _logIndent = false;
 
         public void PushToLog(string message, LogLevel level = LogLevel.Log) {
 
-            if (!isLogInitialized)
+            if (!_isLogInitialized)
                 LogInitialize();
 
             lock (this) {
 
                 if (level == LogLevel.Log) {
-                    File.AppendAllText(logFullPath, logIndent ? $"\r\n{MessageLine(message)}" : MessageLine(message));
-                    logIndent = false;
+                    File.AppendAllText(_logFullPath, _logIndent ? $"\r\n{MessageLine(message)}" : MessageLine(message));
+                    _logIndent = false;
                     return;
                 }
 
@@ -86,20 +86,20 @@ namespace Kit {
                         throw new ArgumentOutOfRangeException(nameof(level));
                 }
 
-                File.AppendAllText(logFullPath, $"\r\n--- {header} ---\r\n{MessageLine(message)}");
-                logIndent = true;
+                File.AppendAllText(_logFullPath, $"\r\n--- {header} ---\r\n{MessageLine(message)}");
+                _logIndent = true;
             }
         }
 
         private void LogInitialize() {
-            Debug.Assert(!isLogInitialized);
+            Debug.Assert(!_isLogInitialized);
 
-            if (isLogInitialized)
+            if (_isLogInitialized)
                 throw new InvalidOperationException();
 
-            isLogInitialized = true;
-            logFullPath = FullPath(LogService.LogFileName, Kit.DiagnisticsCurrentDirectory);
-            CreateDir(logFullPath);
+            _isLogInitialized = true;
+            _logFullPath = FullPath(LogService._logFileName, Kit.DiagnisticsCurrentDirectory);
+            CreateDir(_logFullPath);
         }
 
         private static string MessageLine(string message) =>
@@ -219,7 +219,7 @@ namespace Kit {
         }
 
         public static string FullPath(string path, string targetDirectory = null) =>
-            PathHelper.Combine(Kit.BaseDirectory, targetDirectory ?? Kit.WorkingDirectory, path);
+            PathHelper.Combine(Kit._baseDirectory, targetDirectory ?? Kit._workingDirectory, path);
 
         public static List<string> FileNames(string path = "") =>
             Directory.GetFiles(FullPath(path)).Select(PathHelper.FileName).ToList();
