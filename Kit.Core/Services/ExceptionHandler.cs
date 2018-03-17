@@ -15,8 +15,16 @@ namespace Kit {
 
         public static void Register(Exception exception, LogLevel level = LogLevel.Error) {
 
-            if (exception.Data.Contains("registered"))
-                return;
+            lock (DataClients) {
+
+                if (exception.Data.Contains("registered"))
+                    return;
+
+                exception.Data["registered"] = true;
+            }
+
+            if (exception.IsCanceled())
+                level = LogLevel.Log;
 
             var startTime = DateTimeOffset.Now;
             var message = exception.Message.Replace("\r\n", " ");
@@ -25,11 +33,9 @@ namespace Kit {
             if (match.Success)
                 message += $" ({match.Groups[1].Value}:{match.Groups[2].Value})";
 
-            _counter++;
-            var paddedCount = _counter.ToString().PadLeft(3, '0');
-            LogService.Log($"Exception {paddedCount}: {message}", level);
-            var text = $"Exception #{_counter}\n{message}\n\n";
-
+            var count = ++_counter;
+            LogService.Log($"Exception #{count}: {message}", level);
+            var text = $"Exception #{count}\n{message}\n\n";
             var thisException = exception;
 
             while (true) {
@@ -43,15 +49,12 @@ namespace Kit {
             }
 
             text = text.Replace("\n", "\r\n").Replace("\r\r", "\r");
-            var fileName = PathHelper.SafeFileName($"{paddedCount} {message}.txt");
-
-            LogService.Log($"Exception register started");
+            var fileName = PathHelper.SafeFileName($"{count.ToString().PadLeft(3, '0')} {message}.txt");
 
             foreach (var client in DataClients)
                 client.PushToWrite(fileName, text, Kit.DiagnisticsCurrentDirectory);
-            
-            LogService.Log($"Exception register completed at {TimeHelper.FormattedLatency(startTime)}");
-            exception.Data["registered"] = true;
+
+            LogService.Log($"Exception #{count} registered at {TimeHelper.FormattedLatency(startTime)}");
         }
     }
 }

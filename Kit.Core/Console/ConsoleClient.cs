@@ -8,9 +8,7 @@ namespace Kit {
         public static ConsoleClient Instance => _instance ?? (_instance = new ConsoleClient());
         private ConsoleClient() { }
 
-        private static ConsolePosition _position = new ConsolePosition(0, 0);
-        public static ConsolePosition Position => _position;
-
+        public static ConsolePosition Position { get; private set; } = new ConsolePosition(0, 0);
         private static LogLevel _minLevel = LogLevel.Info;
 
         #region Setup
@@ -59,8 +57,9 @@ namespace Kit {
                     throw new ArgumentOutOfRangeException(nameof(level));
             }
 
-            var fullMessage = $"{DateTimeOffset.Now.ToString("HH:mm:ss")} - {message}";
-            WriteLine(message, color);
+            var fullMessage = Position.Left > 0 ? "\n" : string.Empty;
+            fullMessage += $"{DateTimeOffset.Now.ToString("HH:mm:ss")} - {message}";
+            WriteLine(fullMessage, color);
         }
 
         #endregion
@@ -71,7 +70,7 @@ namespace Kit {
 
         public static ConsolePosition WriteLine(
             string text, ConsoleColor? color = null, ConsolePosition position = null) =>
-            Write($"{text}\r\n", color, position);
+            Write($"{text}\n", color, position);
 
         public static ConsolePosition Write(
             string text, ConsoleColor? color = null, ConsolePosition position = null) {
@@ -107,7 +106,7 @@ namespace Kit {
                         Console.CursorVisible = true;
                     }
                     else
-                        _position = endPosition;
+                        Position = endPosition;
                 }
 
                 return endPosition;

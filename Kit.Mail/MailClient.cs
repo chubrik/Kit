@@ -19,6 +19,7 @@ namespace Kit.Mail {
         private static NetworkCredential _credentials;
         private static string _from;
         private static string _to;
+        private static int _logCounter = 0;
 
         #region Setup
 
@@ -83,7 +84,8 @@ namespace Kit.Mail {
                 return;
 
             var startTime = DateTimeOffset.Now;
-            LogService.Log($"Mail send started: {subject}");
+            var logLabel = $"Mail send #{++_logCounter}";
+            LogService.Log($"{logLabel}: {subject}");
             var message = new MailMessage(_from, _to, subject, body);
 
             if (attachmentPaths != null)
@@ -111,7 +113,8 @@ namespace Kit.Mail {
                 }
             }
             catch (Exception exception) {
-                Debug.Fail(exception.ToString());
+                if (!exception.IsCanceled()) Debug.Fail(exception.ToString());
+                LogService.Log($"{logLabel} failed at {TimeHelper.FormattedLatency(startTime)}");
                 ExceptionHandler.Register(exception);
                 throw;
             }
@@ -119,7 +122,7 @@ namespace Kit.Mail {
             foreach (var attachment in message.Attachments)
                 attachment.Dispose();
 
-            LogService.Log($"Mail send completed at {TimeHelper.FormattedLatency(startTime)}");
+            LogService.Log($"{logLabel} completed at {TimeHelper.FormattedLatency(startTime)}");
         }
 
         #endregion

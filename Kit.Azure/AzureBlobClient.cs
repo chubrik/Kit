@@ -19,6 +19,7 @@ namespace Kit.Azure {
         private static readonly OperationContext _operationContext = new OperationContext();
         private static CloudBlobContainer _container;
         private static string _workingDirectory = string.Empty;
+        private static int _logCounter = 0;
 
         #region Setup
 
@@ -104,16 +105,19 @@ namespace Kit.Azure {
             throw new NotImplementedException();
 
         public static async Task ReadAsync(string path, Stream target, string targetDirectory = null) {
+            var startTime = DateTimeOffset.Now;
+            var fullPath = PathHelper.Combine(targetDirectory ?? _workingDirectory, path);
+            var logLabel = $"Download blob #{++_logCounter}";
+            LogService.Log($"{logLabel}: {fullPath}");
+
             try {
-                var startTime = DateTimeOffset.Now;
-                var fullPath = PathHelper.Combine(targetDirectory ?? _workingDirectory, path);
-                LogService.Log($"Download blob started: {fullPath}");
                 var blob = _container.GetBlockBlobReference(fullPath);
                 await blob.DownloadToStreamAsync(target, _accessCondition, _options, _operationContext, Kit.CancellationToken);
-                LogService.Log($"Download blob completed at {TimeHelper.FormattedLatency(startTime)}");
+                LogService.Log($"{logLabel} completed at {TimeHelper.FormattedLatency(startTime)}");
             }
             catch (Exception exception) {
-                Debug.Fail(exception.ToString());
+                if (!exception.IsCanceled()) Debug.Fail(exception.ToString());
+                LogService.Log($"{logLabel} failed at {TimeHelper.FormattedLatency(startTime)}");
                 ExceptionHandler.Register(exception);
                 throw;
             }
@@ -123,17 +127,21 @@ namespace Kit.Azure {
 
         private static async Task<T> ReadBaseAsync<T>(
             string path, Func<string, CloudBlockBlob, Task<T>> action, string targetDirectory) {
+
+            var startTime = DateTimeOffset.Now;
+            var fullPath = PathHelper.Combine(targetDirectory ?? _workingDirectory, path);
+            var logLabel = $"Download blob #{++_logCounter}";
+            LogService.Log($"{logLabel}: {fullPath}");
+
             try {
-                var startTime = DateTimeOffset.Now;
-                var fullPath = PathHelper.Combine(targetDirectory ?? _workingDirectory, path);
-                LogService.Log($"Download blob started: {fullPath}");
                 var blob = _container.GetBlockBlobReference(fullPath);
                 var result = await action(fullPath, blob);
-                LogService.Log($"Download blob completed at {TimeHelper.FormattedLatency(startTime)}");
+                LogService.Log($"{logLabel} completed at {TimeHelper.FormattedLatency(startTime)}");
                 return result;
             }
             catch (Exception exception) {
-                Debug.Fail(exception.ToString());
+                if (!exception.IsCanceled()) Debug.Fail(exception.ToString());
+                LogService.Log($"{logLabel} failed at {TimeHelper.FormattedLatency(startTime)}");
                 ExceptionHandler.Register(exception);
                 throw;
             }
@@ -172,16 +180,19 @@ namespace Kit.Azure {
             throw new NotImplementedException();
 
         public static async Task WriteAsync(string path, Stream source, string targetDirectory = null) {
+            var startTime = DateTimeOffset.Now;
+            var fullPath = PathHelper.Combine(targetDirectory ?? _workingDirectory, path);
+            var logLabel = $"Upload blob #{++_logCounter}";
+            LogService.Log($"{logLabel}: {fullPath}");
+
             try {
-                var startTime = DateTimeOffset.Now;
-                var fullPath = PathHelper.Combine(targetDirectory ?? _workingDirectory, path);
-                LogService.Log($"Upload blob started: {fullPath}");
                 var blob = _container.GetBlockBlobReference(fullPath);
                 await blob.UploadFromStreamAsync(source, _accessCondition, _options, _operationContext, Kit.CancellationToken);
-                LogService.Log($"Upload blob completed at {TimeHelper.FormattedLatency(startTime)}");
+                LogService.Log($"{logLabel} completed at {TimeHelper.FormattedLatency(startTime)}");
             }
             catch (Exception exception) {
-                Debug.Fail(exception.ToString());
+                if (!exception.IsCanceled()) Debug.Fail(exception.ToString());
+                LogService.Log($"{logLabel} failed at {TimeHelper.FormattedLatency(startTime)}");
                 ExceptionHandler.Register(exception);
                 throw;
             }
@@ -192,16 +203,19 @@ namespace Kit.Azure {
         private static async Task WriteBaseAsync(
             string path, Func<CloudBlockBlob, Task> action, string targetDirectory) {
 
+            var startTime = DateTimeOffset.Now;
+            var fullPath = PathHelper.Combine(targetDirectory ?? _workingDirectory, path);
+            var logLabel = $"Upload blob #{++_logCounter}";
+            LogService.Log($"{logLabel}: {fullPath}");
+
             try {
-                var startTime = DateTimeOffset.Now;
-                var fullPath = PathHelper.Combine(targetDirectory ?? _workingDirectory, path);
-                LogService.Log($"Upload blob started: {fullPath}");
                 var blob = _container.GetBlockBlobReference(fullPath);
                 await action(blob);
-                LogService.Log($"Upload blob completed at {TimeHelper.FormattedLatency(startTime)}");
+                LogService.Log($"{logLabel} completed at {TimeHelper.FormattedLatency(startTime)}");
             }
             catch (Exception exception) {
-                Debug.Fail(exception.ToString());
+                if (!exception.IsCanceled()) Debug.Fail(exception.ToString());
+                LogService.Log($"{logLabel} failed at {TimeHelper.FormattedLatency(startTime)}");
                 ExceptionHandler.Register(exception);
                 throw;
             }

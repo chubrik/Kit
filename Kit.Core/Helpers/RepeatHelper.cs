@@ -15,6 +15,11 @@ namespace Kit {
                 }
                 catch (Exception exception) {
 
+                    if (exception.IsCanceled()) {
+                        ExceptionHandler.Register(exception);
+                        throw;
+                    }
+
                     if (repeatCount > 1)
                         LogService.LogInfo($"Repeat {count} of {repeatCount}:");
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Kit {
     public class ReportService {
@@ -7,6 +8,7 @@ namespace Kit {
         private ReportService() { }
 
         private const string _reportsDirectory = "reports";
+        private static int _logCounter = 0;
 
         public static readonly List<IReportClient> Clients = new List<IReportClient> {
             FileClient.Instance
@@ -43,14 +45,23 @@ namespace Kit {
             string subject, string body, IEnumerable<string> attachmentPaths, LogLevel logLevel = LogLevel.Info) {
 
             var startTime = DateTimeOffset.Now;
-            LogService.Log($"Report: {subject}", logLevel);
-            LogService.Log($"Report started");
+            var logLabel = $"Report #{++_logCounter}";
+            LogService.Log($"{logLabel}: {subject}", logLevel);
 
-            foreach (var client in Clients)
-                client.PushToReport(
-                    subject, body, attachmentPaths, PathHelper.Combine(Kit.DiagnisticsCurrentDirectory, _reportsDirectory));
+            try {
+                var targetDirectory = PathHelper.Combine(Kit.DiagnisticsCurrentDirectory, _reportsDirectory);
 
-            LogService.Log($"Report completed at {TimeHelper.FormattedLatency(startTime)}");
+                foreach (var client in Clients)
+                    client.PushToReport(subject, body, attachmentPaths, targetDirectory);
+
+                LogService.Log($"{logLabel} completed at {TimeHelper.FormattedLatency(startTime)}");
+            }
+            catch (Exception exception) {
+                if (!exception.IsCanceled()) Debug.Fail(exception.ToString());
+                LogService.Log($"{logLabel} failed at {TimeHelper.FormattedLatency(startTime)}");
+                ExceptionHandler.Register(exception);
+                throw;
+            }
         }
     }
 }

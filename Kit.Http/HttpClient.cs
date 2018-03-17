@@ -14,6 +14,7 @@ namespace Kit.Http {
         private static string _cacheDirectory = "$http-cache";
         private static CacheMode _globalCacheMode = CacheMode.Disabled;
         private static bool _globalUseRepeat = true;
+        private static int _logCounter = 0;
 
         private readonly System.Net.Http.HttpClient _client;
         private CookieContainer _cookieContainer = new CookieContainer();
@@ -124,20 +125,24 @@ namespace Kit.Http {
         }
 
         private async Task<HttpResponse> GetBaseAsync(Uri uri) {
-            HttpResponseMessage response;
+            var startTime = DateTimeOffset.Now;
+            var logLabel = $"Http get #{++_logCounter}";
+            LogService.Log($"{logLabel}: {uri.AbsoluteUri}");
+
             var requestCookies = _cookieContainer.GetCookies(uri);
+            HttpResponseMessage response;
 
             try {
-                var startTime = DateTimeOffset.Now;
-                LogService.Log($"Http get started: {uri.AbsoluteUri}");
                 response = await _client.GetAsync(uri, Kit.CancellationToken);
-                LogService.Log($"Http get completed at {TimeHelper.FormattedLatency(startTime)}");
+                LogService.Log($"{logLabel} completed at {TimeHelper.FormattedLatency(startTime)}");
             }
             catch (Exception exception) {
-                Debug.Fail(exception.ToString());
-                var newException = new Exception($"Http stream exception: {uri.AbsoluteUri}", exception);
-                ExceptionHandler.Register(newException, level: LogLevel.Warning);
-                throw newException;
+                if (!exception.IsCanceled()) Debug.Fail(exception.ToString());
+                LogService.Log($"{logLabel} failed at {TimeHelper.FormattedLatency(startTime)}");
+                ExceptionHandler.Register(exception);
+                //var newException = new Exception($"Http stream exception: {uri.AbsoluteUri}", exception);
+                //ExceptionHandler.Register(newException, level: LogLevel.Warning);
+                throw;
             }
 
             var statusCode = response.StatusCode;
@@ -200,19 +205,22 @@ namespace Kit.Http {
         }
 
         private async Task<HttpResponse> PostBaseAsync(Uri uri, HttpContent content) {
-            HttpResponseMessage response;
+            var startTime = DateTimeOffset.Now;
+            var logLabel = $"Http post #{++_logCounter}";
+            LogService.Log($"{logLabel}: {uri.AbsoluteUri}");
+
             var requestCookies = _cookieContainer.GetCookies(uri);
+            HttpResponseMessage response;
 
             try {
-                var startTime = DateTimeOffset.Now;
-                LogService.Log($"Http post started: {uri.AbsoluteUri}");
                 SetHeader("Cache-Control", "max-age=0");
                 SetHeader("Origin", $"{uri.Scheme}://{uri.Host}");
                 response = await _client.PostAsync(uri, content, Kit.CancellationToken);
-                LogService.Log($"Http post completed at {TimeHelper.FormattedLatency(startTime)}");
+                LogService.Log($"{logLabel} completed at {TimeHelper.FormattedLatency(startTime)}");
             }
             catch (Exception exception) {
-                Debug.Fail(exception.ToString());
+                if (!exception.IsCanceled()) Debug.Fail(exception.ToString());
+                LogService.Log($"{logLabel} failed at {TimeHelper.FormattedLatency(startTime)}");
                 ExceptionHandler.Register(exception);
                 RemoveHeader("Cache-Control");
                 throw;

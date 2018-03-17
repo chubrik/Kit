@@ -46,16 +46,13 @@ namespace Kit {
         #endregion
 
         public static void Execute(Action @delegate) =>
-            Execute((CancellationToken cancellationToken) => {
+            Execute(cancellationToken => {
                 @delegate();
                 return Task.CompletedTask;
             });
 
         public static void Execute(Func<Task> delegateAsync) =>
-            Execute((CancellationToken cancellationToken) => {
-                delegateAsync();
-                return Task.CompletedTask;
-            });
+            Execute(cancellationToken => delegateAsync());
 
         public static void Execute(Func<CancellationToken, Task> delegateAsync) =>
             ExecuteAsync(delegateAsync).Wait();
@@ -66,9 +63,9 @@ namespace Kit {
             var startTime = DateTimeOffset.Now;
 
             try {
-                LogService.LogInfo("Kit is started");
+                LogService.LogInfo("Kit started");
                 Initialize();
-                LogService.Log($"Kit is ready at {TimeHelper.FormattedLatency(startTime)}");
+                LogService.Log($"Kit ready at {TimeHelper.FormattedLatency(startTime)}");
                 await delegateAsync(CancellationToken);
                 LogService.LogInfo($"Completed at {TimeHelper.FormattedLatency(startTime)}");
             }
@@ -83,6 +80,9 @@ namespace Kit {
             Console.ReadKey(true);
         }
 
-        public static void Exit() => _сancellationTokenSource.Cancel();
+        public static void Exit() {
+            LogService.LogWarning("Exit requested");
+            _сancellationTokenSource.Cancel();
+        }
     }
 }
