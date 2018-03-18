@@ -62,9 +62,7 @@ namespace Kit {
         public static void Execute(Func<CancellationToken, Task> delegateAsync) =>
             ExecuteAsync(delegateAsync).Wait();
 
-        private static async Task ExecuteAsync(
-            Func<CancellationToken, Task> delegateAsync) {
-
+        private static async Task ExecuteAsync(Func<CancellationToken, Task> delegateAsync) {
             var startTime = DateTimeOffset.Now;
 
             try {

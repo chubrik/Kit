@@ -137,11 +137,15 @@ namespace Kit.Http {
                 LogService.Log($"{logLabel} completed at {TimeHelper.FormattedLatency(startTime)}");
             }
             catch (Exception exception) {
-                if (!exception.IsCanceled()) Debug.Fail(exception.ToString());
-                LogService.Log($"{logLabel} failed at {TimeHelper.FormattedLatency(startTime)}");
+
+                if (exception.IsCanceled())
+                    LogService.Log($"{logLabel} canceled at {TimeHelper.FormattedLatency(startTime)}");
+                else {
+                    Debug.Fail(exception.ToString());
+                    LogService.LogError($"{logLabel} failed at {TimeHelper.FormattedLatency(startTime)}");
+                }
+
                 ExceptionHandler.Register(exception);
-                //var newException = new Exception($"Http stream exception: {uri.AbsoluteUri}", exception);
-                //ExceptionHandler.Register(newException, level: LogLevel.Warning);
                 throw;
             }
 
@@ -219,8 +223,14 @@ namespace Kit.Http {
                 LogService.Log($"{logLabel} completed at {TimeHelper.FormattedLatency(startTime)}");
             }
             catch (Exception exception) {
-                if (!exception.IsCanceled()) Debug.Fail(exception.ToString());
-                LogService.Log($"{logLabel} failed at {TimeHelper.FormattedLatency(startTime)}");
+
+                if (exception.IsCanceled())
+                    LogService.Log($"{logLabel} canceled at {TimeHelper.FormattedLatency(startTime)}");
+                else {
+                    Debug.Fail(exception.ToString());
+                    LogService.LogError($"{logLabel} failed at {TimeHelper.FormattedLatency(startTime)}");
+                }
+
                 ExceptionHandler.Register(exception);
                 RemoveHeader("Cache-Control");
                 throw;

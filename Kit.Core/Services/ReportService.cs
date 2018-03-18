@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace Kit {
     public class ReportService {
@@ -47,21 +46,12 @@ namespace Kit {
             var startTime = DateTimeOffset.Now;
             var logLabel = $"Report #{++_logCounter}";
             LogService.Log($"{logLabel}: {subject}", logLevel);
+            var targetDirectory = PathHelper.Combine(Kit.DiagnisticsCurrentDirectory, _reportsDirectory);
 
-            try {
-                var targetDirectory = PathHelper.Combine(Kit.DiagnisticsCurrentDirectory, _reportsDirectory);
+            foreach (var client in Clients)
+                client.PushToReport(subject, body, attachmentPaths, targetDirectory);
 
-                foreach (var client in Clients)
-                    client.PushToReport(subject, body, attachmentPaths, targetDirectory);
-
-                LogService.Log($"{logLabel} completed at {TimeHelper.FormattedLatency(startTime)}");
-            }
-            catch (Exception exception) {
-                if (!exception.IsCanceled()) Debug.Fail(exception.ToString());
-                LogService.Log($"{logLabel} failed at {TimeHelper.FormattedLatency(startTime)}");
-                ExceptionHandler.Register(exception);
-                throw;
-            }
+            LogService.Log($"{logLabel} completed at {TimeHelper.FormattedLatency(startTime)}");
         }
     }
 }

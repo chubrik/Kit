@@ -113,8 +113,14 @@ namespace Kit.Mail {
                 }
             }
             catch (Exception exception) {
-                if (!exception.IsCanceled()) Debug.Fail(exception.ToString());
-                LogService.Log($"{logLabel} failed at {TimeHelper.FormattedLatency(startTime)}");
+
+                if (exception.IsCanceled())
+                    LogService.Log($"{logLabel} canceled at {TimeHelper.FormattedLatency(startTime)}");
+                else {
+                    Debug.Fail(exception.ToString());
+                    LogService.LogError($"{logLabel} failed at {TimeHelper.FormattedLatency(startTime)}");
+                }
+
                 ExceptionHandler.Register(exception);
                 throw;
             }
