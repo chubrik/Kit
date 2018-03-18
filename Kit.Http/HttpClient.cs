@@ -125,24 +125,35 @@ namespace Kit.Http {
         }
 
         private async Task<HttpResponse> GetBaseAsync(Uri uri) {
-            var startTime = DateTimeOffset.Now;
             var logLabel = $"Http get #{++_logCounter}";
-            LogService.Log($"{logLabel}: {uri.AbsoluteUri}");
-
             var requestCookies = _cookieContainer.GetCookies(uri);
-            HttpResponseMessage response;
+            var repeat12030Count = 3;
+            var repeatLabelPart = string.Empty;
+
+            Retry:
+            var startTime = DateTimeOffset.Now;
+            LogService.Log($"{logLabel}{repeatLabelPart}: {uri.AbsoluteUri}");
+            HttpResponseMessage response = null;
 
             try {
                 response = await _client.GetAsync(uri, Kit.CancellationToken);
                 LogService.Log($"{logLabel} completed at {TimeHelper.FormattedLatency(startTime)}");
             }
             catch (Exception exception) {
+                var latency = TimeHelper.FormattedLatency(startTime);
+
+                if (exception.Has12030() && --repeat12030Count > 0) {
+                    LogService.LogWarning($"{logLabel} terminated at {latency} with native HTTP error. Will repeat...");
+                    ExceptionHandler.Register(exception, level: LogLevel.Warning);
+                    repeatLabelPart = " (repeat)";
+                    goto Retry;
+                }
 
                 if (exception.IsCanceled())
-                    LogService.Log($"{logLabel} canceled at {TimeHelper.FormattedLatency(startTime)}");
+                    LogService.Log($"{logLabel} canceled at {latency}");
                 else {
                     Debug.Fail(exception.ToString());
-                    LogService.LogError($"{logLabel} failed at {TimeHelper.FormattedLatency(startTime)}");
+                    LogService.LogError($"{logLabel} failed at {latency}");
                 }
 
                 ExceptionHandler.Register(exception);
