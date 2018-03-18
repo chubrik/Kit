@@ -9,6 +9,7 @@ namespace Kit {
         private static readonly CancellationTokenSource _сancellationTokenSource = new CancellationTokenSource();
         public static CancellationToken CancellationToken => _сancellationTokenSource.Token;
         private static readonly string _formattedStartTime = DateTimeOffset.Now.ToString("dd.MM.yyyy HH.mm.ss");
+        private static bool _pressAnyKeyToExit = true;
         internal static string _baseDirectory = "$work";
         internal static string _workingDirectory = string.Empty;
         private static string _diagnosticsDirectory = "$diagnostics";
@@ -19,9 +20,13 @@ namespace Kit {
         #region Setup & Initialize
 
         public static void Setup(
+            bool? pressAnyKeyToExit = null,
             string baseDirectory = null,
             string workingDirectory = null,
             string diagnosticsDirectory = null) {
+
+            if (pressAnyKeyToExit != null)
+                _pressAnyKeyToExit = (bool)pressAnyKeyToExit;
 
             if (baseDirectory != null)
                 _baseDirectory = baseDirectory;
@@ -76,8 +81,10 @@ namespace Kit {
                 LogService.LogError($"Failed at {TimeHelper.FormattedLatency(startTime)}");
             }
 
-            Console.Write("\nPress any key to exit...");
-            Console.ReadKey(true);
+            if (_pressAnyKeyToExit) {
+                Console.Write("\nPress any key to exit...");
+                Console.ReadKey(true);
+            }
         }
 
         public static void Exit() {

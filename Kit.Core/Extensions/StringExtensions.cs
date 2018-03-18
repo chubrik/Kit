@@ -18,6 +18,9 @@ namespace Kit {
         public static string Join(this IEnumerable<string> values, string separator) =>
             string.Join(separator, values);
 
+        public static string Join(this IEnumerable<char> values) =>
+            string.Join(string.Empty, values);
+
         public static string JoinLines(this IEnumerable<string> values) =>
             string.Join("\r\n", values) + "\r\n";
     }
