@@ -8,15 +8,17 @@ namespace Kit.Tests {
         public void Run() {
             LogService.LogInfo("Hello World!");
 
-            var html = HttpClient.GetText("https://www.google.com/");
+            using (var http = new HttpClient()) {
+                var html = http.GetText("https://www.google.com/");
+            }
 
-            using (var stream = FileClient.OpenRead("../Test.cs"))
+            using (var stream = FileClient.OpenRead("../Kit.Tests.runtimeconfig.json"))
                 AzureBlobClient.Write("file.ext", stream);
 
-            using (var stream = FileClient.OpenWrite("Test2.cs"))
+            using (var stream = FileClient.OpenWrite("test.json"))
                 AzureBlobClient.Read("file.ext", stream);
 
-            ReportService.ReportSuccess("My report", "My report body", "../Program.cs");
+            ReportService.ReportSuccess("My report", "My report body", "../Kit.Core.dll");
             throw new Exception("My exception");
         }
     }

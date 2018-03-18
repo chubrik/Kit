@@ -10,7 +10,7 @@ namespace Kit.Tests {
             ConsoleClient.Setup(minLevel: LogLevel.Log);
             HttpClient.Setup(cache: CacheMode.Full);
 
-            var azureStorageLogin = File.ReadAllLines("../../azure-storage-login.txt");
+            var azureStorageLogin = File.ReadAllLines("../../../../../azure-storage-login.txt");
 
             AzureBlobClient.Setup(
                 accountName: azureStorageLogin[0],
@@ -18,7 +18,7 @@ namespace Kit.Tests {
                 containerName: "test"
             );
 
-            var mailCredentials = File.ReadAllLines("../../mail-credentials.txt");
+            var mailCredentials = File.ReadAllLines("../../../../../mail-credentials.txt");
 
             MailClient.Setup(
                 host: mailCredentials[0],
