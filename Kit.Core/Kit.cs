@@ -70,13 +70,31 @@ namespace Kit {
                 Initialize();
                 LogService.Log($"Kit ready at {TimeHelper.FormattedLatency(startTime)}");
                 await delegateAsync(CancellationToken);
+                await ThreadService.AwaitAll();
                 LogService.LogInfo($"Completed at {TimeHelper.FormattedLatency(startTime)}");
             }
             catch (Exception exception) {
-                Debug.Fail(exception.ToString());
+                //todo если вылетела основная делегата, нужно всё равно дождаться завершения всех потоков
+
+                if (exception.IsCanceled())
+                    LogService.LogWarning($"Kit canceled at {TimeHelper.FormattedLatency(startTime)}"); //todo cancellation time
+                else {
+                    Debug.Fail(exception.ToString());
+                    LogService.LogError($"Kit failed at {TimeHelper.FormattedLatency(startTime)}");
+                }
+
                 ExceptionHandler.Register(exception);
                 ReportService.Report(exception.Message, exception.ToString());
-                LogService.LogError($"Failed at {TimeHelper.FormattedLatency(startTime)}");
+
+                if (exception.IsCanceled())
+                    LogService.LogWarning($"Canceled at {TimeHelper.FormattedLatency(startTime)}");
+                else {
+                    if (!LogService.Clients.Contains(ConsoleClient.Instance))
+                        LogService.Clients.Add(ConsoleClient.Instance);
+
+                    LogService.LogError($"Failed at {TimeHelper.FormattedLatency(startTime)}");
+                    _pressAnyKeyToExit = true;
+                }
             }
 
             if (_pressAnyKeyToExit) {
@@ -85,8 +103,8 @@ namespace Kit {
             }
         }
 
-        public static void Exit() {
-            LogService.LogWarning("Exit requested");
+        public static void Cancel() {
+            LogService.LogWarning("Kit cancel requested");
             _сancellationTokenSource.Cancel();
         }
     }

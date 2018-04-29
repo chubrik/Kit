@@ -98,7 +98,7 @@ namespace Kit {
                 throw new InvalidOperationException();
 
             _isLogInitialized = true;
-            _logFullPath = FullPath(LogService._logFileName, Kit.DiagnisticsCurrentDirectory);
+            _logFullPath = FullPath(LogService.LogFileName, Kit.DiagnisticsCurrentDirectory);
             CreateDir(_logFullPath);
         }
 

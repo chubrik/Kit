@@ -6,7 +6,7 @@ namespace Kit {
 
         private ReportService() { }
 
-        private const string _reportsDirectory = "reports";
+        private const string ReportsDirectory = "reports";
         private static int _logCounter = 0;
 
         public static readonly List<IReportClient> Clients = new List<IReportClient> {
@@ -46,7 +46,7 @@ namespace Kit {
             var startTime = DateTimeOffset.Now;
             var logLabel = $"Report #{++_logCounter}";
             LogService.Log($"{logLabel}: {subject}", logLevel);
-            var targetDirectory = PathHelper.Combine(Kit.DiagnisticsCurrentDirectory, _reportsDirectory);
+            var targetDirectory = PathHelper.Combine(Kit.DiagnisticsCurrentDirectory, ReportsDirectory);
 
             foreach (var client in Clients)
                 client.PushToReport(subject, body, attachmentPaths, targetDirectory);

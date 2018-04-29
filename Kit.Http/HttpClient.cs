@@ -9,8 +9,9 @@ using System.Threading.Tasks;
 namespace Kit.Http {
     public class HttpClient : IDisposable {
 
-        private const string _registryFileName = "$registry.txt";
-        private const string _infoFileSuffix = "$.txt";
+        private const string RegistryFileName = "$registry.txt";
+        private const string InfoFileSuffix = "$.txt";
+
         private static string _cacheDirectory = "$http-cache";
         private static CacheMode _globalCacheMode = CacheMode.Disabled;
         private static bool _globalUseRepeat = true;
@@ -293,7 +294,7 @@ namespace Kit.Http {
                 if (FileClient.Exists(bodyFileName, _cacheDirectory)) //todo ... && infoFileName
                     return new CachedResponse(
                         mimeType: fileInfo.MimeType,
-                        getInfo: () => FileClient.ReadLines($"{paddedCount} {_infoFileSuffix}", _cacheDirectory),
+                        getInfo: () => FileClient.ReadLines($"{paddedCount} {InfoFileSuffix}", _cacheDirectory),
                         getText: () => FileClient.ReadText(bodyFileName, _cacheDirectory),
                         getBytes: () => FileClient.ReadBytes(bodyFileName, _cacheDirectory)
                     );
@@ -304,7 +305,7 @@ namespace Kit.Http {
             }
 
             var response = await httpAction();
-            var infoFileName = $"{paddedCount} {_infoFileSuffix}";
+            var infoFileName = $"{paddedCount} {InfoFileSuffix}";
             FixCacheFileExtension(response, ref bodyFileName);
             FileClient.Write(infoFileName, response.FormattedInfo, _cacheDirectory);
 
@@ -314,7 +315,7 @@ namespace Kit.Http {
                 FileClient.Write(bodyFileName, response.GetBytes(), _cacheDirectory);
 
             lock (this)
-                FileClient.AppendText(_registryFileName, $"{cachedName} | {response.MimeType} | {bodyFileName}", _cacheDirectory);
+                FileClient.AppendText(RegistryFileName, $"{cachedName} | {response.MimeType} | {bodyFileName}", _cacheDirectory);
 
             _registry[cachedName] = new CacheInfo { MimeType = response.MimeType, BodyFileName = bodyFileName };
             return response;
@@ -329,8 +330,8 @@ namespace Kit.Http {
             _isCacheInitialized = true;
             _registry = new Dictionary<string, CacheInfo>();
 
-            if (FileClient.Exists(_registryFileName, _cacheDirectory)) {
-                var lines = FileClient.ReadLines(_registryFileName, _cacheDirectory);
+            if (FileClient.Exists(RegistryFileName, _cacheDirectory)) {
+                var lines = FileClient.ReadLines(RegistryFileName, _cacheDirectory);
 
                 foreach (var line in lines) {
                     var splitted = line.Split('|');
