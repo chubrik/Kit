@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Kit {
-    public class ReportService {
-
+namespace Kit
+{
+    public class ReportService
+    {
         private ReportService() { }
 
         private const string ReportsDirectory = "reports";
@@ -33,7 +34,8 @@ namespace Kit {
         public static void ReportError(string subject, string body, IEnumerable<string> attachmentPaths) =>
             Report(subject, body, attachmentPaths, logLevel: LogLevel.Error);
 
-        public static void Report(string subject, string body, string attachmentPath = null, LogLevel logLevel = LogLevel.Info) {
+        public static void Report(string subject, string body, string attachmentPath = null, LogLevel logLevel = LogLevel.Info)
+        {
             var attachmentPaths = attachmentPath != null ? new List<string> { attachmentPath } : new List<string>();
             Report(subject, body, attachmentPaths, logLevel: logLevel);
         }
@@ -41,8 +43,8 @@ namespace Kit {
         #endregion
 
         public static void Report(
-            string subject, string body, IEnumerable<string> attachmentPaths, LogLevel logLevel = LogLevel.Info) {
-
+            string subject, string body, IEnumerable<string> attachmentPaths, LogLevel logLevel = LogLevel.Info)
+        {
             var startTime = DateTimeOffset.Now;
             var logLabel = $"Report #{++_logCounter}";
             LogService.Log($"{logLabel}: {subject}", logLevel);

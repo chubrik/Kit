@@ -3,10 +3,12 @@ using Kit.Http;
 using Kit.Mail;
 using System.IO;
 
-namespace Kit.Tests {
-    public class Program {
-
-        public static void Main(string[] args) {
+namespace Kit.Tests
+{
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
             ConsoleClient.Setup(minLevel: LogLevel.Log);
             HttpClient.Setup(cache: CacheMode.Full);
 

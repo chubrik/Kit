@@ -2,9 +2,10 @@
 using System;
 using System.Threading.Tasks;
 
-namespace Kit.Http {
-    public static class HttpExtensions {
-
+namespace Kit.Http
+{
+    public static class HttpExtensions
+    {
         public static IHttpResponse PostJson(this HttpClient client, string url, object json) =>
             PostJsonAsync(client, url, json).Result;
 

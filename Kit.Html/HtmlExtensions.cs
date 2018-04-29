@@ -1,8 +1,9 @@
 ﻿using HtmlAgilityPack;
 
-namespace Kit.Html {
-    public static class HtmlExtensions {
-
+namespace Kit.Html
+{
+    public static class HtmlExtensions
+    {
         public static string InnerHtml(this HtmlDocument document) =>
             document.DocumentNode.InnerHtml;
 

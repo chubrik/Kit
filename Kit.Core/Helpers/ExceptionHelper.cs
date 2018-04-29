@@ -2,10 +2,12 @@
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 
-namespace Kit {
-    public static class ExceptionHelper {
-
-        public static string OneLineMessageWithPlace(Exception exception) {
+namespace Kit
+{
+    public static class ExceptionHelper
+    {
+        public static string OneLineMessageWithPlace(Exception exception)
+        {
             var message = exception.Message.Replace("\r\n", " ");
             var match = Regex.Match(exception.ToString(), @"(\w+\.cs):line (\d+)");
 
@@ -15,10 +17,12 @@ namespace Kit {
             return message;
         }
 
-        public static string FullDump(Exception exception) {
+        public static string FullDump(Exception exception)
+        {
             var dump = exception.ToString().Replace(" --->", "\n   --->") + "\n";
 
-            if (exception is AggregateException) {
+            if (exception is AggregateException)
+            {
                 Debug.Fail(string.Empty);
                 throw new NotImplementedException();
             }

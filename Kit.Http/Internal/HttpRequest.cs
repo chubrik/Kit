@@ -5,9 +5,10 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 
-namespace Kit.Http {
-    internal class HttpRequest : IHttpRequest {
-
+namespace Kit.Http
+{
+    internal class HttpRequest : IHttpRequest
+    {
         internal HttpRequestMessage Original { get; }
         public string HttpVersion => Original.Version.ToString();
         public string Method => Original.Method.ToString();
@@ -18,7 +19,8 @@ namespace Kit.Http {
 
         private IReadOnlyDictionary<string, IReadOnlyList<string>> _headers;
 
-        public IReadOnlyDictionary<string, IReadOnlyList<string>> Headers {
+        public IReadOnlyDictionary<string, IReadOnlyList<string>> Headers
+        {
             get {
                 if (_headers != null)
                     return _headers;
@@ -49,14 +51,16 @@ namespace Kit.Http {
 
         private string _rawHeaders;
 
-        public string RawHeaders {
+        public string RawHeaders
+        {
             get {
                 if (_rawHeaders != null)
                     return _rawHeaders;
 
                 var lines = new List<string>();
 
-                foreach (var header in Headers) {
+                foreach (var header in Headers)
+                {
                     var separator = header.Key == "User-Agent" ? " " : header.Key == "Cookie" ? "; " : ", ";
                     lines.Add($"{header.Key}: {header.Value.Join(separator)}");
                 }
@@ -81,8 +85,8 @@ namespace Kit.Http {
 
         private CookieCollection _cookies;
 
-        public HttpRequest(HttpRequestMessage request, CookieCollection cookies) {
-
+        public HttpRequest(HttpRequestMessage request, CookieCollection cookies)
+        {
             Debug.Assert(request != null);
             Original = request ?? throw new ArgumentNullException(nameof(request));
 

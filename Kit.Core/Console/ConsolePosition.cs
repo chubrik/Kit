@@ -1,12 +1,14 @@
 ﻿using System;
 
-namespace Kit {
-    public class ConsolePosition {
-
+namespace Kit
+{
+    public class ConsolePosition
+    {
         public int Top { get; }
         public int Left { get; }
 
-        public ConsolePosition(int top, int left) {
+        public ConsolePosition(int top, int left)
+        {
             Top = top;
             Left = left;
         }

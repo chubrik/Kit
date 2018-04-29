@@ -1,5 +1,7 @@
-﻿namespace Kit {
-    public enum LogLevel {
+﻿namespace Kit
+{
+    public enum LogLevel
+    {
         Unknown = 0,
         Log,
         Info,

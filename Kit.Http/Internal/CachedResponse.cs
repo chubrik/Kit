@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace Kit.Http {
-    internal class CachedResponse : IHttpResponse {
-
+namespace Kit.Http
+{
+    internal class CachedResponse : IHttpResponse
+    {
         public IHttpRequest Request => throw new NotImplementedException();
 
         public string HttpVersion => throw new NotImplementedException();
@@ -56,8 +57,8 @@ namespace Kit.Http {
             string mimeType,
             Func<List<string>> getInfo,
             Func<string> getText,
-            Func<byte[]> getBytes) {
-
+            Func<byte[]> getBytes)
+        {
             Debug.Assert(mimeType != null);
             MimeType = mimeType ?? throw new ArgumentNullException(nameof(mimeType));
 

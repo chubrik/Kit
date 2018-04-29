@@ -1,12 +1,14 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace Kit {
-    public static class StringExtensions {
-
+namespace Kit
+{
+    public static class StringExtensions
+    {
         public static bool IsNullOrEmpty(this string value) => string.IsNullOrEmpty(value);
 
-        public static List<string> SplitLines(this string value) {
+        public static List<string> SplitLines(this string value)
+        {
             var result = value.Split('\n').Select(i => i.TrimEnd('\r')).ToList();
 
             if (result.Last() == string.Empty)

@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Kit.Http {
-    public interface IHttpRequest {
-
+namespace Kit.Http
+{
+    public interface IHttpRequest
+    {
         string HttpVersion { get; }
         string Method { get; }
         Uri RequestUri { get; }

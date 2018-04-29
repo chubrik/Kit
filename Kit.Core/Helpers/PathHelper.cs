@@ -2,13 +2,16 @@
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace Kit {
-    public class PathHelper {
-
-        public static string Combine(params string[] paths) {
+namespace Kit
+{
+    public class PathHelper
+    {
+        public static string Combine(params string[] paths)
+        {
             var result = Path.Combine(paths).Replace(@"\", "/");
 
-            while (result.Contains("../")) {
+            while (result.Contains("../"))
+            {
 
                 if (result.StartsWith("../"))
                     return result;
@@ -24,7 +27,8 @@ namespace Kit {
 
         public static string FileName(string path) => Path.GetFileName(path);
 
-        public static string SafeFileName(string fileName) {
+        public static string SafeFileName(string fileName)
+        {
             var safeName = fileName.Replace('\"', '\'');
             safeName = Regex.Replace(safeName, @"[\\/:*?""<>|]", "_", RegexOptions.IgnoreCase);
             return safeName.Length > 250 ? safeName.Substring(0, 250) : safeName;

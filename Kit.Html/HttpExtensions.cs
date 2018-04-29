@@ -3,9 +3,10 @@ using Kit.Http;
 using System;
 using System.Threading.Tasks;
 
-namespace Kit.Html {
-    public static class HttpExtensions {
-
+namespace Kit.Html
+{
+    public static class HttpExtensions
+    {
         public static HtmlDocument GetHtmlDoc(
             this HttpClient client, string url, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) =>
             GetHtmlDocAsync(client, url, cache: cache, cacheKey: cacheKey, repeat: repeat).Result;

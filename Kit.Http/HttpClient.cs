@@ -6,9 +6,10 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Kit.Http {
-    public class HttpClient : IDisposable {
-
+namespace Kit.Http
+{
+    public class HttpClient : IDisposable
+    {
         private const string RegistryFileName = "$registry.txt";
         private const string InfoFileSuffix = "$.txt";
 
@@ -28,8 +29,8 @@ namespace Kit.Http {
         public static void Setup(
             string cacheDirectory = null,
             CacheMode? cache = null,
-            bool? repeat = null) {
-
+            bool? repeat = null)
+        {
             if (cacheDirectory != null)
                 _cacheDirectory = cacheDirectory;
 
@@ -40,12 +41,14 @@ namespace Kit.Http {
                 _globalUseRepeat = (bool)repeat;
         }
 
-        public HttpClient(CacheMode? cache = null, string cacheKey = null, bool? repeat = null) {
+        public HttpClient(CacheMode? cache = null, string cacheKey = null, bool? repeat = null)
+        {
             _cacheMode = cache ?? _globalCacheMode;
             _cacheKey = cacheKey ?? string.Empty;
             _useRepeat = repeat ?? _globalUseRepeat;
 
-            var handler = new HttpClientHandler {
+            var handler = new HttpClientHandler
+            {
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                 CookieContainer = _cookieContainer
                 //AllowAutoRedirect = false //todo redirect
@@ -65,7 +68,8 @@ namespace Kit.Http {
 
         #region Headers
 
-        public void SetHeader(string name, string value) {
+        public void SetHeader(string name, string value)
+        {
             Debug.Assert(name != null && value != null);
 
             if (name == null || value == null)
@@ -75,7 +79,8 @@ namespace Kit.Http {
             _client.DefaultRequestHeaders.TryAddWithoutValidation(name, value);
         }
 
-        public void AddToHeader(string name, string value) {
+        public void AddToHeader(string name, string value)
+        {
             Debug.Assert(name != null && value != null);
 
             if (name == null || value == null)
@@ -84,7 +89,8 @@ namespace Kit.Http {
             _client.DefaultRequestHeaders.TryAddWithoutValidation(name, value);
         }
 
-        public void RemoveHeader(string name) {
+        public void RemoveHeader(string name)
+        {
             Debug.Assert(name != null);
 
             if (name == null)
@@ -97,8 +103,8 @@ namespace Kit.Http {
 
         #region Get
 
-        public async Task<IHttpResponse> GetAsync(Uri uri, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) {
-
+        public async Task<IHttpResponse> GetAsync(Uri uri, CacheMode? cache = null, string cacheKey = null, bool? repeat = null)
+        {
             var response =
                 await CacheAsync(uri, "get",
                     () => GetAsync(uri, repeat: repeat ?? _useRepeat),
@@ -111,21 +117,23 @@ namespace Kit.Http {
             return response;
         }
 
-        private async Task<HttpResponse> GetAsync(Uri uri, bool repeat) {
-
+        private async Task<HttpResponse> GetAsync(Uri uri, bool repeat)
+        {
             if (!repeat)
                 return await GetBaseAsync(uri);
 
             HttpResponse response = null;
 
-            await RepeatHelper.Repeat(async () => {
+            await RepeatHelper.Repeat(async () =>
+            {
                 response = await GetBaseAsync(uri);
             });
 
             return response;
         }
 
-        private async Task<HttpResponse> GetBaseAsync(Uri uri) {
+        private async Task<HttpResponse> GetBaseAsync(Uri uri)
+        {
             var logLabel = $"Http get #{++_logCounter}";
             var requestCookies = _cookieContainer.GetCookies(uri);
             var repeat12030Count = 3;
@@ -136,14 +144,17 @@ namespace Kit.Http {
             LogService.Log($"{logLabel}{repeatLabelPart}: {uri.AbsoluteUri}");
             HttpResponseMessage response = null;
 
-            try {
+            try
+            {
                 response = await _client.GetAsync(uri, Kit.CancellationToken);
                 LogService.Log($"{logLabel} completed at {TimeHelper.FormattedLatency(startTime)}");
             }
-            catch (Exception exception) {
+            catch (Exception exception)
+            {
                 var latency = TimeHelper.FormattedLatency(startTime);
 
-                if (exception.Has12030() && --repeat12030Count > 0) {
+                if (exception.Has12030() && --repeat12030Count > 0)
+                {
                     LogService.LogWarning($"{logLabel} terminated at {latency} with native HTTP error. Will repeat...");
                     ExceptionHandler.Register(exception, level: LogLevel.Warning);
                     repeatLabelPart = " (repeat)";
@@ -152,7 +163,8 @@ namespace Kit.Http {
 
                 if (exception.IsCanceled())
                     LogService.Log($"{logLabel} canceled at {latency}");
-                else {
+                else
+                {
                     Debug.Fail(exception.ToString());
                     LogService.LogError($"{logLabel} failed at {latency}");
                 }
@@ -167,7 +179,8 @@ namespace Kit.Http {
             if (statusCode == HttpStatusCode.Found)
                 return await GetBaseAsync(FixRedirectUri(uri, response.Headers.Location));
 
-            if (!response.IsSuccessStatusCode) {
+            if (!response.IsSuccessStatusCode)
+            {
                 Debug.Assert(statusCode == HttpStatusCode.NotFound);
                 var message = $"Http get status {(int)statusCode}: {uri.AbsoluteUri}";
 
@@ -187,12 +200,13 @@ namespace Kit.Http {
         public async Task<IHttpResponse> PostFormAsync(Uri uri, IEnumerable<KeyValuePair<string, string>> form) =>
             await PostAsync(uri, new FormUrlEncodedContent(form));
 
-        public async Task<IHttpResponse> PostMultipartAsync(Uri uri, Dictionary<string, string> multipart) {
-
+        public async Task<IHttpResponse> PostMultipartAsync(Uri uri, Dictionary<string, string> multipart)
+        {
             var context = new MultipartFormDataContent(
                 "----WebKitFormBoundary" + DateTimeOffset.Now.Ticks.ToString("x"));
 
-            foreach (var keyValue in multipart) {
+            foreach (var keyValue in multipart)
+            {
                 var value = new StringContent(keyValue.Value);
                 value.Headers.Remove("Content-Type");
                 value.Headers.Remove("Content-Length");
@@ -206,8 +220,8 @@ namespace Kit.Http {
             await PostAsync(uri, new StringContent(serializedJson, Encoding.UTF8, "application/json"));
 
         private async Task<IHttpResponse> PostAsync(
-            Uri uri, HttpContent content, CacheMode? cache = null, string cacheKey = null) {
-
+            Uri uri, HttpContent content, CacheMode? cache = null, string cacheKey = null)
+        {
             var response =
                 await CacheAsync(uri, "post",
                     () => PostBaseAsync(uri, content),
@@ -220,7 +234,8 @@ namespace Kit.Http {
             return response;
         }
 
-        private async Task<HttpResponse> PostBaseAsync(Uri uri, HttpContent content) {
+        private async Task<HttpResponse> PostBaseAsync(Uri uri, HttpContent content)
+        {
             var startTime = DateTimeOffset.Now;
             var logLabel = $"Http post #{++_logCounter}";
             LogService.Log($"{logLabel}: {uri.AbsoluteUri}");
@@ -228,17 +243,19 @@ namespace Kit.Http {
             var requestCookies = _cookieContainer.GetCookies(uri);
             HttpResponseMessage response;
 
-            try {
+            try
+            {
                 SetHeader("Cache-Control", "max-age=0");
                 SetHeader("Origin", $"{uri.Scheme}://{uri.Host}");
                 response = await _client.PostAsync(uri, content, Kit.CancellationToken);
                 LogService.Log($"{logLabel} completed at {TimeHelper.FormattedLatency(startTime)}");
             }
-            catch (Exception exception) {
-
+            catch (Exception exception)
+            {
                 if (exception.IsCanceled())
                     LogService.Log($"{logLabel} canceled at {TimeHelper.FormattedLatency(startTime)}");
-                else {
+                else
+                {
                     Debug.Fail(exception.ToString());
                     LogService.LogError($"{logLabel} failed at {TimeHelper.FormattedLatency(startTime)}");
                 }
@@ -247,7 +264,8 @@ namespace Kit.Http {
                 RemoveHeader("Cache-Control");
                 throw;
             }
-            finally {
+            finally
+            {
                 RemoveHeader("Origin");
             }
 
@@ -272,8 +290,8 @@ namespace Kit.Http {
         private static int _cacheCounter = 0;
 
         private async Task<IHttpResponse> CacheAsync(
-            Uri uri, string actionName, Func<Task<HttpResponse>> httpAction, CacheMode cache, string cacheKey) {
-
+            Uri uri, string actionName, Func<Task<HttpResponse>> httpAction, CacheMode cache, string cacheKey)
+        {
             if (cache == CacheMode.Disabled)
                 return await httpAction();
 
@@ -285,7 +303,8 @@ namespace Kit.Http {
             string paddedCount;
             string bodyFileName;
 
-            if (cache == CacheMode.Full && _registry.ContainsKey(cachedName)) {
+            if (cache == CacheMode.Full && _registry.ContainsKey(cachedName))
+            {
                 LogService.Log($"Http {actionName} cached: {uri.AbsoluteUri}");
                 var fileInfo = _registry.GetValue(cachedName);
                 bodyFileName = fileInfo.BodyFileName;
@@ -299,7 +318,8 @@ namespace Kit.Http {
                         getBytes: () => FileClient.ReadBytes(bodyFileName, _cacheDirectory)
                     );
             }
-            else {
+            else
+            {
                 paddedCount = (++_cacheCounter).ToString().PadLeft(4, '0');
                 bodyFileName = PathHelper.SafeFileName($"{paddedCount} {key} {uri.AbsoluteUri}"); // no .ext
             }
@@ -321,7 +341,8 @@ namespace Kit.Http {
             return response;
         }
 
-        private static void CacheInitialize() {
+        private static void CacheInitialize()
+        {
             Debug.Assert(!_isCacheInitialized);
 
             if (_isCacheInitialized)
@@ -330,14 +351,17 @@ namespace Kit.Http {
             _isCacheInitialized = true;
             _registry = new Dictionary<string, CacheInfo>();
 
-            if (FileClient.Exists(RegistryFileName, _cacheDirectory)) {
+            if (FileClient.Exists(RegistryFileName, _cacheDirectory))
+            {
                 var lines = FileClient.ReadLines(RegistryFileName, _cacheDirectory);
 
-                foreach (var line in lines) {
+                foreach (var line in lines)
+                {
                     var splitted = line.Split('|');
 
                     _registry[splitted[0].Trim()] =
-                        new CacheInfo {
+                        new CacheInfo
+                        {
                             MimeType = splitted[1].Trim(),
                             BodyFileName = splitted[2].Trim()
                         };
@@ -345,8 +369,8 @@ namespace Kit.Http {
             }
         }
 
-        private static void FixCacheFileExtension(HttpResponse response, ref string fileName) {
-
+        private static void FixCacheFileExtension(HttpResponse response, ref string fileName)
+        {
             if (response.IsHtml && !fileName.EndsWith(".html"))
                 fileName += ".html";
 

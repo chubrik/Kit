@@ -2,13 +2,16 @@
 using Kit.Http;
 using System;
 
-namespace Kit.Tests {
-    public class Test {
-
-        public void Run() {
+namespace Kit.Tests
+{
+    public class Test
+    {
+        public void Run()
+        {
             LogService.LogInfo("Hello World!");
 
-            using (var http = new HttpClient()) {
+            using (var http = new HttpClient())
+            {
                 var html = http.GetText("https://www.google.com/");
             }
 

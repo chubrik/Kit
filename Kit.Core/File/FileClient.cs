@@ -4,9 +4,10 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
-namespace Kit {
-    public class FileClient : IDataClient, IReportClient, ILogClient {
-
+namespace Kit
+{
+    public class FileClient : IDataClient, IReportClient, ILogClient
+    {
         private static FileClient _instance;
         public static FileClient Instance => _instance ?? (_instance = new FileClient());
         private FileClient() { }
@@ -22,7 +23,8 @@ namespace Kit {
 
         private static int _reportCounter = 0;
 
-        public void PushToReport(string subject, string body, IEnumerable<string> attachmentPaths, string targetDirectory) {
+        public void PushToReport(string subject, string body, IEnumerable<string> attachmentPaths, string targetDirectory)
+        {
             Debug.Assert(attachmentPaths != null);
 
             if (attachmentPaths == null)
@@ -48,14 +50,15 @@ namespace Kit {
         private string _logFullPath;
         private bool _logIndent = false;
 
-        public void PushToLog(string message, LogLevel level = LogLevel.Log) {
-
+        public void PushToLog(string message, LogLevel level = LogLevel.Log)
+        {
             if (!_isLogInitialized)
                 LogInitialize();
 
-            lock (this) {
-
-                if (level == LogLevel.Log) {
+            lock (this)
+            {
+                if (level == LogLevel.Log)
+                {
                     File.AppendAllText(_logFullPath, _logIndent ? $"\r\n{MessageLine(message)}" : MessageLine(message));
                     _logIndent = false;
                     return;
@@ -63,8 +66,8 @@ namespace Kit {
 
                 string header;
 
-                switch (level) {
-
+                switch (level)
+                {
                     case LogLevel.Info:
                         header = "INFO";
                         break;
@@ -91,7 +94,8 @@ namespace Kit {
             }
         }
 
-        private void LogInitialize() {
+        private void LogInitialize()
+        {
             Debug.Assert(!_isLogInitialized);
 
             if (_isLogInitialized)
@@ -118,18 +122,22 @@ namespace Kit {
         public static byte[] ReadBytes(string path, string targetDirectory = null) =>
             ReadBase(path, fullPath => File.ReadAllBytes(fullPath), targetDirectory);
 
-        public static void Read(string path, Stream target) {
+        public static void Read(string path, Stream target)
+        {
             using (var fs = OpenRead(path))
                 fs.CopyTo(target);
         }
 
-        public static FileStream OpenRead(string path) {
-            try {
+        public static FileStream OpenRead(string path)
+        {
+            try
+            {
                 var fullPath = FullPath(path);
                 LogService.Log($"Read file: {fullPath}");
                 return File.OpenRead(fullPath);
             }
-            catch (Exception exception) {
+            catch (Exception exception)
+            {
                 Debug.Fail(exception.ToString());
                 ExceptionHandler.Register(exception);
                 throw;
@@ -137,14 +145,16 @@ namespace Kit {
         }
 
         private static T ReadBase<T>(
-            string path, Func<string, T> readFunc, string targetDirectory) {
-
-            try {
+            string path, Func<string, T> readFunc, string targetDirectory)
+        {
+            try
+            {
                 var fullPath = FullPath(path, targetDirectory);
                 LogService.Log($"Read file: {fullPath}");
                 return readFunc(fullPath);
             }
-            catch (Exception exception) {
+            catch (Exception exception)
+            {
                 Debug.Fail(exception.ToString());
                 ExceptionHandler.Register(exception);
                 throw;
@@ -167,33 +177,40 @@ namespace Kit {
         public static void Write(string path, byte[] bytes, string targetDirectory = null) =>
             WriteBase(path, fullPath => File.WriteAllBytes(fullPath, bytes), targetDirectory);
 
-        public static void Write(string path, Stream source, string targetDirectory = null) {
+        public static void Write(string path, Stream source, string targetDirectory = null)
+        {
             using (var fs = OpenWrite(path, targetDirectory))
                 source.CopyTo(fs);
         }
 
-        public static FileStream OpenWrite(string path, string targetDirectory = null) {
-            try {
+        public static FileStream OpenWrite(string path, string targetDirectory = null)
+        {
+            try
+            {
                 var fullPath = FullPath(path, targetDirectory);
                 CreateDir(fullPath);
                 LogService.Log($"Write file: {fullPath}");
                 return File.OpenWrite(fullPath);
             }
-            catch (Exception exception) {
+            catch (Exception exception)
+            {
                 Debug.Fail(exception.ToString());
                 ExceptionHandler.Register(exception);
                 throw;
             }
         }
 
-        private static void WriteBase(string path, Action<string> writeAction, string targetDirectory) {
-            try {
+        private static void WriteBase(string path, Action<string> writeAction, string targetDirectory)
+        {
+            try
+            {
                 var fullPath = FullPath(path, targetDirectory);
                 CreateDir(fullPath);
                 LogService.Log($"Write file: {fullPath}");
                 writeAction(fullPath);
             }
-            catch (Exception exception) {
+            catch (Exception exception)
+            {
                 Debug.Fail(exception.ToString());
                 ExceptionHandler.Register(exception);
                 throw;
@@ -205,14 +222,16 @@ namespace Kit {
         public static bool Exists(string path, string targetDirectory = null) =>
             File.Exists(FullPath(path, targetDirectory));
 
-        public static void AppendText(string path, string text, string targetDirectory = null) {
+        public static void AppendText(string path, string text, string targetDirectory = null)
+        {
             var fullPath = FullPath(path, targetDirectory);
             CreateDir(fullPath);
             LogService.Log($"Append file: {fullPath}");
             File.AppendAllText(fullPath, $"{text}\r\n");
         }
 
-        public static void Delete(string path, string targetDirectory = null) {
+        public static void Delete(string path, string targetDirectory = null)
+        {
             var fullPath = FullPath(path, targetDirectory);
             LogService.Log($"Delete file: {fullPath}");
             File.Delete(fullPath);
@@ -224,10 +243,12 @@ namespace Kit {
         public static List<string> FileNames(string path = "") =>
             Directory.GetFiles(FullPath(path)).Select(PathHelper.FileName).ToList();
 
-        private static void CreateDir(string fullPath) {
+        private static void CreateDir(string fullPath)
+        {
             var dirPath = PathHelper.Parent(fullPath);
 
-            if (!Directory.Exists(dirPath)) {
+            if (!Directory.Exists(dirPath))
+            {
                 Directory.CreateDirectory(dirPath);
                 LogService.Log($"Create directory: {dirPath}");
             }

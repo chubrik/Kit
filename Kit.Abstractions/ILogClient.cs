@@ -1,6 +1,7 @@
-﻿namespace Kit {
-    public interface ILogClient {
-
+﻿namespace Kit
+{
+    public interface ILogClient
+    {
         void PushToLog(string message, LogLevel level = LogLevel.Log);
     }
 }

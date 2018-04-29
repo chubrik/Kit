@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Kit {
-    public class ExceptionHandler {
-
+namespace Kit
+{
+    public class ExceptionHandler
+    {
         private ExceptionHandler() { }
 
         private static int _counter = 0;
@@ -12,10 +13,10 @@ namespace Kit {
             FileClient.Instance
         };
 
-        public static void Register(Exception exception, LogLevel level = LogLevel.Error) {
-
-            lock (DataClients) {
-
+        public static void Register(Exception exception, LogLevel level = LogLevel.Error)
+        {
+            lock (DataClients)
+            {
                 if (exception.Data.Contains("registered"))
                     return;
 

@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
 
-namespace Kit {
-    public class LogService {
-
+namespace Kit
+{
+    public class LogService
+    {
         private LogService() { }
 
         internal const string LogFileName = "$log.txt";
@@ -12,8 +13,8 @@ namespace Kit {
             FileClient.Instance
         };
 
-        public static void Log(string message, LogLevel level = LogLevel.Log) {
-
+        public static void Log(string message, LogLevel level = LogLevel.Log)
+        {
             foreach (var client in Clients)
                 client.PushToLog(message, level);
         }

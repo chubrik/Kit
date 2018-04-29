@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
 
-namespace Kit.Http {
-    public interface IHttpResponse {
-
+namespace Kit.Http
+{
+    public interface IHttpResponse
+    {
         IHttpRequest Request { get; }
 
         string HttpVersion { get; }

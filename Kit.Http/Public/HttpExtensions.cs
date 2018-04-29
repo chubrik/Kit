@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Kit.Http {
-    public static class HttpExtensions {
-
+namespace Kit.Http
+{
+    public static class HttpExtensions
+    {
         #region Get
 
         public static string GetText(
@@ -50,13 +51,15 @@ namespace Kit.Http {
         //
 
         public static async Task<string> GetTextAsync(
-            this HttpClient client, Uri uri, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) {
+            this HttpClient client, Uri uri, CacheMode? cache = null, string cacheKey = null, bool? repeat = null)
+        {
             var response = await client.GetAsync(uri, cache: cache, cacheKey: cacheKey, repeat: repeat);
             return response.GetText();
         }
 
         public static async Task<byte[]> GetBytesAsync(
-            this HttpClient client, Uri uri, CacheMode? cache = null, string cacheKey = null, bool? repeat = null) {
+            this HttpClient client, Uri uri, CacheMode? cache = null, string cacheKey = null, bool? repeat = null)
+        {
             var response = await client.GetAsync(uri, cache: cache, cacheKey: cacheKey, repeat: repeat);
             return response.GetBytes();
         }

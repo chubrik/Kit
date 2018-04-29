@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Diagnostics;
 
-namespace Kit {
-    public class ConsoleClient : ILogClient {
-
+namespace Kit
+{
+    public class ConsoleClient : ILogClient
+    {
         private static ConsoleClient _instance;
         public static ConsoleClient Instance => _instance ?? (_instance = new ConsoleClient());
         private ConsoleClient() { }
@@ -13,8 +14,8 @@ namespace Kit {
 
         #region Setup
 
-        public static void Setup(LogLevel? minLevel = null) {
-
+        public static void Setup(LogLevel? minLevel = null)
+        {
             if (minLevel != null)
                 _minLevel = (LogLevel)minLevel;
         }
@@ -23,15 +24,15 @@ namespace Kit {
 
         #region ILogClient
 
-        public void PushToLog(string message, LogLevel level = LogLevel.Log) {
-
+        public void PushToLog(string message, LogLevel level = LogLevel.Log)
+        {
             if (level < _minLevel)
                 return;
 
             ConsoleColor? color;
 
-            switch (level) {
-
+            switch (level)
+            {
                 case LogLevel.Log:
                     color = ConsoleColor.DarkGray;
                     break;
@@ -73,35 +74,41 @@ namespace Kit {
             Write($"{text}\n", color, position);
 
         public static ConsolePosition Write(
-            string text, ConsoleColor? color = null, ConsolePosition position = null) {
-
-            lock (Position) {
+            string text, ConsoleColor? color = null, ConsolePosition position = null)
+        {
+            lock (Position)
+            {
                 var origColor = Console.ForegroundColor;
                 var origTop = Console.CursorTop;
                 var origLeft = Console.CursorLeft;
                 var isMoved = position != null && !position.Equals(Position);
                 ConsolePosition endPosition;
 
-                try {
+                try
+                {
                     if (color != null)
                         Console.ForegroundColor = (ConsoleColor)color;
 
-                    if (isMoved) {
+                    if (isMoved)
+                    {
                         Console.CursorVisible = false;
                         Console.SetCursorPosition(position.Left, position.Top);
                     }
 
                     Console.Write(text);
                 }
-                catch (ArgumentOutOfRangeException exception) {
+                catch (ArgumentOutOfRangeException exception)
+                {
                     Debug.Fail(exception.ToString());
                     ExceptionHandler.Register(exception);
                 }
-                finally {
+                finally
+                {
                     Console.ForegroundColor = origColor;
                     endPosition = new ConsolePosition(Console.CursorTop, Console.CursorLeft);
 
-                    if (isMoved) {
+                    if (isMoved)
+                    {
                         Console.SetCursorPosition(origLeft, origTop);
                         Console.CursorVisible = true;
                     }

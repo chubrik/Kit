@@ -6,9 +6,10 @@ using System.Net.Mail;
 using System.Net.Mime;
 using System.Threading.Tasks;
 
-namespace Kit.Mail {
-    public class MailClient : IReportClient {
-
+namespace Kit.Mail
+{
+    public class MailClient : IReportClient
+    {
         private static MailClient _instance;
         public static MailClient Instance => _instance ?? (_instance = new MailClient());
         private MailClient() { }
@@ -30,8 +31,8 @@ namespace Kit.Mail {
             string userName = null,
             string password = null,
             string from = null,
-            string to = null) {
-
+            string to = null)
+        {
             if (isEnable != null)
                 _isEnable = (bool)isEnable;
 
@@ -78,8 +79,8 @@ namespace Kit.Mail {
         #endregion
 
         //todo attachments
-        public static async Task SendAsync(string subject, string body, IEnumerable<string> attachmentPaths) {
-
+        public static async Task SendAsync(string subject, string body, IEnumerable<string> attachmentPaths)
+        {
             if (!_isEnable)
                 return;
 
@@ -89,9 +90,10 @@ namespace Kit.Mail {
             var message = new MailMessage(_from, _to, subject, body);
 
             if (attachmentPaths != null)
-                foreach (var attachmentPath in attachmentPaths) {
-
-                    var attachment = new Attachment(FileClient.FullPath(attachmentPath), "application/octet-stream") {
+                foreach (var attachmentPath in attachmentPaths)
+                {
+                    var attachment = new Attachment(FileClient.FullPath(attachmentPath), "application/octet-stream")
+                    {
                         ContentId = new Guid().ToString(),
                         ContentDisposition = {
                             Inline = true,
@@ -105,18 +107,21 @@ namespace Kit.Mail {
                     message.Attachments.Add(attachment);
                 }
 
-            try {
-                using (var smtp = new SmtpClient(_host, _port)) {
+            try
+            {
+                using (var smtp = new SmtpClient(_host, _port))
+                {
                     smtp.EnableSsl = true;
                     smtp.Credentials = _credentials;
                     await smtp.SendMailAsync(message); //todo cancellationToken
                 }
             }
-            catch (Exception exception) {
-
+            catch (Exception exception)
+            {
                 if (exception.IsCanceled())
                     LogService.Log($"{logLabel} canceled at {TimeHelper.FormattedLatency(startTime)}");
-                else {
+                else
+                {
                     Debug.Fail(exception.ToString());
                     LogService.LogError($"{logLabel} failed at {TimeHelper.FormattedLatency(startTime)}");
                 }
