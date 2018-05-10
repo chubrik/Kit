@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Text.RegularExpressions;
 
 namespace Kit
 {
-    public static class ExceptionHelper
+    internal static class ExceptionHelper
     {
         public static string OneLineMessageWithPlace(Exception exception)
         {
@@ -17,20 +16,16 @@ namespace Kit
             return message;
         }
 
-        public static string FullDump(Exception exception)
+        public static string ExtendedDump(Exception exception)
         {
-            var dump = exception.ToString().Replace(" --->", "\n   --->") + "\n";
+            var result = string.Empty;
+            var innerest = exception.FirstInnerestException();
 
-            if (exception is AggregateException)
-            {
-                Debug.Fail(string.Empty);
-                throw new NotImplementedException();
-            }
+            if (innerest != exception)
+                result += $"\r\n\r\n\r\nFIRST INNEREST EXCEPTION:\r\n\r\n{innerest}\r\n";
 
-            if (exception.InnerException != null)
-                dump += "\n\nINNER EXCEPTION:\n\n" + FullDump(exception.InnerException);
-
-            return dump;
+            result += $"\r\n\r\n\r\nFULL DUMP:\r\n\r\n{exception}\r\n";
+            return result;
         }
     }
 }

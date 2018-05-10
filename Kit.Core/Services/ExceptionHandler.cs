@@ -32,7 +32,7 @@ namespace Kit
             var count = ++_counter;
             var logLabel = $"Exception #{count}";
             LogService.Log($"{logLabel}: {message}", level);
-            var text = $"{logLabel}\n{message}\n\n\nDUMP:\n\n{ExceptionHelper.FullDump(exception)}";
+            var text = $"{logLabel}\r\n{message}\r\n{ExceptionHelper.ExtendedDump(exception)}";
             var fileName = PathHelper.SafeFileName($"{count.ToString().PadLeft(3, '0')} {message}.txt");
 
             foreach (var client in DataClients)

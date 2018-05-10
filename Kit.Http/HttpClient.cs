@@ -334,7 +334,7 @@ namespace Kit.Http
             else
                 FileClient.Write(bodyFileName, response.GetBytes(), _cacheDirectory);
 
-            lock (this)
+            lock (RegistryFileName)
                 FileClient.AppendText(RegistryFileName, $"{cachedName} | {response.MimeType} | {bodyFileName}", _cacheDirectory);
 
             _registry[cachedName] = new CacheInfo { MimeType = response.MimeType, BodyFileName = bodyFileName };

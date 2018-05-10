@@ -14,9 +14,15 @@ namespace Kit
             return exception is TaskCanceledException || exception is OperationCanceledException;
         }
 
-        public static Exception SingleMostInnerExceptionOrNull(this Exception exception) =>
-            exception is AggregateException ? null
-            : exception.InnerException == null ? exception
-            : SingleMostInnerExceptionOrNull(exception.InnerException);
+        public static Exception FirstInnerestException(this Exception exception)
+        {
+            if (exception is AggregateException aggregate && aggregate.InnerExceptions.Count > 0)
+                return aggregate.InnerExceptions[0].FirstInnerestException();
+
+            if (exception.InnerException != null)
+                return exception.InnerException.FirstInnerestException();
+
+            return exception;
+        }
     }
 }
