@@ -73,10 +73,12 @@ namespace Kit
             string text, ConsoleColor? color = null, ConsolePosition position = null) =>
             Write($"{text}\n", color, position);
 
+        private static readonly object _lock = new object();
+
         public static ConsolePosition Write(
             string text, ConsoleColor? color = null, ConsolePosition position = null)
         {
-            lock (Position)
+            lock (_lock)
             {
                 var origColor = Console.ForegroundColor;
                 var origTop = Console.CursorTop;
@@ -100,7 +102,7 @@ namespace Kit
                 catch (ArgumentOutOfRangeException exception)
                 {
                     Debug.Fail(exception.ToString());
-                    ExceptionHandler.Register(exception);
+                    ExceptionHandler.Register(exception, level: LogLevel.Warning);
                 }
                 finally
                 {

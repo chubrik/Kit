@@ -49,13 +49,14 @@ namespace Kit
         private bool _isLogInitialized;
         private string _logFullPath;
         private bool _logIndent = false;
+        private static readonly object _lock = new object();
 
         public void PushToLog(string message, LogLevel level = LogLevel.Log)
         {
             if (!_isLogInitialized)
                 LogInitialize();
 
-            lock (this)
+            lock (_lock)
             {
                 if (level == LogLevel.Log)
                 {
@@ -139,7 +140,6 @@ namespace Kit
             catch (Exception exception)
             {
                 Debug.Fail(exception.ToString());
-                ExceptionHandler.Register(exception);
                 throw;
             }
         }
@@ -156,7 +156,6 @@ namespace Kit
             catch (Exception exception)
             {
                 Debug.Fail(exception.ToString());
-                ExceptionHandler.Register(exception);
                 throw;
             }
         }
@@ -195,7 +194,6 @@ namespace Kit
             catch (Exception exception)
             {
                 Debug.Fail(exception.ToString());
-                ExceptionHandler.Register(exception);
                 throw;
             }
         }
@@ -212,7 +210,6 @@ namespace Kit
             catch (Exception exception)
             {
                 Debug.Fail(exception.ToString());
-                ExceptionHandler.Register(exception);
                 throw;
             }
         }
@@ -238,7 +235,7 @@ namespace Kit
         }
 
         public static string FullPath(string path, string targetDirectory = null) =>
-            PathHelper.Combine(Kit._baseDirectory, targetDirectory ?? Kit._workingDirectory, path);
+            PathHelper.Combine(Kit.BaseDirectory, targetDirectory ?? Kit.WorkingDirectory, path);
 
         public static List<string> FileNames(string path = "") =>
             Directory.GetFiles(FullPath(path)).Select(PathHelper.FileName).ToList();

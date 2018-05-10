@@ -8,8 +8,8 @@ namespace Kit
     {
         public static bool IsCanceled(this Exception exception)
         {
-            if (exception is AggregateException)
-                return ((AggregateException)exception).InnerExceptions.All(i => i.IsCanceled());
+            if (exception is AggregateException aggregate)
+                return aggregate.InnerExceptions.All(IsCanceled);
 
             return exception is TaskCanceledException || exception is OperationCanceledException;
         }

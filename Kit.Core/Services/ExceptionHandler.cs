@@ -15,14 +15,6 @@ namespace Kit
 
         public static void Register(Exception exception, LogLevel level = LogLevel.Error)
         {
-            lock (DataClients)
-            {
-                if (exception.Data.Contains("registered"))
-                    return;
-
-                exception.Data["registered"] = true;
-            }
-
             var startTime = DateTimeOffset.Now;
 
             if (exception.IsCanceled())

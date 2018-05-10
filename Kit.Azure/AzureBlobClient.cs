@@ -121,15 +121,7 @@ namespace Kit.Azure
             }
             catch (Exception exception)
             {
-                if (exception.IsCanceled())
-                    LogService.Log($"{logLabel} canceled at {TimeHelper.FormattedLatency(startTime)}");
-                else
-                {
-                    Debug.Fail(exception.ToString());
-                    LogService.LogError($"{logLabel} failed at {TimeHelper.FormattedLatency(startTime)}");
-                }
-
-                ExceptionHandler.Register(exception);
+                Debug.Fail(exception.ToString());
                 throw;
             }
         }
@@ -153,15 +145,7 @@ namespace Kit.Azure
             }
             catch (Exception exception)
             {
-                if (exception.IsCanceled())
-                    LogService.Log($"{logLabel} canceled at {TimeHelper.FormattedLatency(startTime)}");
-                else
-                {
-                    Debug.Fail(exception.ToString());
-                    LogService.LogError($"{logLabel} failed at {TimeHelper.FormattedLatency(startTime)}");
-                }
-
-                ExceptionHandler.Register(exception);
+                Debug.Fail(exception.ToString());
                 throw;
             }
         }
@@ -214,15 +198,7 @@ namespace Kit.Azure
             }
             catch (Exception exception)
             {
-                if (exception.IsCanceled())
-                    LogService.Log($"{logLabel} canceled at {TimeHelper.FormattedLatency(startTime)}");
-                else
-                {
-                    Debug.Fail(exception.ToString());
-                    LogService.LogError($"{logLabel} failed at {TimeHelper.FormattedLatency(startTime)}");
-                }
-
-                ExceptionHandler.Register(exception);
+                Debug.Fail(exception.ToString());
                 throw;
             }
         }
@@ -245,15 +221,7 @@ namespace Kit.Azure
             }
             catch (Exception exception)
             {
-                if (exception.IsCanceled())
-                    LogService.Log($"{logLabel} canceled at {TimeHelper.FormattedLatency(startTime)}");
-                else
-                {
-                    Debug.Fail(exception.ToString());
-                    LogService.LogError($"{logLabel} failed at {TimeHelper.FormattedLatency(startTime)}");
-                }
-
-                ExceptionHandler.Register(exception);
+                Debug.Fail(exception.ToString());
                 throw;
             }
         }

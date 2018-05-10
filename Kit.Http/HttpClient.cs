@@ -151,26 +151,16 @@ namespace Kit.Http
             }
             catch (Exception exception)
             {
-                var latency = TimeHelper.FormattedLatency(startTime);
-
-                if (exception.Has12030() && --repeat12030Count > 0)
-                {
-                    LogService.LogWarning($"{logLabel} terminated at {latency} with native HTTP error. Will repeat...");
-                    ExceptionHandler.Register(exception, level: LogLevel.Warning);
-                    repeatLabelPart = " (repeat)";
-                    goto Retry;
-                }
-
-                if (exception.IsCanceled())
-                    LogService.Log($"{logLabel} canceled at {latency}");
-                else
+                if (!exception.Has12030() || --repeat12030Count == 0)
                 {
                     Debug.Fail(exception.ToString());
-                    LogService.LogError($"{logLabel} failed at {latency}");
+                    throw;
                 }
 
-                ExceptionHandler.Register(exception);
-                throw;
+                LogService.LogWarning($"{logLabel} terminated with native HTTP error. Will repeat...");
+                ExceptionHandler.Register(exception, level: LogLevel.Warning);
+                repeatLabelPart = " (repeat)";
+                goto Retry;
             }
 
             var statusCode = response.StatusCode;
@@ -252,15 +242,7 @@ namespace Kit.Http
             }
             catch (Exception exception)
             {
-                if (exception.IsCanceled())
-                    LogService.Log($"{logLabel} canceled at {TimeHelper.FormattedLatency(startTime)}");
-                else
-                {
-                    Debug.Fail(exception.ToString());
-                    LogService.LogError($"{logLabel} failed at {TimeHelper.FormattedLatency(startTime)}");
-                }
-
-                ExceptionHandler.Register(exception);
+                Debug.Fail(exception.ToString());
                 RemoveHeader("Cache-Control");
                 throw;
             }
