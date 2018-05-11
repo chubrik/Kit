@@ -11,9 +11,12 @@ namespace Kit
         public static CancellationToken CancellationToken => _сancellationTokenSource.Token;
         private static readonly string _formattedStartTime = DateTimeOffset.Now.ToString("dd.MM.yyyy HH.mm.ss");
         private static bool _pressAnyKeyToExit = true;
-        internal static string BaseDirectory = "$work";
-        internal static string WorkingDirectory = string.Empty;
+        internal static string BaseDirectory { get; private set; } = "$work";
+        internal static string WorkingDirectory { get; private set; } = string.Empty;
         private static string _diagnosticsDirectory = "$diagnostics";
+        private static DateTimeOffset _cancellationRequestTime;
+        private static bool _isCanceled;
+        private static bool _isFailed;
 
         internal static string DiagnisticsCurrentDirectory =>
             PathHelper.Combine(_diagnosticsDirectory, _formattedStartTime);
@@ -77,32 +80,39 @@ namespace Kit
                 Initialize();
                 LogService.Log($"Kit ready at {TimeHelper.FormattedLatency(startTime)}");
                 await delegateAsync(CancellationToken);
-                await ThreadService.AwaitAll();
-                LogService.LogInfo($"Completed at {TimeHelper.FormattedLatency(startTime)}");
             }
             catch (Exception exception)
             {
                 if (!exception.IsCanceled())
+                {
                     Debug.Fail(exception.ToString());
-
-                //todo if the main thread is thrown, we need to wait for all threads
+                    SetFailed();
+                }
+                else
+                    SetCanceled();
 
                 ExceptionHandler.Register(exception);
+
+                if (!exception.IsCanceled())
+                    Cancel();
+
                 ReportService.Report(exception.Message, exception.ToString());
-
-                if (exception.IsCanceled())
-                    LogService.LogWarning($"Canceled at {TimeHelper.FormattedLatency(startTime)}"); //todo cancellation time
-                else
-                {
-                    if (!LogService.Clients.Contains(ConsoleClient.Instance))
-                        LogService.Clients.Add(ConsoleClient.Instance);
-
-                    LogService.LogError($"Failed at {TimeHelper.FormattedLatency(startTime)}");
-                    _pressAnyKeyToExit = true;
-                }
             }
 
-            if (_pressAnyKeyToExit)
+            await ThreadService.AwaitAll();
+
+            if (_isFailed)
+                LogService.LogError($"Failed at {TimeHelper.FormattedLatency(startTime)}");
+
+            else if (_isCanceled)
+            {
+                LogService.Log($"Cancellation time is {TimeHelper.FormattedLatency(_cancellationRequestTime)}");
+                LogService.LogWarning($"Canceled at {TimeHelper.FormattedLatency(startTime)}");
+            }
+            else
+                LogService.LogInfo($"Completed at {TimeHelper.FormattedLatency(startTime)}");
+
+            if (_pressAnyKeyToExit || _isFailed)
             {
                 Console.Write("\nPress any key to exit...");
                 Console.ReadKey(true);
@@ -111,8 +121,23 @@ namespace Kit
 
         public static void Cancel()
         {
-            LogService.LogWarning("Kit cancel requested");
-            _сancellationTokenSource.Cancel();
+            if (_cancellationRequestTime == default(DateTimeOffset))
+                _cancellationRequestTime = DateTimeOffset.Now;
+
+            LogService.Log("Kit cancel requested", level: _isFailed ? LogLevel.Log : LogLevel.Warning);
+
+            if (!_сancellationTokenSource.IsCancellationRequested)
+                _сancellationTokenSource.Cancel();
+        }
+
+        internal static void SetCanceled() => _isCanceled = true;
+
+        internal static void SetFailed()
+        {
+            _isFailed = true;
+
+            if (!LogService.Clients.Contains(ConsoleClient.Instance))
+                LogService.Clients.Add(ConsoleClient.Instance);
         }
     }
 }

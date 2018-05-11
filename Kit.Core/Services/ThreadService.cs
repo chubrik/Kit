@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,45 +9,65 @@ namespace Kit
     {
         private ThreadService() { }
 
-        private static int _count = 0;
-        private static List<Exception> _exceptions = new List<Exception>();
+        private static int _threadCount = 0;
 
         public static void StartNew(Func<Task> @delegate)
         {
-            //todo log
-            _count++;
+            _threadCount++;
+            LogService.Log($"Thread #{_threadCount} starting");
 
             new Thread(new ThreadStart(async () =>
             {
+                var startTime = DateTimeOffset.Now;
+
                 try
                 {
+                    LogService.Log($"Thread #{_threadCount} started");
                     await @delegate();
+                    LogService.Log($"Thread #{_threadCount} completed at {TimeHelper.FormattedLatency(startTime)}");
                 }
                 catch (Exception exception)
                 {
-                    Debug.Fail(exception.ToString());
+                    if (!exception.IsCanceled())
+                    {
+                        Debug.Fail(exception.ToString());
+                        Kit.SetFailed();
+                    }
+                    else
+                        Kit.SetCanceled();
+
                     ExceptionHandler.Register(exception);
-                    _exceptions.Add(exception);
+
+                    if (!exception.IsCanceled())
+                        Kit.Cancel();
+
+                    ReportService.Report(exception.Message, exception.ToString());
+
+                    if (exception.IsCanceled())
+                        LogService.LogWarning($"Thread #{_threadCount} canceled at {TimeHelper.FormattedLatency(startTime)}"); //todo cancellation time
+                    else
+                        LogService.LogError($"Thread #{_threadCount} failed at {TimeHelper.FormattedLatency(startTime)}");
                 }
                 finally
                 {
-                    _count--;
+                    _threadCount--;
                 }
             })).Start();
         }
 
         public static async Task AwaitAll()
         {
-            //todo log
+            if (_threadCount == 0)
+                return;
 
-            while (_count > 0)
+            LogService.Log($"Waiting for {_threadCount} threads");
+            var startTime = DateTimeOffset.Now;
+
+            //todo limit
+            while (_threadCount > 0)
                 await Task.Delay(50);
 
-            if (_exceptions.Count == 1)
-                throw _exceptions[0];
-
-            if (_exceptions.Count > 1)
-                throw new AggregateException(_exceptions);
+            LogService.Log($"Waiting for {_threadCount} threads completed at {TimeHelper.FormattedLatency(startTime)}");
         }
     }
 }

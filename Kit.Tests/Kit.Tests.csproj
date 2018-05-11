@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -12,15 +12,6 @@
     <ProjectReference Include="..\Kit.Http.Extensions\Kit.Http.Extensions.csproj" />
     <ProjectReference Include="..\Kit.Http\Kit.Http.csproj" />
     <ProjectReference Include="..\Kit.Mail\Kit.Mail.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Remove="%24*\**" />
-    <Compile Remove="Properties\**" />
-    <EmbeddedResource Remove="%24*\**" />
-    <EmbeddedResource Remove="Properties\**" />
-    <None Remove="%24*\**" />
-    <None Remove="Properties\**" />
   </ItemGroup>
 
 </Project>
