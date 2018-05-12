@@ -11,18 +11,18 @@ namespace Kit.Http
     public class HttpClient : IDisposable
     {
         private const string RegistryFileName = "$registry.txt";
-        private const string InfoFileSuffix = "$.txt";
+        private const string InfoFileSuffix = ".txt";
 
-        private static string _cacheDirectory = "$http-cache";
+        private static string _cacheDirectory = "http-cache";
         private static CacheMode _globalCacheMode = CacheMode.Disabled;
         private static bool _globalUseRepeat = true;
         private static int _logCounter = 0;
 
         private readonly System.Net.Http.HttpClient _client;
-        private CookieContainer _cookieContainer = new CookieContainer();
-        private CacheMode _cacheMode;
-        private string _cacheKey;
-        private bool _useRepeat;
+        private readonly CookieContainer _cookieContainer = new CookieContainer();
+        private readonly CacheMode _cacheMode;
+        private readonly string _cacheKey;
+        private readonly bool _useRepeat;
 
         #region Setup & Consructor
 
@@ -151,16 +151,16 @@ namespace Kit.Http
             }
             catch (Exception exception)
             {
-                if (!exception.Has12030() || --repeat12030Count == 0)
+                if (exception.Has12030() && --repeat12030Count > 0)
                 {
-                    Debug.Fail(exception.ToString());
-                    throw;
+                    LogService.LogWarning($"{logLabel} terminated with native HTTP error. Will repeat...");
+                    ExceptionHandler.Register(exception, level: LogLevel.Warning);
+                    repeatLabelPart = " (repeat)";
+                    goto Retry;
                 }
 
-                LogService.LogWarning($"{logLabel} terminated with native HTTP error. Will repeat...");
-                ExceptionHandler.Register(exception, level: LogLevel.Warning);
-                repeatLabelPart = " (repeat)";
-                goto Retry;
+                Debug.Fail(exception.ToString());
+                throw;
             }
 
             var statusCode = response.StatusCode;
@@ -284,6 +284,7 @@ namespace Kit.Http
             var cachedName = $"{key} {uri.AbsoluteUri}";
             string paddedCount;
             string bodyFileName;
+            var targetDirectory = PathHelper.Combine(Kit.DiagnisticsCurrentDirectory, _cacheDirectory);
 
             if (cache == CacheMode.Full && _registry.ContainsKey(cachedName))
             {
@@ -292,12 +293,12 @@ namespace Kit.Http
                 bodyFileName = fileInfo.BodyFileName;
                 paddedCount = bodyFileName.Substring(0, 4);
 
-                if (FileClient.Exists(bodyFileName, _cacheDirectory)) //todo ... && infoFileName
+                if (FileClient.Exists(bodyFileName, targetDirectory)) //todo ... && infoFileName
                     return new CachedResponse(
                         mimeType: fileInfo.MimeType,
-                        getInfo: () => FileClient.ReadLines($"{paddedCount} {InfoFileSuffix}", _cacheDirectory),
-                        getText: () => FileClient.ReadText(bodyFileName, _cacheDirectory),
-                        getBytes: () => FileClient.ReadBytes(bodyFileName, _cacheDirectory)
+                        getInfo: () => FileClient.ReadLines(paddedCount + InfoFileSuffix, targetDirectory),
+                        getText: () => FileClient.ReadText(bodyFileName, targetDirectory),
+                        getBytes: () => FileClient.ReadBytes(bodyFileName, targetDirectory)
                     );
             }
             else
@@ -307,17 +308,17 @@ namespace Kit.Http
             }
 
             var response = await httpAction();
-            var infoFileName = $"{paddedCount} {InfoFileSuffix}";
+            var infoFileName = paddedCount + InfoFileSuffix;
             FixCacheFileExtension(response, ref bodyFileName);
-            FileClient.Write(infoFileName, response.FormattedInfo, _cacheDirectory);
+            FileClient.Write(infoFileName, response.FormattedInfo, targetDirectory);
 
             if (response.IsText)
-                FileClient.Write(bodyFileName, response.GetText(), _cacheDirectory);
+                FileClient.Write(bodyFileName, response.GetText(), targetDirectory);
             else
-                FileClient.Write(bodyFileName, response.GetBytes(), _cacheDirectory);
+                FileClient.Write(bodyFileName, response.GetBytes(), targetDirectory);
 
             lock (RegistryFileName)
-                FileClient.AppendText(RegistryFileName, $"{cachedName} | {response.MimeType} | {bodyFileName}", _cacheDirectory);
+                FileClient.AppendText(RegistryFileName, $"{cachedName} | {response.MimeType} | {bodyFileName}", targetDirectory);
 
             _registry[cachedName] = new CacheInfo { MimeType = response.MimeType, BodyFileName = bodyFileName };
             return response;
@@ -332,10 +333,11 @@ namespace Kit.Http
 
             _isCacheInitialized = true;
             _registry = new Dictionary<string, CacheInfo>();
+            var targetDirectory = PathHelper.Combine(Kit.DiagnisticsCurrentDirectory, _cacheDirectory);
 
-            if (FileClient.Exists(RegistryFileName, _cacheDirectory))
+            if (FileClient.Exists(RegistryFileName, targetDirectory))
             {
-                var lines = FileClient.ReadLines(RegistryFileName, _cacheDirectory);
+                var lines = FileClient.ReadLines(RegistryFileName, targetDirectory);
 
                 foreach (var line in lines)
                 {

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace Kit
 {
@@ -11,6 +12,7 @@ namespace Kit
 
         public static ConsolePosition Position { get; private set; } = new ConsolePosition(0, 0);
         private static LogLevel _minLevel = LogLevel.Info;
+        private static bool _isDisabled;
 
         #region Setup
 
@@ -80,6 +82,9 @@ namespace Kit
         {
             lock (_lock)
             {
+                if (_isDisabled)
+                    return Position;
+
                 var origColor = Console.ForegroundColor;
                 var origTop = Console.CursorTop;
                 var origLeft = Console.CursorLeft;
@@ -123,5 +128,11 @@ namespace Kit
         }
 
         #endregion
+
+        public static async Task DisableAsync()
+        {
+            _isDisabled = true;
+            await Task.Delay(TimeSpan.FromMilliseconds(50));
+        }
     }
 }

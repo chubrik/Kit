@@ -28,22 +28,18 @@ namespace Kit
                 }
                 catch (Exception exception)
                 {
-                    if (!exception.IsCanceled())
-                    {
-                        Debug.Fail(exception.ToString());
-                        Kit.SetFailed();
-                    }
-                    else
+                    Debug.Fail(exception.ToString());
+                    var isCanceled = exception.IsCanceled();
+
+                    if (isCanceled)
                         Kit.SetCanceled();
+                    else
+                        Kit.SetFailed();
 
                     ExceptionHandler.Register(exception);
-
-                    if (!exception.IsCanceled())
-                        Kit.Cancel();
-
                     ReportService.Report(exception.Message, exception.ToString());
 
-                    if (exception.IsCanceled())
+                    if (isCanceled)
                         LogService.LogWarning($"Thread #{_threadCount} canceled at {TimeHelper.FormattedLatency(startTime)}"); //todo cancellation time
                     else
                         LogService.LogError($"Thread #{_threadCount} failed at {TimeHelper.FormattedLatency(startTime)}");

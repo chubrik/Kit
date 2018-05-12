@@ -18,7 +18,7 @@ namespace Kit
         private static bool _isCanceled;
         private static bool _isFailed;
 
-        internal static string DiagnisticsCurrentDirectory =>
+        public static string DiagnisticsCurrentDirectory =>
             PathHelper.Combine(_diagnosticsDirectory, _formattedStartTime);
 
         #region Setup & Initialize
@@ -72,6 +72,32 @@ namespace Kit
 
         private static async Task ExecuteAsync(Func<CancellationToken, Task> delegateAsync)
         {
+            try
+            {
+                await ExecuteCoreAsync(delegateAsync);
+            }
+            catch (Exception exception)
+            {
+                Debug.Fail(exception.ToString());
+                await ConsoleClient.DisableAsync();
+                Console.BackgroundColor = ConsoleColor.DarkRed;
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.WriteLine((Console.CursorLeft > 0 ? "\n" : "") + "\n Kit internal error \n");
+                Console.BackgroundColor = ConsoleColor.Black;
+                Console.ForegroundColor = ConsoleColor.Gray;
+                Console.WriteLine(exception.ToString().Trim());
+                _isFailed = true;
+            }
+
+            if (_isFailed || _pressAnyKeyToExit)
+            {
+                Console.Write("\nPress any key to exit...");
+                Console.ReadKey(true);
+            }
+        }
+
+        private static async Task ExecuteCoreAsync(Func<CancellationToken, Task> delegateAsync)
+        {
             var startTime = DateTimeOffset.Now;
 
             try
@@ -83,19 +109,15 @@ namespace Kit
             }
             catch (Exception exception)
             {
-                if (!exception.IsCanceled())
-                {
-                    Debug.Fail(exception.ToString());
-                    SetFailed();
-                }
-                else
+                Debug.Fail(exception.ToString());
+                var isCanceled = exception.IsCanceled();
+
+                if (isCanceled)
                     SetCanceled();
+                else
+                    SetFailed();
 
                 ExceptionHandler.Register(exception);
-
-                if (!exception.IsCanceled())
-                    Cancel();
-
                 ReportService.Report(exception.Message, exception.ToString());
             }
 
@@ -111,12 +133,6 @@ namespace Kit
             }
             else
                 LogService.LogInfo($"Completed at {TimeHelper.FormattedLatency(startTime)}");
-
-            if (_pressAnyKeyToExit || _isFailed)
-            {
-                Console.Write("\nPress any key to exit...");
-                Console.ReadKey(true);
-            }
         }
 
         public static void Cancel()
@@ -139,5 +155,8 @@ namespace Kit
             if (!LogService.Clients.Contains(ConsoleClient.Instance))
                 LogService.Clients.Add(ConsoleClient.Instance);
         }
+
+        public static CancellationTokenSource NewLinkedCancellationTokenSource() =>
+            CancellationTokenSource.CreateLinkedTokenSource(CancellationToken);
     }
 }
