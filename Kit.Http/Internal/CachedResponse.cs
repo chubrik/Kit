@@ -22,9 +22,9 @@ namespace Kit.Http
 
         public bool IsHtml => MimeType == "text/html";
 
-        #region MyRegion
+        #region Headers
 
-        private Func<List<string>> _getInfo;
+        private readonly Func<List<string>> _getInfo;
 
         public IReadOnlyDictionary<string, IReadOnlyList<string>> Headers =>
             throw new NotImplementedException();
@@ -35,7 +35,7 @@ namespace Kit.Http
 
         #region Text
 
-        private Func<string> _getText;
+        private readonly Func<string> _getText;
 
         private string _text;
 
@@ -45,7 +45,7 @@ namespace Kit.Http
 
         #region Bytes
 
-        private Func<byte[]> _getBytes;
+        private readonly Func<byte[]> _getBytes;
 
         private byte[] _bytes;
 

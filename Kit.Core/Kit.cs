@@ -82,7 +82,7 @@ namespace Kit
                 await ConsoleClient.DisableAsync();
                 Console.BackgroundColor = ConsoleColor.DarkRed;
                 Console.ForegroundColor = ConsoleColor.White;
-                Console.WriteLine((Console.CursorLeft > 0 ? "\n" : "") + "\n Kit internal error \n");
+                Console.WriteLine((Console.CursorLeft > 0 ? "\n" : string.Empty) + "\n Kit internal error \n");
                 Console.BackgroundColor = ConsoleColor.Black;
                 Console.ForegroundColor = ConsoleColor.Gray;
                 Console.WriteLine(exception.ToString().Trim());

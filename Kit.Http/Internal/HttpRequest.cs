@@ -83,7 +83,7 @@ namespace Kit.Http
 
         #endregion
 
-        private CookieCollection _cookies;
+        private readonly CookieCollection _cookies;
 
         public HttpRequest(HttpRequestMessage request, CookieCollection cookies)
         {

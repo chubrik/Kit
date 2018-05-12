@@ -16,7 +16,7 @@ namespace Kit
                 if (result.StartsWith("../"))
                     return result;
 
-                result = Regex.Replace(result, @"(?<=^|/)[^/]+/\.\./", "");
+                result = Regex.Replace(result, @"(?<=^|/)[^/]+/\.\./", string.Empty);
             }
 
             return result;

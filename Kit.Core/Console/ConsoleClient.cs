@@ -26,11 +26,19 @@ namespace Kit
 
         #region ILogClient
 
+        private DateTimeOffset _previousDate = DateTimeOffset.Now;
+
         public void PushToLog(string message, LogLevel level = LogLevel.Log)
         {
             if (level < _minLevel)
                 return;
 
+            var now = DateTimeOffset.Now;
+
+            if (now.Day != _previousDate.Day)
+                WriteLine((Position.Left > 0 ? "\n" : string.Empty) + $"\n{now.ToString("dd.MM.yyyy")}\n\n");
+
+            _previousDate = now;
             ConsoleColor? color;
 
             switch (level)
@@ -61,7 +69,7 @@ namespace Kit
             }
 
             var fullMessage = Position.Left > 0 ? "\n" : string.Empty;
-            fullMessage += $"{DateTimeOffset.Now.ToString("HH:mm:ss")} - {message}";
+            fullMessage += $"{now.ToString("HH:mm:ss")} - {message}";
             WriteLine(fullMessage, color);
         }
 
