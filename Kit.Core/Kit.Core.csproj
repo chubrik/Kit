@@ -3,13 +3,14 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>Kit</RootNamespace>
-    <Version>1.1.0</Version>
+    <Version>1.1.1</Version>
     <PackageTags>kit helpers tools utils</PackageTags>
     <Authors>Arkadi Chubrik</Authors>
     <Description>The powerful engine for various C# projects.
 Has advanced diagnostics and the most useful features.</Description>
     <PackageProjectUrl>https://github.com/chubrik/Kit</PackageProjectUrl>
     <PackageIconUrl>https://raw.githubusercontent.com/chubrik/Kit/master/logo-64x64.png</PackageIconUrl>
+    <PackageLicenseUrl>https://github.com/chubrik/Kit/blob/master/LICENSE</PackageLicenseUrl>
   </PropertyGroup>
 
   <ItemGroup>
