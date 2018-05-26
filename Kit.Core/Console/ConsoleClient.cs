@@ -36,7 +36,7 @@ namespace Kit
             var now = DateTimeOffset.Now;
 
             if (now.Day != _previousDate.Day)
-                WriteLine((Position.Left > 0 ? "\n" : string.Empty) + $"\n{now.ToString("dd.MM.yyyy")}\n\n");
+                WriteLine((Position.Left > 0 ? "\n" : string.Empty) + $"\n{now.ToString("dd.MM.yyyy")}\n");
 
             _previousDate = now;
             ConsoleColor? color;

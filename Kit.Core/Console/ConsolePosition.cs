@@ -16,6 +16,8 @@ namespace Kit
         public bool Equals(ConsolePosition other) =>
             Top == other.Top && Left == other.Left;
 
+        public bool HasEnoughWidthFor(string text) => Left + text.Length <= Console.WindowWidth;
+
         public ConsolePosition Write(string text, ConsoleColor? color = null) =>
             ConsoleClient.Write(text, color: color, position: this);
     }
