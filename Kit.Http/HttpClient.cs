@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Kit.Http
@@ -16,6 +17,7 @@ namespace Kit.Http
         private static string _cacheDirectory = "http-cache";
         private static CacheMode _globalCacheMode = CacheMode.Disabled;
         private static bool _globalUseRepeat = true;
+        private static int _globalTimeoutSeconds = 60;
         private static int _logCounter = 0;
 
         private readonly System.Net.Http.HttpClient _client;
@@ -23,13 +25,15 @@ namespace Kit.Http
         private readonly CacheMode _cacheMode;
         private readonly string _cacheKey;
         private readonly bool _useRepeat;
+        private readonly int _timeoutSeconds;
 
         #region Setup & Consructor
 
         public static void Setup(
             string cacheDirectory = null,
             CacheMode? cache = null,
-            bool? repeat = null)
+            bool? repeat = null,
+            int? timeoutSeconds = null)
         {
             if (cacheDirectory != null)
                 _cacheDirectory = cacheDirectory;
@@ -39,13 +43,17 @@ namespace Kit.Http
 
             if (repeat != null)
                 _globalUseRepeat = (bool)repeat;
+
+            if (timeoutSeconds != null)
+                _globalTimeoutSeconds = (int)timeoutSeconds;
         }
 
-        public HttpClient(CacheMode? cache = null, string cacheKey = null, bool? repeat = null)
+        public HttpClient(CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
         {
             _cacheMode = cache ?? _globalCacheMode;
             _cacheKey = cacheKey ?? string.Empty;
             _useRepeat = repeat ?? _globalUseRepeat;
+            _timeoutSeconds = timeoutSeconds ?? _globalTimeoutSeconds;
 
             var handler = new HttpClientHandler
             {
@@ -54,7 +62,11 @@ namespace Kit.Http
                 //AllowAutoRedirect = false //todo redirect
             };
 
-            _client = new System.Net.Http.HttpClient(handler);
+            _client = new System.Net.Http.HttpClient(handler)
+            {
+                Timeout = Timeout.InfiniteTimeSpan
+            };
+
             SetHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8");
             SetHeader("Accept-Encoding", "gzip, deflate");
             SetHeader("Accept-Language", "ru,en;q=0.9");
@@ -70,9 +82,9 @@ namespace Kit.Http
 
         public void SetHeader(string name, string value)
         {
-            Debug.Assert(name != null && value != null);
+            Debug.Assert(!name.IsNullOrEmpty() && value != null);
 
-            if (name == null || value == null)
+            if (name.IsNullOrEmpty() || value == null)
                 throw new InvalidOperationException();
 
             _client.DefaultRequestHeaders.Remove(name);
@@ -81,9 +93,9 @@ namespace Kit.Http
 
         public void AddToHeader(string name, string value)
         {
-            Debug.Assert(name != null && value != null);
+            Debug.Assert(!name.IsNullOrEmpty() && value != null);
 
-            if (name == null || value == null)
+            if (name.IsNullOrEmpty() || value == null)
                 throw new InvalidOperationException();
 
             _client.DefaultRequestHeaders.TryAddWithoutValidation(name, value);
@@ -91,9 +103,9 @@ namespace Kit.Http
 
         public void RemoveHeader(string name)
         {
-            Debug.Assert(name != null);
+            Debug.Assert(!name.IsNullOrEmpty());
 
-            if (name == null)
+            if (name.IsNullOrEmpty())
                 throw new InvalidOperationException();
 
             _client.DefaultRequestHeaders.Remove(name);
@@ -103,11 +115,12 @@ namespace Kit.Http
 
         #region Get
 
-        public async Task<IHttpResponse> GetAsync(Uri uri, CacheMode? cache = null, string cacheKey = null, bool? repeat = null)
+        public async Task<IHttpResponse> GetAsync(
+            Uri uri, CacheMode? cache = null, string cacheKey = null, bool? repeat = null)
         {
             var response =
                 await CacheAsync(uri, "get",
-                    () => GetAsync(uri, repeat: repeat ?? _useRepeat),
+                    () => GetOrRepeatAsync(uri, repeat: repeat ?? _useRepeat),
                     cache: cache ?? _cacheMode,
                     cacheKey: cacheKey ?? _cacheKey);
 
@@ -117,18 +130,13 @@ namespace Kit.Http
             return response;
         }
 
-        private async Task<HttpResponse> GetAsync(Uri uri, bool repeat)
+        private async Task<HttpResponse> GetOrRepeatAsync(Uri uri, bool repeat)
         {
             if (!repeat)
                 return await GetBaseAsync(uri);
 
             HttpResponse response = null;
-
-            await RepeatHelper.Repeat(async () =>
-            {
-                response = await GetBaseAsync(uri);
-            });
-
+            await HttpHelper.RepeatAsync(async () => response = await GetBaseAsync(uri));
             return response;
         }
 
@@ -146,7 +154,9 @@ namespace Kit.Http
 
             try
             {
-                response = await _client.GetAsync(uri, Kit.CancellationToken);
+                response = await HttpHelper.TimeoutAsync(cancellationToken =>
+                    _client.GetAsync(uri, cancellationToken), timeoutSeconds: _timeoutSeconds); //todo timeoutSeconds ?? _timeoutSeconds
+
                 LogService.Log($"{logLabel} completed at {TimeHelper.FormattedLatency(startTime)}");
             }
             catch (Exception exception)
@@ -214,13 +224,23 @@ namespace Kit.Http
         {
             var response =
                 await CacheAsync(uri, "post",
-                    () => PostBaseAsync(uri, content),
+                    () => PostOrRepeatAsync(uri, content, repeat: _useRepeat), //todo repeat ?? _useRepeat
                     cache: cache ?? _cacheMode,
                     cacheKey: cacheKey ?? _cacheKey);
 
             if (response.IsHtml)
                 SetHeader("Referer", uri.AbsoluteUri);
 
+            return response;
+        }
+
+        private async Task<HttpResponse> PostOrRepeatAsync(Uri uri, HttpContent content, bool repeat)
+        {
+            if (!repeat)
+                return await PostBaseAsync(uri, content);
+
+            HttpResponse response = null;
+            await HttpHelper.RepeatAsync(async () => response = await PostBaseAsync(uri, content));
             return response;
         }
 
@@ -237,7 +257,10 @@ namespace Kit.Http
             {
                 SetHeader("Cache-Control", "max-age=0");
                 SetHeader("Origin", $"{uri.Scheme}://{uri.Host}");
-                response = await _client.PostAsync(uri, content, Kit.CancellationToken);
+
+                response = await HttpHelper.TimeoutAsync(cancellationToken =>
+                    _client.PostAsync(uri, content, cancellationToken), timeoutSeconds: 5); //todo timeoutSeconds ?? _timeoutSeconds
+
                 LogService.Log($"{logLabel} completed at {TimeHelper.FormattedLatency(startTime)}");
             }
             catch (Exception exception)
@@ -364,7 +387,11 @@ namespace Kit.Http
 
         #endregion
 
+        #region Utils
+
         private static Uri FixRedirectUri(Uri original, Uri rawPart) =>
             new Uri(new Uri($"{original.Scheme}://{original.Host}"), rawPart);
+
+        #endregion
     }
 }

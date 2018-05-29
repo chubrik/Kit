@@ -24,7 +24,8 @@ namespace Kit
             if (innerest != exception)
                 result += $"\r\n\r\n\r\nFIRST INNEREST EXCEPTION:\r\n\r\n{innerest}\r\n";
 
-            result += $"\r\n\r\n\r\nFULL DUMP:\r\n\r\n{exception}\r\n";
+            var dump = exception.ToString().Replace(" --->", "\r\n--->");
+            result += $"\r\n\r\n\r\nFULL DUMP:\r\n\r\n{dump}\r\n";
             return result;
         }
     }
