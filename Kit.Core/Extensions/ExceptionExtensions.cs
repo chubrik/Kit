@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace Kit
 {
@@ -11,7 +10,15 @@ namespace Kit
             if (exception is AggregateException aggregate)
                 return aggregate.InnerExceptions.All(IsCanceled);
 
-            return exception is TaskCanceledException || exception is OperationCanceledException;
+            return exception is OperationCanceledException;
+        }
+
+        public static bool IsTimeoutOrCanceled(this Exception exception)
+        {
+            if (exception is AggregateException aggregate)
+                return aggregate.InnerExceptions.All(IsTimeoutOrCanceled);
+
+            return exception is TimeoutException || exception.IsCanceled();
         }
 
         public static Exception FirstInnerestException(this Exception exception)

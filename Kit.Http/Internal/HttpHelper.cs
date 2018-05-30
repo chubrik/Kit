@@ -26,7 +26,7 @@ namespace Kit.Http
 
                 ExceptionHandler.Register(exception);
 
-                if (exception is TimeoutException)
+                if (exception.IsTimeoutOrCanceled())
                     LogService.LogWarning($"Repeat {count} of {repeatCount} failed by timeout");
                 else
                 {
@@ -38,7 +38,7 @@ namespace Kit.Http
             }
         }
 
-        public static async Task<T> TimeoutAsync<T>(Func<CancellationToken, Task<T>> action, int timeoutSeconds = 60)
+        public static async Task<T> TimeoutAsync<T>(Func<CancellationToken, Task<T>> action, int timeoutSeconds)
         {
             var cts = Kit.NewLinkedCancellationTokenSource();
             var timeIsOut = false;
@@ -51,7 +51,9 @@ namespace Kit.Http
                     timeIsOut = true;
                     cts.Cancel();
                 }
-                catch (TaskCanceledException) { }
+                catch (TaskCanceledException) {
+                    // no throw for canceled timer
+                }
             });
 
             try

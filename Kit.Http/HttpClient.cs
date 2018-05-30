@@ -116,13 +116,14 @@ namespace Kit.Http
         #region Get
 
         public async Task<IHttpResponse> GetAsync(
-            Uri uri, CacheMode? cache = null, string cacheKey = null, bool? repeat = null)
+            Uri uri, CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
         {
             var response =
-                await CacheAsync(uri, "get",
-                    () => GetOrRepeatAsync(uri, repeat: repeat ?? _useRepeat),
-                    cache: cache ?? _cacheMode,
-                    cacheKey: cacheKey ?? _cacheKey);
+                await CacheAsync(
+                    uri, "get",
+                    () => GetOrRepeatAsync(uri, repeat ?? _useRepeat, timeoutSeconds ?? _timeoutSeconds),
+                    cache ?? _cacheMode,
+                    cacheKey ?? _cacheKey);
 
             if (response.IsHtml)
                 SetHeader("Referer", uri.AbsoluteUri);
@@ -130,17 +131,17 @@ namespace Kit.Http
             return response;
         }
 
-        private async Task<HttpResponse> GetOrRepeatAsync(Uri uri, bool repeat)
+        private async Task<HttpResponse> GetOrRepeatAsync(Uri uri, bool repeat, int timeoutSeconds)
         {
             if (!repeat)
-                return await GetBaseAsync(uri);
+                return await GetBaseAsync(uri, timeoutSeconds);
 
             HttpResponse response = null;
-            await HttpHelper.RepeatAsync(async () => response = await GetBaseAsync(uri));
+            await HttpHelper.RepeatAsync(async () => response = await GetBaseAsync(uri, timeoutSeconds));
             return response;
         }
 
-        private async Task<HttpResponse> GetBaseAsync(Uri uri)
+        private async Task<HttpResponse> GetBaseAsync(Uri uri, int timeoutSeconds)
         {
             var logLabel = $"Http get #{++_logCounter}";
             var requestCookies = _cookieContainer.GetCookies(uri);
@@ -155,7 +156,7 @@ namespace Kit.Http
             try
             {
                 response = await HttpHelper.TimeoutAsync(cancellationToken =>
-                    _client.GetAsync(uri, cancellationToken), timeoutSeconds: _timeoutSeconds); //todo timeoutSeconds ?? _timeoutSeconds
+                    _client.GetAsync(uri, cancellationToken), timeoutSeconds);
 
                 LogService.Log($"{logLabel} completed at {TimeHelper.FormattedLatency(startTime)}");
             }
@@ -177,7 +178,7 @@ namespace Kit.Http
 
             //todo redirect
             if (statusCode == HttpStatusCode.Found)
-                return await GetBaseAsync(FixRedirectUri(uri, response.Headers.Location));
+                return await GetBaseAsync(FixRedirectUri(uri, response.Headers.Location), timeoutSeconds);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -197,10 +198,16 @@ namespace Kit.Http
 
         #region Post
 
-        public async Task<IHttpResponse> PostFormAsync(Uri uri, IEnumerable<KeyValuePair<string, string>> form) =>
-            await PostAsync(uri, new FormUrlEncodedContent(form));
+        public async Task<IHttpResponse> PostFormAsync(
+            Uri uri, IEnumerable<KeyValuePair<string, string>> form,
+            CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
+        {
+            return await PostAsync(uri, new FormUrlEncodedContent(form), cache, cacheKey, repeat, timeoutSeconds);
+        }
 
-        public async Task<IHttpResponse> PostMultipartAsync(Uri uri, Dictionary<string, string> multipart)
+        public async Task<IHttpResponse> PostMultipartAsync(
+            Uri uri, Dictionary<string, string> multipart,
+            CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
         {
             var context = new MultipartFormDataContent(
                 "----WebKitFormBoundary" + DateTimeOffset.Now.Ticks.ToString("x"));
@@ -213,20 +220,25 @@ namespace Kit.Http
                 context.Add(value, $"\"{keyValue.Key}\"");
             }
 
-            return await PostAsync(uri, context);
+            return await PostAsync(uri, context, cache, cacheKey, repeat, timeoutSeconds);
         }
 
-        public async Task<IHttpResponse> PostSerializedJsonAsync(Uri uri, string serializedJson) =>
-            await PostAsync(uri, new StringContent(serializedJson, Encoding.UTF8, "application/json"));
+        public async Task<IHttpResponse> PostSerializedJsonAsync(
+            Uri uri, string serializedJson,
+            CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
+        {
+            var content = new StringContent(serializedJson, Encoding.UTF8, "application/json");
+            return await PostAsync(uri, content, cache, cacheKey, repeat, timeoutSeconds);
+        }
 
         private async Task<IHttpResponse> PostAsync(
-            Uri uri, HttpContent content, CacheMode? cache = null, string cacheKey = null)
+            Uri uri, HttpContent content, CacheMode? cache, string cacheKey, bool? repeat, int? timeoutSeconds)
         {
             var response =
                 await CacheAsync(uri, "post",
-                    () => PostOrRepeatAsync(uri, content, repeat: _useRepeat), //todo repeat ?? _useRepeat
-                    cache: cache ?? _cacheMode,
-                    cacheKey: cacheKey ?? _cacheKey);
+                    () => PostOrRepeatAsync(uri, content, repeat ?? _useRepeat, timeoutSeconds ?? _timeoutSeconds),
+                    cache ?? _cacheMode,
+                    cacheKey ?? _cacheKey);
 
             if (response.IsHtml)
                 SetHeader("Referer", uri.AbsoluteUri);
@@ -234,17 +246,18 @@ namespace Kit.Http
             return response;
         }
 
-        private async Task<HttpResponse> PostOrRepeatAsync(Uri uri, HttpContent content, bool repeat)
+        private async Task<HttpResponse> PostOrRepeatAsync(
+            Uri uri, HttpContent content, bool repeat, int timeoutSeconds)
         {
             if (!repeat)
-                return await PostBaseAsync(uri, content);
+                return await PostBaseAsync(uri, content, timeoutSeconds);
 
             HttpResponse response = null;
-            await HttpHelper.RepeatAsync(async () => response = await PostBaseAsync(uri, content));
+            await HttpHelper.RepeatAsync(async () => response = await PostBaseAsync(uri, content, timeoutSeconds));
             return response;
         }
 
-        private async Task<HttpResponse> PostBaseAsync(Uri uri, HttpContent content)
+        private async Task<HttpResponse> PostBaseAsync(Uri uri, HttpContent content, int timeoutSeconds)
         {
             var startTime = DateTimeOffset.Now;
             var logLabel = $"Http post #{++_logCounter}";
@@ -259,7 +272,7 @@ namespace Kit.Http
                 SetHeader("Origin", $"{uri.Scheme}://{uri.Host}");
 
                 response = await HttpHelper.TimeoutAsync(cancellationToken =>
-                    _client.PostAsync(uri, content, cancellationToken), timeoutSeconds: 5); //todo timeoutSeconds ?? _timeoutSeconds
+                    _client.PostAsync(uri, content, cancellationToken), timeoutSeconds);
 
                 LogService.Log($"{logLabel} completed at {TimeHelper.FormattedLatency(startTime)}");
             }
@@ -276,7 +289,7 @@ namespace Kit.Http
 
             //todo redirect
             if (response.StatusCode == HttpStatusCode.Found)
-                return await GetBaseAsync(FixRedirectUri(uri, response.Headers.Location));
+                return await GetBaseAsync(FixRedirectUri(uri, response.Headers.Location), timeoutSeconds);
 
             RemoveHeader("Cache-Control");
 
