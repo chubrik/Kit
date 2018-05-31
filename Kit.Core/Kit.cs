@@ -52,10 +52,13 @@ namespace Kit
             {
                 ExceptionHandler.Register(exception, level: LogLevel.Log);
                 ReportService.Report(exception.Message, exception.ToString(), logLevel: LogLevel.Log);
+                // no throw for test exception
             }
         }
 
         #endregion
+
+        #region Execute delegate
 
         public static void Execute(Action @delegate) =>
             Execute(cancellationToken =>
@@ -74,11 +77,24 @@ namespace Kit
         {
             try
             {
-                await ExecuteCoreAsync(delegateAsync);
+                var startTime = DateTimeOffset.Now;
+                LogService.LogInfo("Kit started");
+                Initialize();
+                LogService.Log($"Kit ready at {TimeHelper.FormattedLatency(startTime)}");
+                await ExecuteBaseAsync(delegateAsync, "Main delegate");
+                ThreadService.AwaitAll();
+
+                if (_isFailed)
+                    LogService.LogError($"Failed at {TimeHelper.FormattedLatency(startTime)}");
+                else if (_isCanceled)
+                    LogService.LogWarning($"Canceled at {TimeHelper.FormattedLatency(startTime)}");
+                else
+                    LogService.LogInfo($"Completed at {TimeHelper.FormattedLatency(startTime)}");
             }
             catch (Exception exception)
             {
                 Debug.Fail(exception.ToString());
+                _isFailed = true;
                 await ConsoleClient.DisableAsync();
                 Console.BackgroundColor = ConsoleColor.DarkRed;
                 Console.ForegroundColor = ConsoleColor.White;
@@ -86,7 +102,7 @@ namespace Kit
                 Console.BackgroundColor = ConsoleColor.Black;
                 Console.ForegroundColor = ConsoleColor.Gray;
                 Console.WriteLine(exception.ToString().Trim());
-                _isFailed = true;
+                // no throw for internal error
             }
 
             if (_isFailed || _pressAnyKeyToExit)
@@ -96,44 +112,48 @@ namespace Kit
             }
         }
 
-        private static async Task ExecuteCoreAsync(Func<CancellationToken, Task> delegateAsync)
+        internal static async Task ExecuteBaseAsync(Func<CancellationToken, Task> delegateAsync, string delegateName)
         {
             var startTime = DateTimeOffset.Now;
 
             try
             {
-                LogService.LogInfo("Kit started");
-                Initialize();
-                LogService.Log($"Kit ready at {TimeHelper.FormattedLatency(startTime)}");
+                LogService.Log($"{delegateName} started");
                 await delegateAsync(CancellationToken);
+                LogService.Log($"{delegateName} completed at {TimeHelper.FormattedLatency(startTime)}");
             }
             catch (Exception exception)
             {
                 Debug.Fail(exception.ToString());
-                var isCanceled = exception.IsCanceled();
 
-                if (isCanceled)
-                    SetCanceled();
+                if (exception.IsCanceled())
+                    _isCanceled = true;
                 else
-                    SetFailed();
+                {
+                    _isFailed = true;
+
+                    if (!LogService.Clients.Contains(ConsoleClient.Instance))
+                        LogService.Clients.Add(ConsoleClient.Instance);
+                }
 
                 ExceptionHandler.Register(exception);
                 ReportService.Report(exception.Message, exception.ToString());
+
+                if (_isCanceled)
+                {
+                    LogService.Log($"{delegateName} cancellation time is {TimeHelper.FormattedLatency(_cancellationRequestTime)}");
+                    LogService.LogWarning($"{delegateName} canceled at {TimeHelper.FormattedLatency(startTime)}");
+                }
+                else
+                    LogService.LogError($"{delegateName} failed at {TimeHelper.FormattedLatency(startTime)}");
+
+                // no throw for delegate error
             }
-
-            await ThreadService.AwaitAll();
-
-            if (_isFailed)
-                LogService.LogError($"Failed at {TimeHelper.FormattedLatency(startTime)}");
-
-            else if (_isCanceled)
-            {
-                LogService.Log($"Cancellation time is {TimeHelper.FormattedLatency(_cancellationRequestTime)}");
-                LogService.LogWarning($"Canceled at {TimeHelper.FormattedLatency(startTime)}");
-            }
-            else
-                LogService.LogInfo($"Completed at {TimeHelper.FormattedLatency(startTime)}");
         }
+
+        #endregion
+
+        #region Utils
 
         public static void Cancel()
         {
@@ -146,17 +166,9 @@ namespace Kit
                 _сancellationTokenSource.Cancel();
         }
 
-        internal static void SetCanceled() => _isCanceled = true;
-
-        internal static void SetFailed()
-        {
-            _isFailed = true;
-
-            if (!LogService.Clients.Contains(ConsoleClient.Instance))
-                LogService.Clients.Add(ConsoleClient.Instance);
-        }
-
         public static CancellationTokenSource NewLinkedCancellationTokenSource() =>
             CancellationTokenSource.CreateLinkedTokenSource(CancellationToken);
+
+        #endregion
     }
 }

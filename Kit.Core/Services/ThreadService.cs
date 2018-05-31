@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Diagnostics;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -9,61 +9,42 @@ namespace Kit
     {
         private ThreadService() { }
 
-        private static int _threadCount = 0;
+        private static readonly List<Thread> _threads = new List<Thread>();
 
-        public static void StartNew(Func<Task> @delegate)
-        {
-            _threadCount++;
-            LogService.Log($"Thread #{_threadCount} starting");
-
-            new Thread(new ThreadStart(async () =>
+        public static void StartNew(Action @delegate) =>
+            StartNew(cancellationToken =>
             {
-                var startTime = DateTimeOffset.Now;
+                @delegate();
+                return Task.CompletedTask;
+            });
 
-                try
-                {
-                    LogService.Log($"Thread #{_threadCount} started");
-                    await @delegate();
-                    LogService.Log($"Thread #{_threadCount} completed at {TimeHelper.FormattedLatency(startTime)}");
-                }
-                catch (Exception exception)
-                {
-                    Debug.Fail(exception.ToString());
-                    var isCanceled = exception.IsCanceled();
+        public static void StartNew(Func<Task> delegateAsync) =>
+            StartNew(cancellationToken => delegateAsync());
 
-                    if (isCanceled)
-                        Kit.SetCanceled();
-                    else
-                        Kit.SetFailed();
+        public static void StartNew(Func<CancellationToken, Task> delegateAsync)
+        {
+            var threadName = $"Thread #{_threads.Count + 1}";
+            LogService.Log($"{threadName} starting");
 
-                    ExceptionHandler.Register(exception);
-                    ReportService.Report(exception.Message, exception.ToString());
+            var thread = new Thread(new ThreadStart(() =>
+                Kit.ExecuteBaseAsync(delegateAsync, threadName).Wait()));
 
-                    if (isCanceled)
-                        LogService.LogWarning($"Thread #{_threadCount} canceled at {TimeHelper.FormattedLatency(startTime)}"); //todo cancellation time
-                    else
-                        LogService.LogError($"Thread #{_threadCount} failed at {TimeHelper.FormattedLatency(startTime)}");
-                }
-                finally
-                {
-                    _threadCount--;
-                }
-            })).Start();
+            _threads.Add(thread);
+            thread.Start();
         }
 
-        public static async Task AwaitAll()
+        public static void AwaitAll()
         {
-            if (_threadCount == 0)
+            var count = _threads.Count;
+
+            if (count == 0)
                 return;
 
-            LogService.Log($"Waiting for {_threadCount} threads");
             var startTime = DateTimeOffset.Now;
-
-            //todo limit
-            while (_threadCount > 0)
-                await Task.Delay(50);
-
-            LogService.Log($"Waiting for {_threadCount} threads completed at {TimeHelper.FormattedLatency(startTime)}");
+            var logText = "Waiting for " + count + (count > 1 ? " threads" : " thread");
+            LogService.Log(logText);
+            _threads.ForEach(i => i.Join()); //todo timeout
+            LogService.Log($"{logText} completed at {TimeHelper.FormattedLatency(startTime)}");
         }
     }
 }
