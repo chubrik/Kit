@@ -70,10 +70,7 @@ namespace Kit
         public static void Execute(Func<Task> delegateAsync) =>
             Execute(cancellationToken => delegateAsync());
 
-        public static void Execute(Func<CancellationToken, Task> delegateAsync) =>
-            ExecuteAsync(delegateAsync).Wait();
-
-        private static async Task ExecuteAsync(Func<CancellationToken, Task> delegateAsync)
+        public static void Execute(Func<CancellationToken, Task> delegateAsync)
         {
             try
             {
@@ -81,7 +78,7 @@ namespace Kit
                 LogService.LogInfo("Kit started");
                 Initialize();
                 LogService.Log($"Kit ready at {TimeHelper.FormattedLatency(startTime)}");
-                await ExecuteBaseAsync(delegateAsync, "Main delegate");
+                ExecuteBaseAsync(delegateAsync, "Main delegate").Wait();
                 ThreadService.AwaitAll();
 
                 if (_isFailed)
@@ -95,7 +92,7 @@ namespace Kit
             {
                 Debug.Fail(exception.ToString());
                 _isFailed = true;
-                await ConsoleClient.DisableAsync();
+                ConsoleClient.Disable();
                 Console.BackgroundColor = ConsoleColor.DarkRed;
                 Console.ForegroundColor = ConsoleColor.White;
                 Console.WriteLine((Console.CursorLeft > 0 ? "\n" : string.Empty) + "\n Kit internal error \n");
@@ -163,7 +160,10 @@ namespace Kit
             LogService.Log("Kit cancel requested", level: _isFailed ? LogLevel.Log : LogLevel.Warning);
 
             if (!_сancellationTokenSource.IsCancellationRequested)
+            {
+                ConsoleClient.ReduceToLogOnly();
                 _сancellationTokenSource.Cancel();
+            }
         }
 
         public static CancellationTokenSource NewLinkedCancellationTokenSource() =>

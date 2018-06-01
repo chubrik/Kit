@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Threading.Tasks;
 
 namespace Kit
 {
@@ -12,7 +11,7 @@ namespace Kit
 
         public static ConsolePosition Position { get; private set; } = new ConsolePosition(0, 0);
         private static LogLevel _minLevel = LogLevel.Info;
-        private static bool _isDisabled;
+        private static ConsoleMode _mode = ConsoleMode.Enabled;
 
         #region Setup
 
@@ -69,8 +68,8 @@ namespace Kit
             }
 
             var fullMessage = Position.Left > 0 ? "\n" : string.Empty;
-            fullMessage += $"{now.ToString("HH:mm:ss")} - {message}";
-            WriteLine(fullMessage, color);
+            fullMessage += $"{now.ToString("HH:mm:ss")} - {message}\n";
+            WriteBase(fullMessage, color, position: null, isLog: true);
         }
 
         #endregion
@@ -83,14 +82,18 @@ namespace Kit
             string text, ConsoleColor? color = null, ConsolePosition position = null) =>
             Write($"{text}\n", color, position);
 
+        public static ConsolePosition Write(
+            string text, ConsoleColor? color = null, ConsolePosition position = null) =>
+            WriteBase(text, color, position, isLog: false);
+
         private static readonly object _lock = new object();
 
-        public static ConsolePosition Write(
-            string text, ConsoleColor? color = null, ConsolePosition position = null)
+        public static ConsolePosition WriteBase(
+            string text, ConsoleColor? color, ConsolePosition position, bool isLog)
         {
             lock (_lock)
             {
-                if (_isDisabled)
+                if (_mode == ConsoleMode.Disabled || (_mode == ConsoleMode.LogOnly && !isLog))
                     return Position;
 
                 var origColor = Console.ForegroundColor;
@@ -116,6 +119,7 @@ namespace Kit
                 {
                     Debug.Fail(exception.ToString());
                     ExceptionHandler.Register(exception, level: LogLevel.Warning);
+                    // no throw for overflow warning
                 }
                 finally
                 {
@@ -137,10 +141,20 @@ namespace Kit
 
         #endregion
 
-        public static async Task DisableAsync()
+        #region Utils
+
+        public static void ReduceToLogOnly()
         {
-            _isDisabled = true;
-            await Task.Delay(TimeSpan.FromMilliseconds(50));
+            if (_mode == ConsoleMode.Enabled)
+                _mode = ConsoleMode.LogOnly;
         }
+
+        public static void Disable()
+        {
+            lock (_lock)
+                _mode = ConsoleMode.Disabled;
+        }
+
+        #endregion
     }
 }
