@@ -13,8 +13,7 @@ namespace Kit
             Left = left;
         }
 
-        public bool Equals(ConsolePosition other) =>
-            Top == other.Top && Left == other.Left;
+        public bool Equals(ConsolePosition other) => Top == other.Top && Left == other.Left;
 
         public bool HasEnoughWidthFor(string text) => Left + text.Length <= Console.WindowWidth;
 

@@ -78,7 +78,6 @@ namespace Kit.Mail
 
         #endregion
 
-        //todo attachments
         public static async Task SendAsync(string subject, string body, IEnumerable<string> attachmentPaths)
         {
             if (!_isEnable)

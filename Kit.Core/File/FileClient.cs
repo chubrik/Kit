@@ -216,6 +216,8 @@ namespace Kit
 
         #endregion
 
+        #region Utils
+
         public static bool Exists(string path, string targetDirectory = null) =>
             File.Exists(FullPath(path, targetDirectory));
 
@@ -250,5 +252,7 @@ namespace Kit
                 LogService.Log($"Create directory: {dirPath}");
             }
         }
+
+        #endregion
     }
 }

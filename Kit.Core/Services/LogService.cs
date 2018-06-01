@@ -13,11 +13,7 @@ namespace Kit
             FileClient.Instance
         };
 
-        public static void Log(string message, LogLevel level = LogLevel.Log)
-        {
-            foreach (var client in Clients)
-                client.PushToLog(message, level);
-        }
+        #region Extensions
 
         public static void LogInfo(string message) => Log(message, LogLevel.Info);
 
@@ -26,5 +22,13 @@ namespace Kit
         public static void LogWarning(string message) => Log(message, LogLevel.Warning);
 
         public static void LogError(string message) => Log(message, LogLevel.Error);
+
+        #endregion
+
+        public static void Log(string message, LogLevel level = LogLevel.Log)
+        {
+            foreach (var client in Clients)
+                client.PushToLog(message, level);
+        }
     }
 }
