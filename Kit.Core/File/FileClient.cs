@@ -86,7 +86,6 @@ namespace Kit
                         break;
 
                     default:
-                        Debug.Fail(string.Empty);
                         throw new ArgumentOutOfRangeException(nameof(level));
                 }
 

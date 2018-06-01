@@ -117,7 +117,7 @@ namespace Kit.Mail
             }
             catch (Exception exception)
             {
-                Debug.Fail(exception.ToString());
+                Debug.Assert(exception.IsAllowed());
                 throw;
             }
 

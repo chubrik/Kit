@@ -21,6 +21,8 @@ namespace Kit
             return exception is TimeoutException || exception.IsCanceled();
         }
 
+        public static bool IsAllowed(this Exception exception) => exception.IsTimeoutOrCanceled();
+
         public static Exception FirstInnerestException(this Exception exception)
         {
             if (exception is AggregateException aggregate && aggregate.InnerExceptions.Count > 0)

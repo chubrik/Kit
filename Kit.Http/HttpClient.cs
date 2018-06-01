@@ -162,6 +162,8 @@ namespace Kit.Http
             }
             catch (Exception exception)
             {
+                Debug.Assert(exception.IsHttpAllowed() && repeat12030Count > 1);
+
                 if (exception.Has12030() && --repeat12030Count > 0)
                 {
                     LogService.LogWarning($"{logLabel} terminated with native HTTP error. Will repeat...");
@@ -170,7 +172,6 @@ namespace Kit.Http
                     goto Retry;
                 }
 
-                Debug.Fail(exception.ToString());
                 throw;
             }
 
@@ -278,7 +279,7 @@ namespace Kit.Http
             }
             catch (Exception exception)
             {
-                Debug.Fail(exception.ToString());
+                Debug.Assert(exception.IsAllowed());
                 RemoveHeader("Cache-Control");
                 throw;
             }

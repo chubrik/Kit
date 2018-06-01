@@ -121,7 +121,7 @@ namespace Kit.Azure
             }
             catch (Exception exception)
             {
-                Debug.Fail(exception.ToString());
+                Debug.Assert(exception.IsAllowed());
                 throw;
             }
         }
@@ -145,7 +145,7 @@ namespace Kit.Azure
             }
             catch (Exception exception)
             {
-                Debug.Fail(exception.ToString());
+                Debug.Assert(exception.IsAllowed());
                 throw;
             }
         }
@@ -198,7 +198,7 @@ namespace Kit.Azure
             }
             catch (Exception exception)
             {
-                Debug.Fail(exception.ToString());
+                Debug.Assert(exception.IsAllowed());
                 throw;
             }
         }
@@ -221,7 +221,7 @@ namespace Kit.Azure
             }
             catch (Exception exception)
             {
-                Debug.Fail(exception.ToString());
+                Debug.Assert(exception.IsAllowed());
                 throw;
             }
         }

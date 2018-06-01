@@ -121,7 +121,7 @@ namespace Kit
             }
             catch (Exception exception)
             {
-                Debug.Fail(exception.ToString());
+                Debug.Assert(exception.IsAllowed());
 
                 if (exception.IsCanceled())
                     _isCanceled = true;
