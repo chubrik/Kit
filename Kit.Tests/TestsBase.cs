@@ -1,13 +1,23 @@
 ﻿using Kit.Azure;
 using Kit.Http;
 using Kit.Mail;
+using System;
 using System.IO;
 
 namespace Kit.Tests
 {
-    public class Program
+    public class TestsBase
     {
-        public static void Main(string[] args)
+        public static void TestExecute(string baseDirectory, Action @delegate)
+        {
+            Kit.Setup(
+                pressAnyKeyToExit: false,
+                baseDirectory: baseDirectory);
+
+            Kit.Execute(@delegate);
+        }
+
+        public static void Setup()
         {
             ConsoleClient.Setup(minLevel: LogLevel.Log);
             HttpClient.Setup(cache: CacheMode.Full);
@@ -31,7 +41,7 @@ namespace Kit.Tests
                 to: mailCredentials[5]
             );
 
-            Kit.Execute(() => new Test().Run());
+            //Kit.Execute(() => new Tests().Run());
         }
     }
 }
