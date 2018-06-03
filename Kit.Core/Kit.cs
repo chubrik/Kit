@@ -166,9 +166,6 @@ namespace Kit
             }
         }
 
-        public static CancellationTokenSource NewLinkedCancellationTokenSource() =>
-            CancellationTokenSource.CreateLinkedTokenSource(CancellationToken);
-
         #endregion
     }
 }

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Mail;
 using System.Net.Mime;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Kit.Mail
@@ -58,8 +59,9 @@ namespace Kit.Mail
 
         #region IReportClient
 
-        public void PushToReport(string subject, string body, IEnumerable<string> attachmentPaths, string targetDirectory) =>
-            SendAsync(subject, body, attachmentPaths).Wait(); //todo queue
+        public void PushToReport(
+            string subject, string body, IEnumerable<string> attachmentPaths, string targetDirectory) =>
+            Send(subject, body, attachmentPaths); //todo queue
 
         #endregion
 
@@ -67,18 +69,27 @@ namespace Kit.Mail
 
         #region Extensions
 
-        public static void Send(string subject, string body, string attachmentPath = null) =>
-            SendAsync(subject, body, attachmentPath).Wait();
+        public static void Send(string subject, string body) =>
+            SendAsync(subject, body, attachmentPaths: null, cancellationToken: Kit.CancellationToken).Wait();
+
+        public static void Send(string subject, string body, string attachmentPath) =>
+            SendAsync(subject, body, new List<string> { attachmentPath }, cancellationToken: Kit.CancellationToken).Wait();
 
         public static void Send(string subject, string body, IEnumerable<string> attachmentPaths) =>
-            SendAsync(subject, body, attachmentPaths).Wait();
+            SendAsync(subject, body, attachmentPaths, cancellationToken: Kit.CancellationToken).Wait();
 
-        public static Task SendAsync(string subject, string body, string attachmentPath = null) =>
-            SendAsync(subject, body, attachmentPath == null ? new List<string>() : new List<string> { attachmentPath });
+        public static Task SendAsync(
+            string subject, string body, CancellationToken? cancellationToken = null) =>
+            SendAsync(subject, body, attachmentPaths: null, cancellationToken: cancellationToken);
+
+        public static Task SendAsync(
+            string subject, string body, string attachmentPath, CancellationToken? cancellationToken = null) =>
+            SendAsync(subject, body, new List<string> { attachmentPath }, cancellationToken: cancellationToken);
 
         #endregion
 
-        public static async Task SendAsync(string subject, string body, IEnumerable<string> attachmentPaths)
+        public static async Task SendAsync(
+            string subject, string body, IEnumerable<string> attachmentPaths, CancellationToken? cancellationToken = null)
         {
             if (!_isEnable)
                 return;
@@ -86,43 +97,42 @@ namespace Kit.Mail
             var startTime = DateTimeOffset.Now;
             var logLabel = $"Mail send #{++_logCounter}";
             LogService.Log($"{logLabel}: {subject}");
-            var message = new MailMessage(_from, _to, subject, body);
 
-            if (attachmentPaths != null)
-                foreach (var attachmentPath in attachmentPaths)
-                {
-                    var attachment = new Attachment(FileClient.FullPath(attachmentPath), "application/octet-stream")
+            using (var message = new MailMessage(_from, _to, subject, body))
+            {
+                if (attachmentPaths != null)
+                    foreach (var attachmentPath in attachmentPaths)
                     {
-                        ContentId = new Guid().ToString(),
-                        ContentDisposition = {
-                            Inline = true,
-                            DispositionType = DispositionTypeNames.Inline
-                        },
-                        ContentType = {
-                            Name = PathHelper.FileName(attachmentPath)
-                        }
-                    };
+                        var attachment = new Attachment(FileClient.FullPath(attachmentPath), "application/octet-stream")
+                        {
+                            ContentId = new Guid().ToString(),
+                            ContentDisposition = {
+                                Inline = true,
+                                DispositionType = DispositionTypeNames.Inline
+                            },
+                            ContentType = {
+                                Name = PathHelper.FileName(attachmentPath)
+                            }
+                        };
 
-                    message.Attachments.Add(attachment);
-                }
+                        message.Attachments.Add(attachment);
+                    }
 
-            try
-            {
-                using (var smtp = new SmtpClient(_host, _port))
+                try
                 {
-                    smtp.EnableSsl = true;
-                    smtp.Credentials = _credentials;
-                    await smtp.SendMailAsync(message); //todo cancellationToken
+                    using (var client = new SmtpClient(_host, _port))
+                    {
+                        client.EnableSsl = true;
+                        client.Credentials = _credentials;
+                        await client.SendMailAsync(message, cancellationToken ?? Kit.CancellationToken);
+                    }
+                }
+                catch (Exception exception)
+                {
+                    Debug.Assert(exception.IsAllowed());
+                    throw;
                 }
             }
-            catch (Exception exception)
-            {
-                Debug.Assert(exception.IsAllowed());
-                throw;
-            }
-
-            foreach (var attachment in message.Attachments)
-                attachment.Dispose();
 
             LogService.Log($"{logLabel} completed at {TimeHelper.FormattedLatency(startTime)}");
         }

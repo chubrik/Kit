@@ -40,7 +40,7 @@ namespace Kit.Http
 
         public static async Task<T> TimeoutAsync<T>(Func<CancellationToken, Task<T>> action, int timeoutSeconds)
         {
-            var cts = Kit.NewLinkedCancellationTokenSource();
+            var cts = Kit.CancellationToken.GetNestedSource();
             var timeIsOut = false;
 
             var timerTask = Task.Factory.StartNew(async () =>
@@ -51,7 +51,8 @@ namespace Kit.Http
                     timeIsOut = true;
                     cts.Cancel();
                 }
-                catch (TaskCanceledException) {
+                catch (OperationCanceledException)
+                {
                     // no throw for canceled timer
                 }
             });
@@ -60,7 +61,7 @@ namespace Kit.Http
             {
                 return await action(cts.Token);
             }
-            catch (TaskCanceledException exception)
+            catch (OperationCanceledException exception)
             {
                 if (timeIsOut)
                     throw new TimeoutException($"The operation has timed out ({timeoutSeconds} seconds).", exception);
