@@ -9,31 +9,25 @@ using System.Text.RegularExpressions;
 namespace Kit.Tests
 {
     [TestClass]
-    public class Test : TestsBase
+    public class CoreTests : TestsBase
     {
         [TestMethod]
         public void BaseRun()
         {
-            var baseDir = $"$tests/{nameof(BaseRun)}";
+            var testName = $"{GetType().Name}.{nameof(BaseRun)}";
+            var diagnosticsDir = TestUtils.GetDiagnosticsDir(testName);
+            var reportsDir = $"{diagnosticsDir}/reports";
 
-            if (Directory.Exists(baseDir))
-                Directory.Delete(baseDir, recursive: true);
-
-            Assert.IsFalse(Directory.Exists(baseDir));
-            var formattedStartTime = DateTimeOffset.Now.ToString("dd.MM.yyyy HH.mm.ss");
-
-            TestExecute(baseDir, () =>
+            TestExecute(testName, () =>
             {
                 LogService.LogInfo("Hello World!");
             });
 
-            var diagnosticsDir = $"{baseDir}/$diagnostics/{formattedStartTime}";
             Assert.IsTrue(Directory.Exists(diagnosticsDir));
             var diagnosticsFileNames = Directory.GetFiles(diagnosticsDir).Select(Path.GetFileName).ToList();
             Assert.IsTrue(diagnosticsFileNames.Count == 2);
             Assert.IsTrue(diagnosticsFileNames[0] == "$log.txt");
             Assert.IsTrue(Regex.IsMatch(diagnosticsFileNames[1], @"^001 Test exception \(Kit\.cs_\d+\)\.txt$"));
-            var reportsDir = $"{diagnosticsDir}/reports";
             Assert.IsTrue(Directory.Exists(reportsDir));
             var reportFileNames = Directory.GetFiles(reportsDir).Select(Path.GetFileName).ToList();
             Assert.IsTrue(reportFileNames.Count == 1);
