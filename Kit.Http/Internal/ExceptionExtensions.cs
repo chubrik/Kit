@@ -3,7 +3,7 @@ using System.ComponentModel;
 
 namespace Kit.Http
 {
-    internal static class HttpExceptionExtensions
+    internal static class ExceptionExtensions
     {
         /// <summary>
         /// WinHttpException: The connection with the server was terminated abnormally
