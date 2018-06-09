@@ -69,9 +69,9 @@ namespace Kit.Http
 
             SetHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8");
             SetHeader("Accept-Encoding", "gzip, deflate");
-            SetHeader("Accept-Language", "ru,en;q=0.9");
+            SetHeader("Accept-Language", "en;q=0.9");
             SetHeader("Upgrade-Insecure-Requests", "1");
-            SetHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36");
+            SetHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.79 Safari/537.36");
         }
 
         public void Dispose() => _client.Dispose();

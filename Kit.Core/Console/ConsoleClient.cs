@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace Kit
@@ -35,7 +36,7 @@ namespace Kit
             var now = DateTimeOffset.Now;
 
             if (now.Day != _previousDate.Day)
-                WriteLine((Position.Left > 0 ? "\n" : string.Empty) + $"\n{now.ToString("dd.MM.yyyy")}\n");
+                WriteBase($"\n{now.ToString("dd.MM.yyyy")}\n\n", color: null, position: null, isLog: true);
 
             _previousDate = now;
             ConsoleColor? color;
@@ -66,9 +67,35 @@ namespace Kit
                     throw new ArgumentOutOfRangeException(nameof(level));
             }
 
-            var fullMessage = Position.Left > 0 ? "\n" : string.Empty;
-            fullMessage += $"{now.ToString("HH:mm:ss")} - {message}\n";
-            WriteBase(fullMessage, color, position: null, isLog: true);
+            var timePrefix = $"{now.ToString("HH:mm:ss")} - ";
+            var maxWidth = Console.WindowWidth - timePrefix.Length - 1;
+
+            if (message.Length > maxWidth)
+            {
+                var separator = '\n' + new String(' ', timePrefix.Length);
+                message = SplitByWords(message, maxWidth).Join(separator);
+            }
+
+            WriteBase($"{timePrefix}{message}\n", color, position: null, isLog: true);
+        }
+
+        private static List<string> SplitByWords(string text, int maxWidth)
+        {
+            var lines = new List<string>();
+
+            while (text.Length > maxWidth)
+            {
+                var index = text.LastIndexOf(' ', maxWidth);
+
+                if (index == -1)
+                    index = maxWidth;
+
+                lines.Add(text.Substring(0, index).TrimEnd());
+                text = text.Substring(index + 1);
+            }
+
+            lines.Add(text);
+            return lines;
         }
 
         #endregion
@@ -79,7 +106,7 @@ namespace Kit
 
         public static ConsolePosition WriteLine(
             string text, ConsoleColor? color = null, ConsolePosition position = null) =>
-            Write($"{text}\n", color, position);
+            WriteBase($"{text}\n", color, position, isLog: false);
 
         public static ConsolePosition Write(
             string text, ConsoleColor? color = null, ConsolePosition position = null) =>
@@ -87,7 +114,7 @@ namespace Kit
 
         private static readonly object _lock = new object();
 
-        public static ConsolePosition WriteBase(
+        private static ConsolePosition WriteBase(
             string text, ConsoleColor? color, ConsolePosition position, bool isLog)
         {
             lock (_lock)
@@ -111,6 +138,9 @@ namespace Kit
                         Console.CursorVisible = false;
                         Console.SetCursorPosition(position.Left, position.Top);
                     }
+
+                    if (isLog && origLeft > 0)
+                        text = $"\n{text}";
 
                     Console.Write(text);
                 }

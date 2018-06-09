@@ -93,6 +93,7 @@ namespace Kit
                 Debug.Fail(exception.ToString());
                 _isFailed = true;
                 ConsoleClient.Disable();
+                _сancellationTokenSource.Cancel();
                 Console.BackgroundColor = ConsoleColor.DarkRed;
                 Console.ForegroundColor = ConsoleColor.White;
                 Console.WriteLine((Console.CursorLeft > 0 ? "\n" : string.Empty) + "\n Kit internal error \n");
@@ -124,25 +125,24 @@ namespace Kit
                 Debug.Assert(exception.IsAllowed());
 
                 if (exception.IsCanceled())
+                {
                     _isCanceled = true;
+                    ExceptionHandler.Register(exception, level: LogLevel.Warning);
+                    LogService.Log($"{delegateName} cancellation time is {TimeHelper.FormattedLatency(_cancellationRequestTime)}");
+                    LogService.LogWarning($"{delegateName} canceled at {TimeHelper.FormattedLatency(startTime)}");
+                }
                 else
                 {
                     _isFailed = true;
 
                     if (!LogService.Clients.Contains(ConsoleClient.Instance))
                         LogService.Clients.Add(ConsoleClient.Instance);
-                }
 
-                ExceptionHandler.Register(exception);
-                ReportService.Report(exception.Message, exception.ToString());
-
-                if (_isCanceled)
-                {
-                    LogService.Log($"{delegateName} cancellation time is {TimeHelper.FormattedLatency(_cancellationRequestTime)}");
-                    LogService.LogWarning($"{delegateName} canceled at {TimeHelper.FormattedLatency(startTime)}");
-                }
-                else
+                    ExceptionHandler.Register(exception);
+                    ReportService.ReportError(exception.Message, exception.ToString());
                     LogService.LogError($"{delegateName} failed at {TimeHelper.FormattedLatency(startTime)}");
+                    Cancel();
+                }
 
                 // no throw for delegate error
             }

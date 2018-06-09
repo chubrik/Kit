@@ -17,10 +17,6 @@ namespace Kit
         public static void Register(Exception exception, LogLevel level = LogLevel.Error)
         {
             var startTime = DateTimeOffset.Now;
-
-            if (exception.IsCanceled())
-                level = LogLevel.Log;
-
             var message = OneLineMessageWithPlace(exception);
             var count = ++_counter;
             var logLabel = $"Exception #{count}";

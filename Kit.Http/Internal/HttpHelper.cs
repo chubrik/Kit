@@ -27,7 +27,7 @@ namespace Kit.Http
                 if (exception.IsCanceled() || count == RepeatCount)
                     throw;
 
-                ExceptionHandler.Register(exception);
+                ExceptionHandler.Register(exception, LogLevel.Warning);
 
                 if (exception.IsTimeoutOrCanceled())
                     LogService.LogWarning($"Repeat {count} of {RepeatCount} failed by timeout");

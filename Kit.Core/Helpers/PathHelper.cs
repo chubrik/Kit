@@ -25,7 +25,16 @@ namespace Kit
         public static string Parent(string path) =>
             path.Contains('/') ? path.Substring(0, path.LastIndexOf('/')) : string.Empty;
 
-        public static string FileName(string path) => Path.GetFileName(path);
+        public static string FileName(string path)
+        {
+            var fileName = Path.GetFileName(path);
+            var queryIndex = fileName.IndexOf('?');
+
+            if (queryIndex != -1)
+                fileName = fileName.Substring(0, queryIndex);
+
+            return fileName;
+        }
 
         public static string SafeFileName(string fileName)
         {
