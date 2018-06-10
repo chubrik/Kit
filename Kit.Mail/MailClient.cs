@@ -26,7 +26,6 @@ namespace Kit.Mail
         #region Setup
 
         public static void Setup(
-            bool? isEnable = null,
             string host = null,
             int? port = null,
             string userName = null,
@@ -34,9 +33,6 @@ namespace Kit.Mail
             string from = null,
             string to = null)
         {
-            if (isEnable != null)
-                _isEnable = (bool)isEnable;
-
             if (host != null)
                 _host = host;
 

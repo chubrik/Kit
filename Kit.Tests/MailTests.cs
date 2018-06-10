@@ -1,6 +1,5 @@
 ﻿using Kit.Mail;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
 using System.IO;
 using System.Net.Mail;
 using System.Threading;
@@ -11,16 +10,17 @@ namespace Kit.Tests
     [TestClass]
     public class MailTests : TestsBase
     {
+        private static readonly string[] Credentials = File.ReadAllLines("../../../../../mail-credentials.txt");
+
         [TestMethod]
         public void Succeeded()
         {
             var testName = $"{GetType().Name}.{nameof(Succeeded)}";
 
-            TestExecute(testName, () =>
+            TestExecute(testName, async () =>
             {
-                MailSetup();
-                MailClient.Send("Kit.Test", $"{GetType().Name}.{nameof(Succeeded)}");
-                MailReset();
+                Setup();
+                await MailClient.SendAsync("Kit.Test", $"{GetType().Name}.{nameof(Succeeded)}");
             });
         }
 
@@ -28,41 +28,38 @@ namespace Kit.Tests
         public void Failed()
         {
             var testName = $"{GetType().Name}.{nameof(Failed)}";
-            Exception testException = null;
 
-            TestExecute(testName, () =>
+            TestExecute(testName, async () =>
             {
-                MailSetup();
-                MailClient.Setup(userName: "wrong", password: "wrong");
+                MailClient.Setup(
+                    host: "wrong-host",
+                    port: 0,
+                    userName: "wrong-user",
+                    password: "wrong-password",
+                    from: Credentials[4],
+                    to: Credentials[5]
+                );
 
                 try
                 {
-                    MailClient.Send("Kit.Test", $"{GetType().Name}.{nameof(Failed)}");
+                    await MailClient.SendAsync("Kit.Test", $"{GetType().Name}.{nameof(Failed)}");
+                    Assert.Fail();
                 }
-                catch (Exception exception)
+                catch (SmtpException exception)
                 {
-                    testException = exception;
+                    Assert.IsTrue(exception.Message == "Failure sending mail.");
                 }
-
-                MailReset();
             });
-
-            Assert.IsTrue(testException is AggregateException);
-            var innerExceptions = (testException as AggregateException).InnerExceptions;
-            Assert.IsTrue(innerExceptions.Count == 1);
-            Assert.IsTrue(innerExceptions[0] is SmtpException);
-            Assert.IsTrue(innerExceptions[0].Message == "Failure sending mail.");
         }
 
         [TestMethod]
         public void Canceled()
         {
             var testName = $"{GetType().Name}.{nameof(Canceled)}";
-            Exception testException = null;
 
             TestExecute(testName, async () =>
             {
-                MailSetup();
+                Setup();
 
                 try
                 {
@@ -71,48 +68,25 @@ namespace Kit.Tests
                     await Task.Delay(100);
                     cts.Cancel();
                     await mailTask;
+                    Assert.Fail();
                 }
-                catch (Exception exception)
+                catch (TaskCanceledException)
                 {
-                    testException = exception;
                 }
-
-                MailReset();
             });
-
-            Assert.IsTrue(testException is TaskCanceledException);
-            Assert.IsTrue(testException.Message == "A task was canceled.");
         }
 
         #region Utils
 
-        private void MailSetup()
-        {
-            var mailCredentials = File.ReadAllLines("../../../../../mail-credentials.txt");
-
+        private void Setup() =>
             MailClient.Setup(
-                host: mailCredentials[0],
-                port: int.Parse(mailCredentials[1]),
-                userName: mailCredentials[2],
-                password: mailCredentials[3],
-                from: mailCredentials[4],
-                to: mailCredentials[5]
+                host: Credentials[0],
+                port: int.Parse(Credentials[1]),
+                userName: Credentials[2],
+                password: Credentials[3],
+                from: Credentials[4],
+                to: Credentials[5]
             );
-        }
-
-        private void MailReset()
-        {
-            MailClient.Setup(
-                host: default(string),
-                port: default(int),
-                userName: default(string),
-                password: default(string),
-                from: default(string),
-                to: default(string)
-            );
-
-            ReportService.Clients.Remove(MailClient.Instance);
-        }
 
         #endregion
     }

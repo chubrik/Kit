@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Kit
 {
-    public class Kit
+    public static class Kit
     {
         private static readonly CancellationTokenSource _сancellationTokenSource = new CancellationTokenSource();
         public static CancellationToken CancellationToken => _сancellationTokenSource.Token;
@@ -17,6 +17,7 @@ namespace Kit
         private static DateTimeOffset _cancellationRequestTime;
         private static bool _isCanceled;
         private static bool _isFailed;
+        internal static bool IsTest { get; private set; }
 
         public static string DiagnisticsCurrentDirectory =>
             PathHelper.Combine(_diagnosticsDirectory, _formattedStartTime);
@@ -27,7 +28,8 @@ namespace Kit
             bool? pressAnyKeyToExit = null,
             string baseDirectory = null,
             string workingDirectory = null,
-            string diagnosticsDirectory = null)
+            string diagnosticsDirectory = null,
+            bool? isTest = null)
         {
             if (pressAnyKeyToExit != null)
                 _pressAnyKeyToExit = (bool)pressAnyKeyToExit;
@@ -40,6 +42,9 @@ namespace Kit
 
             if (diagnosticsDirectory != null)
                 _diagnosticsDirectory = diagnosticsDirectory;
+
+            if (isTest != null)
+                IsTest = (bool)isTest;
         }
 
         private static void Initialize()
@@ -91,6 +96,10 @@ namespace Kit
             catch (Exception exception)
             {
                 Debug.Fail(exception.ToString());
+
+                if (IsTest)
+                    throw;
+
                 _isFailed = true;
                 ConsoleClient.Disable();
                 _сancellationTokenSource.Cancel();
@@ -103,7 +112,7 @@ namespace Kit
                 // no throw for internal error
             }
 
-            if (_isFailed || _pressAnyKeyToExit)
+            if ((_isFailed || _pressAnyKeyToExit) && !IsTest)
             {
                 Console.Write("\nPress any key to exit...");
                 Console.ReadKey(true);
@@ -123,6 +132,9 @@ namespace Kit
             catch (Exception exception)
             {
                 Debug.Assert(exception.IsAllowed());
+
+                if (IsTest)
+                    throw;
 
                 if (exception.IsCanceled())
                 {

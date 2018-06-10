@@ -55,7 +55,7 @@ namespace Kit.Http
                     timeIsOut = true;
                     cts.Cancel();
                 }
-                catch (OperationCanceledException)
+                catch (TaskCanceledException)
                 {
                     // no throw for canceled timer
                 }

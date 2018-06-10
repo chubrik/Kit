@@ -43,7 +43,7 @@ namespace Kit.Mail
             {
                 await Task.Delay(Timeout.InfiniteTimeSpan, ctsWrapper[0].Token);
             }
-            catch (OperationCanceledException)
+            catch (TaskCanceledException)
             {
                 // no throw for canceled delay
             }
@@ -59,7 +59,7 @@ namespace Kit.Mail
                     Debug.Fail(string.Empty);
                     throw new InvalidOperationException();
                 }
-                catch (OperationCanceledException)
+                catch (TaskCanceledException)
                 {
                     // no throw for canceled delay
                 }

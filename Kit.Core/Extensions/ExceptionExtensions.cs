@@ -21,7 +21,8 @@ namespace Kit
             return exception is TimeoutException || exception.IsCanceled();
         }
 
-        public static bool IsAllowed(this Exception exception) => exception.IsTimeoutOrCanceled();
+        public static bool IsAllowed(this Exception exception) =>
+            exception.IsTimeoutOrCanceled() || Kit.IsTest;
 
         public static Exception FirstInnerestException(this Exception exception)
         {
