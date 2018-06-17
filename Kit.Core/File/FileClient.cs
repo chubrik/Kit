@@ -138,7 +138,7 @@ namespace Kit
             }
             catch (Exception exception)
             {
-                Debug.Fail(exception.ToString());
+                Debug.Assert(exception.IsAllowed());
                 throw;
             }
         }
@@ -154,7 +154,7 @@ namespace Kit
             }
             catch (Exception exception)
             {
-                Debug.Fail(exception.ToString());
+                Debug.Assert(exception.IsAllowed());
                 throw;
             }
         }
@@ -192,7 +192,7 @@ namespace Kit
             }
             catch (Exception exception)
             {
-                Debug.Fail(exception.ToString());
+                Debug.Assert(exception.IsAllowed());
                 throw;
             }
         }
@@ -208,7 +208,7 @@ namespace Kit
             }
             catch (Exception exception)
             {
-                Debug.Fail(exception.ToString());
+                Debug.Assert(exception.IsAllowed());
                 throw;
             }
         }

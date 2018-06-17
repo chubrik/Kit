@@ -29,7 +29,7 @@ namespace Kit
             string baseDirectory = null,
             string workingDirectory = null,
             string diagnosticsDirectory = null,
-            bool? isTest = null)
+            bool? test = null)
         {
             if (pressAnyKeyToExit != null)
                 _pressAnyKeyToExit = (bool)pressAnyKeyToExit;
@@ -43,8 +43,8 @@ namespace Kit
             if (diagnosticsDirectory != null)
                 _diagnosticsDirectory = diagnosticsDirectory;
 
-            if (isTest != null)
-                IsTest = (bool)isTest;
+            if (test != null)
+                IsTest = (bool)test;
         }
 
         private static void Initialize()

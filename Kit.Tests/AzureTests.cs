@@ -12,22 +12,15 @@ namespace Kit.Tests
         [TestMethod]
         public void WriteAndRead()
         {
-            var testName = $"{GetType().Name}.{nameof(WriteAndRead)}";
+            TestInitialize($"{GetType().Name}.{nameof(WriteAndRead)}");
+            Setup();
+            var testFileName = "test.json";
 
-            TestExecute(testName, () =>
-            {
-                Setup();
-                var testFileName = "test.json";
+            using (var stream = FileClient.OpenRead("../../Kit.Tests.runtimeconfig.json"))
+                AzureBlobClient.Write(testFileName, stream, targetDirectory: nameof(WriteAndRead));
 
-                using (var stream = FileClient.OpenRead("../../Kit.Tests.runtimeconfig.json"))
-                    AzureBlobClient.Write(testFileName, stream, targetDirectory: nameof(WriteAndRead));
-
-                using (var stream = FileClient.OpenWrite(testFileName))
-                    AzureBlobClient.Read(testFileName, stream, targetDirectory: nameof(WriteAndRead));
-            });
-
-            //ReportService.ReportSuccess("My report", "My report body", "../Kit.Core.dll");
-            //throw new Exception("My exception");
+            using (var stream = FileClient.OpenWrite(testFileName))
+                AzureBlobClient.Read(testFileName, stream, targetDirectory: nameof(WriteAndRead));
         }
 
         private static void Setup() =>

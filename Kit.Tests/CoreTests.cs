@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -9,13 +10,14 @@ namespace Kit.Tests
     public class CoreTests : TestsBase
     {
         [TestMethod]
-        public void BaseRun()
+        public void Execute()
         {
-            var testName = $"{GetType().Name}.{nameof(BaseRun)}";
-            var diagnosticsDir = TestUtils.GetDiagnosticsDir(testName);
+            var testName = $"{GetType().Name}.{nameof(Execute)}";
+            TestInitialize(testName);
+            var diagnosticsDir = $"$tests/{testName}/$diagnostics/" + DateTimeOffset.Now.ToString("dd.MM.yyyy HH.mm.ss");
             var reportsDir = $"{diagnosticsDir}/reports";
 
-            TestExecute(testName, () =>
+            Kit.Execute(() =>
             {
                 LogService.LogInfo("Hello World!");
             });
