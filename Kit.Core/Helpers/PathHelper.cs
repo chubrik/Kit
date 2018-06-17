@@ -12,7 +12,6 @@ namespace Kit
 
             while (result.Contains("../"))
             {
-
                 if (result.StartsWith("../"))
                     return result;
 
@@ -38,8 +37,8 @@ namespace Kit
 
         public static string SafeFileName(string fileName)
         {
-            var safeName = fileName.Replace('\"', '\'');
-            safeName = Regex.Replace(safeName, @"[\\/:*?""<>|]", "_", RegexOptions.IgnoreCase);
+            var safeName = Regex.Replace(fileName, @"\r?\n", " ").Replace('\"', '\'');
+            safeName = Regex.Replace(safeName, @"[\\/:*?<>|]", "_");
             return safeName.Length > 250 ? safeName.Substring(0, 250) : safeName;
         }
     }

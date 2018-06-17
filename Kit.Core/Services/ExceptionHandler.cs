@@ -17,30 +17,28 @@ namespace Kit
         public static void Register(Exception exception, LogLevel level = LogLevel.Error)
         {
             var startTime = DateTimeOffset.Now;
-            var message = OneLineMessageWithPlace(exception);
+            var message = Regex.Replace(exception.Message, @"\r?\n", " ") + GetPlaceSuffix(exception);
             var count = ++_counter;
             var logLabel = $"Exception #{count}";
             LogService.Log($"{logLabel}: {message}", level);
-            var text = $"{logLabel}\r\n{message}\r\n{ExtendedDump(exception)}";
+            var fullText = $"{logLabel}\r\n{message}\r\n{ExtendedDump(exception)}";
             var fileName = PathHelper.SafeFileName($"{count.ToString().PadLeft(3, '0')} {message}.txt");
 
             foreach (var client in DataClients)
-                client.PushToWrite(fileName, text, Kit.DiagnisticsCurrentDirectory);
+                client.PushToWrite(fileName, fullText, Kit.DiagnisticsCurrentDirectory);
 
             LogService.Log($"{logLabel} registered at {TimeHelper.FormattedLatency(startTime)}");
         }
 
         #region Utils
 
-        private static string OneLineMessageWithPlace(Exception exception)
+        private static string GetPlaceSuffix(Exception exception)
         {
-            var message = exception.Message.Replace("\r\n", " ");
             var match = Regex.Match(exception.ToString(), @"(\w+\.cs):line (\d+)");
 
-            if (match.Success)
-                message += $" ({match.Groups[1].Value}:{match.Groups[2].Value})";
-
-            return message;
+            return match.Success
+                ? $" ({match.Groups[1].Value}:{match.Groups[2].Value})"
+                : string.Empty;
         }
 
         private static string ExtendedDump(Exception exception)

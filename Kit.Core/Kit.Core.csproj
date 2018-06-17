@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>Kit</RootNamespace>
-    <Version>1.3.1</Version>
+    <Version>1.3.2</Version>
     <PackageTags>kit helpers tools utils</PackageTags>
     <Authors>Arkadi Chubrik</Authors>
     <Description>The powerful engine for various C# projects.
