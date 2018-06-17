@@ -109,6 +109,7 @@ namespace Kit
                 Console.BackgroundColor = ConsoleColor.Black;
                 Console.ForegroundColor = ConsoleColor.Gray;
                 Console.WriteLine(exception.ToString().Trim());
+
                 // no throw for internal error
             }
 
@@ -133,9 +134,6 @@ namespace Kit
             {
                 Debug.Assert(exception.IsAllowed());
 
-                if (IsTest)
-                    throw;
-
                 if (exception.IsCanceled())
                 {
                     _isCanceled = true;
@@ -157,6 +155,8 @@ namespace Kit
                 }
 
                 // no throw for delegate error
+                if (IsTest)
+                    throw;
             }
         }
 

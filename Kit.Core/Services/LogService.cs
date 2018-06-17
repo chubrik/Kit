@@ -9,6 +9,7 @@ namespace Kit
         internal const string LogFileName = "$log.txt";
 
         public static readonly List<ILogClient> Clients = new List<ILogClient> {
+            TraceClient.Instance,
             ConsoleClient.Instance,
             FileClient.Instance
         };
