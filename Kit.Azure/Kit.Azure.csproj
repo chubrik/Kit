@@ -17,7 +17,6 @@ Has advanced diagnostics and the most useful features.</Description>
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Kit.Abstractions\Kit.Abstractions.csproj" />
     <ProjectReference Include="..\Kit.Core\Kit.Core.csproj" />
   </ItemGroup>
 

@@ -13,7 +13,6 @@ Has advanced diagnostics and the most useful features.</Description>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Kit.Abstractions\Kit.Abstractions.csproj" />
     <ProjectReference Include="..\Kit.Core\Kit.Core.csproj" />
   </ItemGroup>
 

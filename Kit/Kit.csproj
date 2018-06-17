@@ -13,11 +13,10 @@ Has advanced diagnostics and the most useful features.</Description>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Kit.Azure\Kit.Azure.csproj" />
     <ProjectReference Include="..\Kit.Core\Kit.Core.csproj" />
     <ProjectReference Include="..\Kit.Html\Kit.Html.csproj" />
-    <ProjectReference Include="..\Kit.Http.Extensions\Kit.Http.Extensions.csproj" />
     <ProjectReference Include="..\Kit.Http\Kit.Http.csproj" />
+    <ProjectReference Include="..\Kit.Http.Extensions\Kit.Http.Extensions.csproj" />
     <ProjectReference Include="..\Kit.Mail\Kit.Mail.csproj" />
   </ItemGroup>
 
