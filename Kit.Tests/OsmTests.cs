@@ -10,7 +10,7 @@ namespace Kit.Tests
         public void Validate()
         {
             TestInitialize($"{GetType().Name}.{nameof(Validate)}");
-            OsmService.ValidateSource("../../$data/antarctica.osm.pbf");
+            OsmService.Validate("../../$data/antarctica.osm.pbf");
         }
     }
 }
