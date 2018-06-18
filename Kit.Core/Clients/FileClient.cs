@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace Kit
 {
-    public class FileClient : IDataClient, IReportClient, ILogClient
+    public class FileClient : IDataClient, ILogClient, IReportClient
     {
         private static FileClient _instance;
         public static FileClient Instance => _instance ?? (_instance = new FileClient());
@@ -45,53 +45,40 @@ namespace Kit
         #endregion
 
         #region ILogClient
-
+        
+        private const string LogTimeFormat = "dd.MM.yyyy HH:mm:ss.fff";
         private bool _isLogInitialized;
         private string _logFullPath;
         private bool _logIndent = false;
         private static readonly object _lock = new object();
+
+        private static readonly Dictionary<LogLevel, string> _logBadges =
+            new Dictionary<LogLevel, string>
+            {
+                { LogLevel.Info, "INFO" },
+                { LogLevel.Success, "SUCCESS" },
+                { LogLevel.Warning, "WARNING" },
+                { LogLevel.Error, "ERROR" },
+            };
 
         public void PushToLog(string message, LogLevel level = LogLevel.Log)
         {
             if (!_isLogInitialized)
                 LogInitialize();
 
+            var textLine = $"{DateTimeOffset.Now.ToString(LogTimeFormat)} - {message}\r\n";
+
             lock (_lock)
-            {
                 if (level == LogLevel.Log)
                 {
-                    File.AppendAllText(_logFullPath, _logIndent ? $"\r\n{MessageLine(message)}" : MessageLine(message));
+                    File.AppendAllText(_logFullPath, _logIndent ? $"\r\n{textLine}" : textLine);
                     _logIndent = false;
-                    return;
                 }
-
-                string header;
-
-                switch (level)
+                else
                 {
-                    case LogLevel.Info:
-                        header = "INFO";
-                        break;
-
-                    case LogLevel.Success:
-                        header = "SUCCESS";
-                        break;
-
-                    case LogLevel.Warning:
-                        header = "WARNING";
-                        break;
-
-                    case LogLevel.Error:
-                        header = "ERROR";
-                        break;
-
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(level));
+                    File.AppendAllText(_logFullPath, $"\r\n--- {_logBadges[level]} ---\r\n{textLine}");
+                    _logIndent = true;
                 }
-
-                File.AppendAllText(_logFullPath, $"\r\n--- {header} ---\r\n{MessageLine(message)}");
-                _logIndent = true;
-            }
         }
 
         private void LogInitialize()
@@ -105,9 +92,6 @@ namespace Kit
             _logFullPath = FullPath(LogService.LogFileName, Kit.DiagnisticsCurrentDirectory);
             CreateDir(_logFullPath);
         }
-
-        private static string MessageLine(string message) =>
-            $"{DateTimeOffset.Now.ToString("dd.MM.yyyy HH:mm:ss.fff")} - {message}\r\n";
 
         #endregion
 

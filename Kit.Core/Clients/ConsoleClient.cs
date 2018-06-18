@@ -26,7 +26,18 @@ namespace Kit
 
         #region ILogClient
 
+        private const string LogTimeFormat = "HH:mm:ss";
         private DateTimeOffset _previousDate = DateTimeOffset.Now;
+
+        private static readonly Dictionary<LogLevel, ConsoleColor?> _logColors =
+            new Dictionary<LogLevel, ConsoleColor?>
+            {
+                { LogLevel.Log, ConsoleColor.DarkGray },
+                { LogLevel.Info, null },
+                { LogLevel.Success, ConsoleColor.Green },
+                { LogLevel.Warning, ConsoleColor.Yellow },
+                { LogLevel.Error, ConsoleColor.Red },
+            };
 
         public void PushToLog(string message, LogLevel level = LogLevel.Log)
         {
@@ -39,35 +50,7 @@ namespace Kit
                 WriteBase($"\n{now.ToString("dd.MM.yyyy")}\n\n", color: null, position: null, isLog: true);
 
             _previousDate = now;
-            ConsoleColor? color;
-
-            switch (level)
-            {
-                case LogLevel.Log:
-                    color = ConsoleColor.DarkGray;
-                    break;
-
-                case LogLevel.Info:
-                    color = null;
-                    break;
-
-                case LogLevel.Success:
-                    color = ConsoleColor.Green;
-                    break;
-
-                case LogLevel.Warning:
-                    color = ConsoleColor.Yellow;
-                    break;
-
-                case LogLevel.Error:
-                    color = ConsoleColor.Red;
-                    break;
-
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(level));
-            }
-
-            var timePrefix = $"{now.ToString("HH:mm:ss")} - ";
+            var timePrefix = $"{now.ToString(LogTimeFormat)} - ";
             var maxWidth = Console.WindowWidth - timePrefix.Length - 1;
 
             if (message.Length > maxWidth)
@@ -76,7 +59,7 @@ namespace Kit
                 message = SplitByWords(message, maxWidth).Join(separator);
             }
 
-            WriteBase($"{timePrefix}{message}\n", color, position: null, isLog: true);
+            WriteBase($"{timePrefix}{message}\n", color: _logColors[level], position: null, isLog: true);
         }
 
         private static List<string> SplitByWords(string text, int maxWidth)
