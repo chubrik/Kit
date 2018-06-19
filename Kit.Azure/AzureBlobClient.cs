@@ -110,7 +110,7 @@ namespace Kit.Azure
 
         public static Task<string> ReadTextAsync(
             string path, CancellationToken cancellationToken, string targetDirectory = null) =>
-            ReadBaseAsync(path, targetDirectory, (fullPath, blob) =>
+            ReadBaseAsync(path, targetDirectory, blob =>
                 blob.DownloadTextAsync(
                     Encoding.UTF8, _accessCondition, _options, _operationContext, cancellationToken));
 
@@ -126,13 +126,13 @@ namespace Kit.Azure
             string path, Stream target, CancellationToken cancellationToken, string targetDirectory = null)
         {
             var startTime = DateTimeOffset.Now;
-            var fullPath = PathHelper.Combine(targetDirectory ?? _workingDirectory, path);
+            var nativePath = PathHelper.Combine(targetDirectory ?? _workingDirectory, path);
             var logLabel = $"Download blob #{++_logCounter}";
-            LogService.Log($"{logLabel}: {fullPath}");
+            LogService.Log($"{logLabel}: {nativePath}");
 
             try
             {
-                var blob = _container.GetBlockBlobReference(fullPath);
+                var blob = _container.GetBlockBlobReference(nativePath);
 
                 await blob.DownloadToStreamAsync(
                     target, _accessCondition, _options, _operationContext, cancellationToken);
@@ -150,17 +150,17 @@ namespace Kit.Azure
             throw new NotImplementedException();
 
         private static async Task<T> ReadBaseAsync<T>(
-            string path, string targetDirectory, Func<string, CloudBlockBlob, Task<T>> action)
+            string path, string targetDirectory, Func<CloudBlockBlob, Task<T>> action)
         {
             var startTime = DateTimeOffset.Now;
-            var fullPath = PathHelper.Combine(targetDirectory ?? _workingDirectory, path);
+            var nativePath = PathHelper.Combine(targetDirectory ?? _workingDirectory, path);
             var logLabel = $"Download blob #{++_logCounter}";
-            LogService.Log($"{logLabel}: {fullPath}");
+            LogService.Log($"{logLabel}: {nativePath}");
 
             try
             {
-                var blob = _container.GetBlockBlobReference(fullPath);
-                var result = await action(fullPath, blob);
+                var blob = _container.GetBlockBlobReference(nativePath);
+                var result = await action(blob);
                 LogService.Log($"{logLabel} completed at {TimeHelper.FormattedLatency(startTime)}");
                 return result;
             }
@@ -221,13 +221,13 @@ namespace Kit.Azure
             string path, Stream source, CancellationToken cancellationToken, string targetDirectory = null)
         {
             var startTime = DateTimeOffset.Now;
-            var fullPath = PathHelper.Combine(targetDirectory ?? _workingDirectory, path);
+            var nativePath = PathHelper.Combine(targetDirectory ?? _workingDirectory, path);
             var logLabel = $"Upload blob #{++_logCounter}";
-            LogService.Log($"{logLabel}: {fullPath}");
+            LogService.Log($"{logLabel}: {nativePath}");
 
             try
             {
-                var blob = _container.GetBlockBlobReference(fullPath);
+                var blob = _container.GetBlockBlobReference(nativePath);
 
                 await blob.UploadFromStreamAsync(
                     source, _accessCondition, _options, _operationContext, cancellationToken);
@@ -248,13 +248,13 @@ namespace Kit.Azure
             string path, string targetDirectory, Func<CloudBlockBlob, Task> action)
         {
             var startTime = DateTimeOffset.Now;
-            var fullPath = PathHelper.Combine(targetDirectory ?? _workingDirectory, path);
+            var nativePath = PathHelper.Combine(targetDirectory ?? _workingDirectory, path);
             var logLabel = $"Upload blob #{++_logCounter}";
-            LogService.Log($"{logLabel}: {fullPath}");
+            LogService.Log($"{logLabel}: {nativePath}");
 
             try
             {
-                var blob = _container.GetBlockBlobReference(fullPath);
+                var blob = _container.GetBlockBlobReference(nativePath);
                 await action(blob);
                 LogService.Log($"{logLabel} completed at {TimeHelper.FormattedLatency(startTime)}");
             }

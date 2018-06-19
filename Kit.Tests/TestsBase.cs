@@ -5,17 +5,30 @@ namespace Kit.Tests
 {
     public abstract class TestsBase
     {
+        protected const string ProjectNativePath = "../../..";
+
+        [TestInitialize]
+        public void BaseInitialize()
+        {
+            Kit.Setup(test: true, baseDirectory: ProjectNativePath);
+            ConsoleClient.Setup(minLevel: LogLevel.Log);
+        }
+
         public void TestInitialize(string testName)
         {
-            var baseDirectory = $"$tests/{testName}";
-
-            if (Directory.Exists(baseDirectory))
-                Directory.Delete(baseDirectory, recursive: true);
-
-            Assert.IsFalse(Directory.Exists(baseDirectory));
-
-            Kit.Setup(test: true, baseDirectory: baseDirectory);
+            var workingDir = "$tests/" + testName;
+            Kit.Setup(workingDirectory: workingDir, diagnosticsDirectory: workingDir);
             ConsoleClient.Setup(minLevel: LogLevel.Log);
+
+            var nativeWorkingDir = ProjectNativePath + "/" + workingDir;
+
+            if (Directory.Exists(nativeWorkingDir))
+            {
+                foreach (var file in Directory.GetFiles(nativeWorkingDir))
+                    File.Delete(file);
+
+                Assert.IsTrue(Directory.GetFiles(nativeWorkingDir).Length == 0);
+            }
         }
     }
 }

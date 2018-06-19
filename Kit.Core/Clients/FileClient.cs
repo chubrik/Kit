@@ -15,7 +15,7 @@ namespace Kit
         #region IDataClient
 
         public void PushToWrite(string path, string text, string targetDirectory = null) =>
-            WriteBase(path, fullPath => File.WriteAllText(fullPath, text), targetDirectory);
+            WriteBase(path, nativePath => File.WriteAllText(nativePath, text), targetDirectory);
 
         #endregion
 
@@ -48,7 +48,7 @@ namespace Kit
         
         private const string LogTimeFormat = "dd.MM.yyyy HH:mm:ss.fff";
         private bool _isLogInitialized;
-        private string _logFullPath;
+        private string _logNativeFilePath;
         private bool _logIndent = false;
         private static readonly object _lock = new object();
 
@@ -71,12 +71,12 @@ namespace Kit
             lock (_lock)
                 if (level == LogLevel.Log)
                 {
-                    File.AppendAllText(_logFullPath, _logIndent ? $"\r\n{textLine}" : textLine);
+                    File.AppendAllText(_logNativeFilePath, _logIndent ? $"\r\n{textLine}" : textLine);
                     _logIndent = false;
                 }
                 else
                 {
-                    File.AppendAllText(_logFullPath, $"\r\n--- {_logBadges[level]} ---\r\n{textLine}");
+                    File.AppendAllText(_logNativeFilePath, $"\r\n--- {_logBadges[level]} ---\r\n{textLine}");
                     _logIndent = true;
                 }
         }
@@ -89,8 +89,8 @@ namespace Kit
                 throw new InvalidOperationException();
 
             _isLogInitialized = true;
-            _logFullPath = FullPath(LogService.LogFileName, Kit.DiagnisticsCurrentDirectory);
-            CreateDir(_logFullPath);
+            _logNativeFilePath = NativePath(LogService.LogFileName, Kit.DiagnisticsCurrentDirectory);
+            CreateDir(_logNativeFilePath);
         }
 
         #endregion
@@ -98,27 +98,27 @@ namespace Kit
         #region Read
 
         public static string ReadText(string path, string targetDirectory = null) =>
-            ReadBase(path, fullPath => File.ReadAllText(fullPath), targetDirectory);
+            ReadBase(path, nativePath => File.ReadAllText(nativePath), targetDirectory);
 
         public static List<string> ReadLines(string path, string targetDirectory = null) =>
-            ReadBase(path, fullPath => File.ReadAllLines(fullPath).ToList(), targetDirectory);
+            ReadBase(path, nativePath => File.ReadAllLines(nativePath).ToList(), targetDirectory);
 
         public static byte[] ReadBytes(string path, string targetDirectory = null) =>
-            ReadBase(path, fullPath => File.ReadAllBytes(fullPath), targetDirectory);
+            ReadBase(path, nativePath => File.ReadAllBytes(nativePath), targetDirectory);
 
-        public static void Read(string path, Stream target)
+        public static void Read(string path, Stream target, string targetDirectory = null)
         {
-            using (var fs = OpenRead(path))
+            using (var fs = OpenRead(path, targetDirectory))
                 fs.CopyTo(target);
         }
 
-        public static FileStream OpenRead(string path)
+        public static FileStream OpenRead(string path, string targetDirectory = null)
         {
             try
             {
-                var fullPath = FullPath(path);
-                LogService.Log($"Read file: {fullPath}");
-                return File.OpenRead(fullPath);
+                var nativePath = NativePath(path, targetDirectory);
+                LogService.Log($"Read file: {nativePath}");
+                return File.OpenRead(nativePath);
             }
             catch (Exception exception)
             {
@@ -132,9 +132,9 @@ namespace Kit
         {
             try
             {
-                var fullPath = FullPath(path, targetDirectory);
-                LogService.Log($"Read file: {fullPath}");
-                return readFunc(fullPath);
+                var nativePath = NativePath(path, targetDirectory);
+                LogService.Log($"Read file: {nativePath}");
+                return readFunc(nativePath);
             }
             catch (Exception exception)
             {
@@ -148,16 +148,16 @@ namespace Kit
         #region Write
 
         public static void Write(string path, string text, string targetDirectory = null) =>
-            WriteBase(path, fullPath => File.WriteAllText(fullPath, text), targetDirectory);
+            WriteBase(path, nativePath => File.WriteAllText(nativePath, text), targetDirectory);
 
         public static void Write(string path, string[] lines, string targetDirectory = null) =>
-            WriteBase(path, fullPath => File.WriteAllLines(fullPath, lines), targetDirectory);
+            WriteBase(path, nativePath => File.WriteAllLines(nativePath, lines), targetDirectory);
 
         public static void Write(string path, IEnumerable<string> lines, string targetDirectory = null) =>
-            WriteBase(path, fullPath => File.WriteAllLines(fullPath, lines.ToArray()), targetDirectory);
+            WriteBase(path, nativePath => File.WriteAllLines(nativePath, lines.ToArray()), targetDirectory);
 
         public static void Write(string path, byte[] bytes, string targetDirectory = null) =>
-            WriteBase(path, fullPath => File.WriteAllBytes(fullPath, bytes), targetDirectory);
+            WriteBase(path, nativePath => File.WriteAllBytes(nativePath, bytes), targetDirectory);
 
         public static void Write(string path, Stream source, string targetDirectory = null)
         {
@@ -169,10 +169,10 @@ namespace Kit
         {
             try
             {
-                var fullPath = FullPath(path, targetDirectory);
-                CreateDir(fullPath);
-                LogService.Log($"Write file: {fullPath}");
-                return File.OpenWrite(fullPath);
+                var nativePath = NativePath(path, targetDirectory);
+                CreateDir(nativePath);
+                LogService.Log($"Write file: {nativePath}");
+                return File.OpenWrite(nativePath);
             }
             catch (Exception exception)
             {
@@ -185,10 +185,10 @@ namespace Kit
         {
             try
             {
-                var fullPath = FullPath(path, targetDirectory);
-                CreateDir(fullPath);
-                LogService.Log($"Write file: {fullPath}");
-                writeAction(fullPath);
+                var nativePath = NativePath(path, targetDirectory);
+                CreateDir(nativePath);
+                LogService.Log($"Write file: {nativePath}");
+                writeAction(nativePath);
             }
             catch (Exception exception)
             {
@@ -201,38 +201,38 @@ namespace Kit
 
         #region Utils
 
+        public static string NativePath(string path, string targetDirectory = null) =>
+            PathHelper.Combine(Kit.BaseDirectory, targetDirectory ?? Kit.WorkingDirectory, path);
+
         public static bool Exists(string path, string targetDirectory = null) =>
-            File.Exists(FullPath(path, targetDirectory));
+            File.Exists(NativePath(path, targetDirectory));
 
         public static void AppendText(string path, string text, string targetDirectory = null)
         {
-            var fullPath = FullPath(path, targetDirectory);
-            CreateDir(fullPath);
-            LogService.Log($"Append file: {fullPath}");
-            File.AppendAllText(fullPath, $"{text}\r\n");
+            var nativePath = NativePath(path, targetDirectory);
+            CreateDir(nativePath);
+            LogService.Log($"Append file: {nativePath}");
+            File.AppendAllText(nativePath, $"{text}\r\n");
         }
 
         public static void Delete(string path, string targetDirectory = null)
         {
-            var fullPath = FullPath(path, targetDirectory);
-            LogService.Log($"Delete file: {fullPath}");
-            File.Delete(fullPath);
+            var nativePath = NativePath(path, targetDirectory);
+            LogService.Log($"Delete file: {nativePath}");
+            File.Delete(nativePath);
         }
 
-        public static string FullPath(string path, string targetDirectory = null) =>
-            PathHelper.Combine(Kit.BaseDirectory, targetDirectory ?? Kit.WorkingDirectory, path);
+        public static List<string> FileNames(string path, string targetDirectory = null) =>
+            Directory.GetFiles(NativePath(path, targetDirectory)).Select(PathHelper.FileName).ToList();
 
-        public static List<string> FileNames(string path = "") =>
-            Directory.GetFiles(FullPath(path)).Select(PathHelper.FileName).ToList();
-
-        private static void CreateDir(string fullPath)
+        private static void CreateDir(string nativeFilePath)
         {
-            var dirPath = PathHelper.Parent(fullPath);
+            var nativeDir = PathHelper.Parent(nativeFilePath);
 
-            if (!Directory.Exists(dirPath))
+            if (!Directory.Exists(nativeDir))
             {
-                Directory.CreateDirectory(dirPath);
-                LogService.Log($"Create directory: {dirPath}");
+                Directory.CreateDirectory(nativeDir);
+                LogService.Log($"Create directory: {nativeDir}");
             }
         }
 

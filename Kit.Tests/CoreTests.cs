@@ -14,7 +14,8 @@ namespace Kit.Tests
         {
             var testName = $"{GetType().Name}.{nameof(Execute)}";
             TestInitialize(testName);
-            var diagnosticsDir = $"$tests/{testName}/$diagnostics/" + DateTimeOffset.Now.ToString("dd.MM.yyyy HH.mm.ss");
+            var formattedTime = DateTimeOffset.Now.ToString("dd.MM.yyyy HH.mm.ss");
+            var diagnosticsDir = $"{ProjectNativePath}/$tests/{testName}/{formattedTime}";
             var reportsDir = $"{diagnosticsDir}/reports";
 
             Kit.Execute(() =>
@@ -40,6 +41,7 @@ namespace Kit.Tests
             Assert.IsTrue(PathHelper.Combine("/") == "/");
             Assert.IsTrue(PathHelper.Combine("//") == "/");
             Assert.IsTrue(PathHelper.Combine("/./") == "/");
+            Assert.IsTrue(PathHelper.Combine(".") == "");
             Assert.IsTrue(PathHelper.Combine("..") == "..");
             Assert.IsTrue(PathHelper.Combine("one") == "one");
             Assert.IsTrue(PathHelper.Combine("one/") == "one");

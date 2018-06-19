@@ -11,9 +11,9 @@ namespace Kit
         public static CancellationToken CancellationToken => _сancellationTokenSource.Token;
         private static readonly string _formattedStartTime = DateTimeOffset.Now.ToString("dd.MM.yyyy HH.mm.ss");
         private static bool _pressAnyKeyToExit = true;
-        internal static string BaseDirectory { get; private set; } = "$work";
-        internal static string WorkingDirectory { get; private set; } = string.Empty;
-        private static string _diagnosticsDirectory = "$diagnostics";
+        internal static string BaseDirectory { get; private set; } = string.Empty;
+        internal static string WorkingDirectory { get; private set; } = "$work";
+        private static string _diagnosticsDirectory = $"{WorkingDirectory}/$diagnostics";
         private static DateTimeOffset _cancellationRequestTime;
         private static bool _isCanceled;
         private static bool _isFailed;

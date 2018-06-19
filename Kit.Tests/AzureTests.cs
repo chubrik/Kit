@@ -1,33 +1,34 @@
 ﻿using Kit.Azure;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.IO;
 
 namespace Kit.Tests
 {
     [TestClass]
     public class AzureTests : TestsBase
     {
-        private static readonly string[] Credentials = File.ReadAllLines("../../../../../azure-credentials.txt");
-
         [TestMethod]
         public void WriteAndRead()
         {
             TestInitialize($"{GetType().Name}.{nameof(WriteAndRead)}");
             Setup();
-            var testFileName = "test.json";
+            var testFileName = "test.xml";
 
-            using (var stream = FileClient.OpenRead("../../Kit.Tests.runtimeconfig.json"))
-                AzureBlobClient.Write(testFileName, stream, targetDirectory: nameof(WriteAndRead));
+            using (var stream = FileClient.OpenRead("../../Kit.Tests.csproj"))
+                AzureBlobClient.Write(testFileName, stream);
 
             using (var stream = FileClient.OpenWrite(testFileName))
-                AzureBlobClient.Read(testFileName, stream, targetDirectory: nameof(WriteAndRead));
+                AzureBlobClient.Read(testFileName, stream);
         }
 
-        private static void Setup() =>
+        private static void Setup()
+        {
+            var credentials = FileClient.ReadLines("../../../../azure-credentials.txt");
+
             AzureBlobClient.Setup(
-                accountName: Credentials[0],
-                accountKey: Credentials[1],
+                accountName: credentials[0],
+                accountKey: credentials[1],
                 containerName: "test"
             );
+        }
     }
 }
