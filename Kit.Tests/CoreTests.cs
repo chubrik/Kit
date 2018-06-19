@@ -14,7 +14,8 @@ namespace Kit.Tests
         {
             var testName = $"{GetType().Name}.{nameof(Execute)}";
             TestInitialize(testName);
-            var diagnosticsDir = $"$tests/{testName}/$diagnostics/" + DateTimeOffset.Now.ToString("dd.MM.yyyy HH.mm.ss");
+            var formattedTime = DateTimeOffset.Now.ToString("dd.MM.yyyy HH.mm.ss");
+            var diagnosticsDir = $"{ProjectNativePath}/$tests/{testName}/{formattedTime}";
             var reportsDir = $"{diagnosticsDir}/reports";
 
             Kit.Execute(() =>
@@ -31,6 +32,55 @@ namespace Kit.Tests
             var reportFileNames = Directory.GetFiles(reportsDir).Select(Path.GetFileName).ToList();
             Assert.IsTrue(reportFileNames.Count == 1);
             Assert.IsTrue(reportFileNames[0] == "001 Test exception.txt");
+        }
+
+        [TestMethod]
+        public void PathCombine()
+        {
+            Assert.IsTrue(PathHelper.Combine("") == "");
+            Assert.IsTrue(PathHelper.Combine("/") == "/");
+            Assert.IsTrue(PathHelper.Combine("//") == "/");
+            Assert.IsTrue(PathHelper.Combine("/./") == "/");
+            Assert.IsTrue(PathHelper.Combine(".") == "");
+            Assert.IsTrue(PathHelper.Combine("..") == "..");
+            Assert.IsTrue(PathHelper.Combine("one") == "one");
+            Assert.IsTrue(PathHelper.Combine("one/") == "one");
+            Assert.IsTrue(PathHelper.Combine("one//") == "one");
+            Assert.IsTrue(PathHelper.Combine(@"one\") == "one");
+            Assert.IsTrue(PathHelper.Combine(@"one\\") == "one");
+            Assert.IsTrue(PathHelper.Combine(@"one\/\") == "one");
+            Assert.IsTrue(PathHelper.Combine("one/.") == "one");
+            Assert.IsTrue(PathHelper.Combine("one/..") == "");
+            Assert.IsTrue(PathHelper.Combine("one/two") == "one/two");
+            Assert.IsTrue(PathHelper.Combine("one//two") == "one/two");
+            Assert.IsTrue(PathHelper.Combine("one/./two") == "one/two");
+            Assert.IsTrue(PathHelper.Combine("one/../two") == "two");
+            Assert.IsTrue(PathHelper.Combine("/one") == "/one");
+            Assert.IsTrue(PathHelper.Combine("/one/") == "/one");
+            Assert.IsTrue(PathHelper.Combine("/one/.") == "/one");
+            Assert.IsTrue(PathHelper.Combine("/one/..") == "/");
+            Assert.IsTrue(PathHelper.Combine("./one") == "one");
+            Assert.IsTrue(PathHelper.Combine("../one") == "../one");
+            Assert.IsTrue(PathHelper.Combine("../one/..") == "..");
+            Assert.IsTrue(PathHelper.Combine("one", "two") == "one/two");
+            Assert.IsTrue(PathHelper.Combine(@"/one\/\", "two//") == "/one/two");
+            Assert.IsTrue(PathHelper.Combine("one/", @"\two") == "/two");
+            Assert.IsTrue(PathHelper.Combine("./one/.././two/./") == "two");
+            Assert.IsTrue(PathHelper.Combine("../one/../../two/..") == "../..");
+
+            try
+            {
+                PathHelper.Combine("/..");
+                Assert.Fail();
+            }
+            catch (InvalidOperationException) { }
+
+            try
+            {
+                PathHelper.Combine("/one", "../../two");
+                Assert.Fail();
+            }
+            catch (InvalidOperationException) { }
         }
     }
 }

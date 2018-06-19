@@ -99,7 +99,7 @@ namespace Kit.Mail
                 if (attachmentPaths != null)
                     foreach (var attachmentPath in attachmentPaths)
                     {
-                        var attachment = new Attachment(FileClient.FullPath(attachmentPath), "application/octet-stream")
+                        var attachment = new Attachment(FileClient.NativePath(attachmentPath), "application/octet-stream")
                         {
                             ContentId = new Guid().ToString(),
                             ContentDisposition = {

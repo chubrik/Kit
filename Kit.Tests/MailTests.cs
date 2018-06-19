@@ -1,6 +1,5 @@
 ﻿using Kit.Mail;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.IO;
 using System.Net.Mail;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,8 +9,6 @@ namespace Kit.Tests
     [TestClass]
     public class MailTests : TestsBase
     {
-        private static readonly string[] Credentials = File.ReadAllLines("../../../../../mail-credentials.txt");
-
         [TestMethod]
         public async Task Succeeded()
         {
@@ -24,14 +21,13 @@ namespace Kit.Tests
         public async Task Failed()
         {
             TestInitialize($"{GetType().Name}.{nameof(Failed)}");
+            Setup();
 
             MailClient.Setup(
                 host: "wrong-host",
                 port: 0,
                 userName: "wrong-user",
-                password: "wrong-password",
-                from: Credentials[4],
-                to: Credentials[5]
+                password: "wrong-password"
             );
 
             try
@@ -60,22 +56,24 @@ namespace Kit.Tests
                 await mailTask;
                 Assert.Fail();
             }
-            catch (TaskCanceledException)
-            {
-            }
+            catch (TaskCanceledException) { }
         }
 
         #region Utils
 
-        private void Setup() =>
+        private void Setup()
+        {
+            var credentials = FileClient.ReadLines("../../../../mail-credentials.txt");
+
             MailClient.Setup(
-                host: Credentials[0],
-                port: int.Parse(Credentials[1]),
-                userName: Credentials[2],
-                password: Credentials[3],
-                from: Credentials[4],
-                to: Credentials[5]
+                host: credentials[0],
+                port: int.Parse(credentials[1]),
+                userName: credentials[2],
+                password: credentials[3],
+                from: credentials[4],
+                to: credentials[5]
             );
+        }
 
         #endregion
     }

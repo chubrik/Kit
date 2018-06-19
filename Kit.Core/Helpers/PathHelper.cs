@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -8,21 +10,42 @@ namespace Kit
     {
         public static string Combine(params string[] paths)
         {
-            var result = Path.Combine(paths).Replace(@"\", "/");
+            var combined = Path.Combine(paths);
 
-            while (result.Contains("../"))
+            if (combined == string.Empty)
+                return combined;
+
+            var segments = Regex.Replace(combined, @"[\\/]+", "/").TrimEnd('/').Split('/');
+            var output = new Stack<string>();
+
+            foreach (var segment in segments)
             {
-                if (result.StartsWith("../"))
-                    return result;
+                if (segment == ".")
+                    continue;
 
-                result = Regex.Replace(result, @"(?<=^|/)[^/]+/\.\./", string.Empty);
+                if (segment == ".." && output.Count > 0)
+                {
+                    var previous = output.Peek();
+
+                    if (previous == string.Empty)
+                        throw new InvalidOperationException(); // Path is out of root
+
+                    if (previous != "..")
+                    {
+                        output.Pop();
+                        continue;
+                    }
+                }
+
+                output.Push(segment);
             }
 
-            return result;
+            return output.Count == 1 && output.Peek() == string.Empty
+                ? "/"
+                : output.Reverse().Join("/");
         }
 
-        public static string Parent(string path) =>
-            path.Contains('/') ? path.Substring(0, path.LastIndexOf('/')) : string.Empty;
+        public static string Parent(string path) => Combine(path, "..");
 
         public static string FileName(string path)
         {
