@@ -16,8 +16,8 @@ namespace Kit.Tests
 
         public void TestInitialize(string testName)
         {
-            var workingDir = "$tests/" + testName;
-            Kit.Setup(workingDirectory: workingDir, diagnosticsDirectory: workingDir);
+            var workingDir = "$work/" + testName;
+            Kit.Setup(workingDirectory: workingDir);
             ConsoleClient.Setup(minLevel: LogLevel.Log);
 
             var nativeWorkingDir = ProjectNativePath + "/" + workingDir;

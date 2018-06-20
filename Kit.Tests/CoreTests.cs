@@ -15,7 +15,7 @@ namespace Kit.Tests
             var testName = $"{GetType().Name}.{nameof(Execute)}";
             TestInitialize(testName);
             var formattedTime = DateTimeOffset.Now.ToString("dd.MM.yyyy HH.mm.ss");
-            var diagnosticsDir = $"{ProjectNativePath}/$tests/{testName}/{formattedTime}";
+            var diagnosticsDir = $"{ProjectNativePath}/$work/$diagnostics/{formattedTime}";
             var reportsDir = $"{diagnosticsDir}/reports";
 
             Kit.Execute(() =>
