@@ -1,5 +1,6 @@
 ﻿using Kit.Osm;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using OsmSharp;
 
 namespace Kit.Tests
 {
@@ -9,16 +10,16 @@ namespace Kit.Tests
         private const string SrcPath = "../$data/antarctica.osm.pbf";
 
         [TestMethod]
-        public void Validate()
+        public void ValidateSource()
         {
-            TestInitialize($"{GetType().Name}.{nameof(Validate)}");
-            OsmService.Validate(SrcPath);
+            TestInitialize($"{GetType().Name}.{nameof(ValidateSource)}");
+            OsmService.ValidateSource(SrcPath);
         }
 
         [TestMethod]
-        public void OsmPredicate()
+        public void LoadPredicate()
         {
-            TestInitialize($"{GetType().Name}.{nameof(OsmPredicate)}");
+            TestInitialize($"{GetType().Name}.{nameof(LoadPredicate)}");
             var response = OsmService.Load(SrcPath, i => i.Tags.ContainsKey("place"));
             Assert.IsTrue(response.Nodes.Count > 100);
             Assert.IsTrue(response.Ways.Count > 5000);
@@ -29,22 +30,22 @@ namespace Kit.Tests
         }
 
         [TestMethod]
-        public void GeoGroup()
+        public void LoadRelationObject()
         {
-            TestInitialize($"{GetType().Name}.{nameof(GeoGroup)}");
+            TestInitialize($"{GetType().Name}.{nameof(LoadRelationObject)}");
 
             // https://www.openstreetmap.org/relation/2969204
             var title = "Vega Island";
             var osmId = 2969204;
 
-            var group = GeoService.LoadGroup(SrcPath, cacheName: title, osmRelationId: osmId);
-            Assert.IsTrue(group.Type == GeoType.Group);
-            Assert.IsTrue(group.Id == osmId);
-            Assert.IsTrue(group.Title == title);
-            Assert.IsTrue(group.Tags["type"] == "multipolygon");
-            Assert.IsTrue(group.Tags["place"] == "island");
-            Assert.IsTrue(group.MemberIds.Count > 50);
-            Assert.IsTrue(group.Members.Count == group.MemberIds.Count);
+            var relation = OsmObjectService.LoadRelationObject(SrcPath, cacheName: title, relationId: osmId);
+            Assert.IsTrue(relation.Type == OsmGeoType.Relation);
+            Assert.IsTrue(relation.Id == osmId);
+            Assert.IsTrue(relation.Title == title);
+            Assert.IsTrue(relation.Tags["type"] == "multipolygon");
+            Assert.IsTrue(relation.Tags["place"] == "island");
+            Assert.IsTrue(relation.MemberIds.Count > 50);
+            Assert.IsTrue(relation.Members.Count == relation.MemberIds.Count);
         }
     }
 }
