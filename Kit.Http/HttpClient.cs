@@ -354,7 +354,8 @@ namespace Kit.Http
                         mimeType: fileInfo.MimeType,
                         getInfo: () => FileClient.ReadLines(paddedCount + InfoFileSuffix, targetDirectory),
                         getText: () => FileClient.ReadText(bodyFileName, targetDirectory),
-                        getBytes: () => FileClient.ReadBytes(bodyFileName, targetDirectory)
+                        getBytes: () => FileClient.ReadBytes(bodyFileName, targetDirectory),
+                        getStream: () => FileClient.OpenRead(bodyFileName, targetDirectory)
                     );
             }
             else

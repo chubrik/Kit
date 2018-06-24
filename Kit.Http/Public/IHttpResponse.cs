@@ -1,8 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace Kit.Http
 {
-    public interface IHttpResponse
+    public interface IHttpResponse : IDisposable
     {
         IHttpRequest Request { get; }
 
@@ -20,5 +23,9 @@ namespace Kit.Http
 
         string GetText();
         byte[] GetBytes();
+        Stream GetStream();
+        Task<string> GetTextAsync();
+        Task<byte[]> GetBytesAsync();
+        Task<Stream> GetStreamAsync();
     }
 }

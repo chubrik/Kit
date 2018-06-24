@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -48,7 +49,7 @@ namespace Kit.Http
             var response = await client.GetAsync(uri, cancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
-            return response.GetText();
+            return await response.GetTextAsync();
         }
 
         #endregion
@@ -92,7 +93,51 @@ namespace Kit.Http
             var response = await client.GetAsync(uri, cancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
-            return response.GetBytes();
+            return await response.GetBytesAsync();
+        }
+
+        #endregion
+
+        #region Get stream
+
+        public static Stream GetStream(
+            this HttpClient client, string url,
+            CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
+            client.GetStreamAsync(new Uri(url), Kit.CancellationToken,
+                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds).Result;
+
+        public static Stream GetStream(
+            this HttpClient client, Uri uri,
+            CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
+            client.GetStreamAsync(uri, Kit.CancellationToken,
+                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds).Result;
+
+        public static Task<Stream> GetStreamAsync(
+            this HttpClient client, string url,
+            CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
+            client.GetStreamAsync(new Uri(url), Kit.CancellationToken,
+                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
+
+        public static Task<Stream> GetStreamAsync(
+            this HttpClient client, Uri uri,
+            CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
+            client.GetStreamAsync(uri, Kit.CancellationToken,
+                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
+
+        public static Task<Stream> GetStreamAsync(
+            this HttpClient client, string url, CancellationToken cancellationToken,
+            CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
+            client.GetStreamAsync(new Uri(url), cancellationToken,
+                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
+
+        public static async Task<Stream> GetStreamAsync(
+            this HttpClient client, Uri uri, CancellationToken cancellationToken,
+            CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
+        {
+            var response = await client.GetAsync(uri, cancellationToken,
+                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
+
+            return await response.GetStreamAsync();
         }
 
         #endregion

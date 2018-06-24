@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace Kit.Http
 {
@@ -63,11 +65,23 @@ namespace Kit.Http
 
         #region Content
 
+        public string GetText() => GetTextAsync().Result;
+
+        public byte[] GetBytes() => GetBytesAsync().Result;
+
+        public Stream GetStream() => GetStreamAsync().Result;
+
         private string _text;
-        public string GetText() => _text ?? (_text = Original.Content.ReadAsStringAsync().Result);
+
+        public async Task<string> GetTextAsync() =>
+            _text ?? (_text = await Original.Content.ReadAsStringAsync());
 
         private byte[] _bytes;
-        public byte[] GetBytes() => _bytes ?? (_bytes = Original.Content.ReadAsByteArrayAsync().Result);
+
+        public async Task<byte[]> GetBytesAsync() =>
+            _bytes ?? (_bytes = await Original.Content.ReadAsByteArrayAsync());
+
+        public Task<Stream> GetStreamAsync() => Original.Content.ReadAsStreamAsync();
 
         #endregion
 
@@ -98,11 +112,17 @@ namespace Kit.Http
 
         #endregion
 
+        #region Constructor & Dispose
+
         public HttpResponse(HttpResponseMessage response, CookieCollection requestCookies)
         {
             Debug.Assert(response != null);
             Original = response ?? throw new ArgumentNullException(nameof(response));
             Request = new HttpRequest(response.RequestMessage, requestCookies);
         }
+
+        public void Dispose() => Original.Dispose();
+
+        #endregion
     }
 }

@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace Kit.Http
 {
@@ -75,13 +77,27 @@ namespace Kit.Http
 
         public bool HasContent => Original.Content != null;
 
+        public string GetText() => GetTextAsync().Result;
+
+        public byte[] GetBytes() => GetBytesAsync().Result;
+
+        public Stream GetStream() => GetStreamAsync().Result;
+
         private string _text;
-        public string GetText() => _text ?? (_text = Original.Content.ReadAsStringAsync().Result);
+
+        public async Task<string> GetTextAsync() =>
+            _text ?? (_text = await Original.Content.ReadAsStringAsync());
 
         private byte[] _bytes;
-        public byte[] GetBytes() => _bytes ?? (_bytes = Original.Content.ReadAsByteArrayAsync().Result);
+
+        public async Task<byte[]> GetBytesAsync() =>
+            _bytes ?? (_bytes = await Original.Content.ReadAsByteArrayAsync());
+
+        public Task<Stream> GetStreamAsync() => Original.Content.ReadAsStreamAsync();
 
         #endregion
+
+        #region Constructor & Dispose
 
         private readonly CookieCollection _cookies;
 
@@ -93,5 +109,9 @@ namespace Kit.Http
             Debug.Assert(cookies != null);
             _cookies = cookies ?? throw new ArgumentNullException(nameof(cookies));
         }
+
+        public void Dispose() => Original.Dispose();
+
+        #endregion
     }
 }

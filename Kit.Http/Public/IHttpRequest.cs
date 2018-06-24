@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace Kit.Http
 {
-    public interface IHttpRequest
+    public interface IHttpRequest : IDisposable
     {
         string HttpVersion { get; }
         string Method { get; }
@@ -14,7 +16,12 @@ namespace Kit.Http
         string RawHeaders { get; }
 
         bool HasContent { get; }
+
         string GetText();
         byte[] GetBytes();
+        Stream GetStream();
+        Task<string> GetTextAsync();
+        Task<byte[]> GetBytesAsync();
+        Task<Stream> GetStreamAsync();
     }
 }

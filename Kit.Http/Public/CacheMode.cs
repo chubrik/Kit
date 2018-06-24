@@ -2,8 +2,7 @@
 {
     public enum CacheMode
     {
-        Unknown = 0,
-        Disabled,
+        Disabled = 0,
         WriteOnly,
         Full
     }
