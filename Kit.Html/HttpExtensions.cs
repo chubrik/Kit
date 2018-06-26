@@ -40,12 +40,17 @@ namespace Kit.Html
 
         public static async Task<HtmlDocument> GetHtmlDocAsync(
             this HttpClient client, Uri uri, CancellationToken cancellationToken,
-            CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            (await client.GetAsync(uri, cancellationToken,
+            CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
+        {
+            using (var response = await client.GetAsync(uri, cancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds))
-                .GetHtmlDoc();
+                return await response.GetHtmlDocAsync();
+        }
 
         public static HtmlDocument GetHtmlDoc(this IHttpResponse httpResponse) =>
             httpResponse.GetText().ToHtmlDoc();
+
+        public static async Task<HtmlDocument> GetHtmlDocAsync(this IHttpResponse httpResponse) =>
+            (await httpResponse.GetTextAsync()).ToHtmlDoc();
     }
 }

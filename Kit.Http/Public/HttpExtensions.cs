@@ -46,10 +46,9 @@ namespace Kit.Http
             this HttpClient client, Uri uri, CancellationToken cancellationToken,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
         {
-            var response = await client.GetAsync(uri, cancellationToken,
-                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
-
-            return await response.GetTextAsync();
+            using (var response = await client.GetAsync(uri, cancellationToken,
+                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds))
+                return await response.GetTextAsync();
         }
 
         #endregion
@@ -90,10 +89,9 @@ namespace Kit.Http
             this HttpClient client, Uri uri, CancellationToken cancellationToken,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
         {
-            var response = await client.GetAsync(uri, cancellationToken,
-                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
-
-            return await response.GetBytesAsync();
+            using (var response = await client.GetAsync(uri, cancellationToken,
+                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds))
+                return await response.GetBytesAsync();
         }
 
         #endregion
@@ -134,10 +132,9 @@ namespace Kit.Http
             this HttpClient client, Uri uri, CancellationToken cancellationToken,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
         {
-            var response = await client.GetAsync(uri, cancellationToken,
-                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
-
-            return await response.GetStreamAsync();
+            using (var response = await client.GetAsync(uri, cancellationToken,
+                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds))
+                return await response.GetStreamAsync();
         }
 
         #endregion

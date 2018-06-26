@@ -45,7 +45,7 @@ namespace Kit
         #endregion
 
         #region ILogClient
-        
+
         private const string LogTimeFormat = "dd.MM.yyyy HH:mm:ss.fff";
         private bool _isLogInitialized;
         private string _logNativeFilePath;
@@ -106,26 +106,14 @@ namespace Kit
         public static byte[] ReadBytes(string path, string targetDirectory = null) =>
             ReadBase(path, nativePath => File.ReadAllBytes(nativePath), targetDirectory);
 
-        public static void Read(string path, Stream target, string targetDirectory = null)
+        public static void ReadTo(string path, Stream target, string targetDirectory = null)
         {
             using (var fs = OpenRead(path, targetDirectory))
                 fs.CopyTo(target);
         }
 
-        public static FileStream OpenRead(string path, string targetDirectory = null)
-        {
-            try
-            {
-                var nativePath = NativePath(path, targetDirectory);
-                LogService.Log($"Read file: {nativePath}");
-                return File.OpenRead(nativePath);
-            }
-            catch (Exception exception)
-            {
-                Debug.Assert(exception.IsAllowed());
-                throw;
-            }
-        }
+        public static FileStream OpenRead(string path, string targetDirectory = null) =>
+            ReadBase(path, nativePath => File.OpenRead(nativePath), targetDirectory);
 
         private static T ReadBase<T>(
             string path, Func<string, T> readFunc, string targetDirectory)
@@ -142,6 +130,10 @@ namespace Kit
                 throw;
             }
         }
+
+        [Obsolete("Use ReadTo() instead")]
+        public static void Read(string path, Stream target, string targetDirectory = null) =>
+            ReadTo(path, target, targetDirectory);
 
         #endregion
 
