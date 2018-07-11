@@ -3,10 +3,12 @@ using System;
 using System.Diagnostics;
 using System.IO;
 
-namespace Kit.Osm
+namespace Kit
 {
-    internal class JsonFileService
+    public class JsonFileClient : FileClient
     {
+        private JsonFileClient() { }
+
         public static T Read<T>(string path, string targetDirectory = null) where T : class
         {
             Debug.Assert(path != null);
@@ -15,13 +17,13 @@ namespace Kit.Osm
                 throw new ArgumentNullException(nameof(path));
 
             var startTime = DateTimeOffset.Now;
-            var nativePath = FileClient.NativePath(path, targetDirectory);
+            var nativePath = NativePath(path, targetDirectory);
             LogService.Log($"Read json file: {nativePath}");
             T obj;
 
             try
             {
-                using (var fileStream = FileClient.OpenRead(path, targetDirectory))
+                using (var fileStream = OpenRead(path, targetDirectory))
                 using (var streamReader = new StreamReader(fileStream))
                 using (var jsonTextReader = new JsonTextReader(streamReader))
                     obj = new JsonSerializer().Deserialize<T>(jsonTextReader);
@@ -52,7 +54,7 @@ namespace Kit.Osm
                 throw new ArgumentNullException(nameof(obj));
 
             var startTime = DateTimeOffset.Now;
-            var nativePath = FileClient.NativePath(path, targetDirectory);
+            var nativePath = NativePath(path, targetDirectory);
             LogService.Log($"Write json file: {nativePath}");
             var dirPath = PathHelper.Parent(nativePath);
 
@@ -64,7 +66,7 @@ namespace Kit.Osm
 
             try
             {
-                using (var fileStream = FileClient.OpenWrite(path))
+                using (var fileStream = OpenWrite(path))
                 using (var streamWriter = new StreamWriter(fileStream))
                 using (var jsonTextWriter = new JsonTextWriter(streamWriter))
                 {

@@ -10,7 +10,7 @@ namespace Kit
     {
         private static FileClient _instance;
         public static FileClient Instance => _instance ?? (_instance = new FileClient());
-        private FileClient() { }
+        protected FileClient() { }
 
         #region IDataClient
 

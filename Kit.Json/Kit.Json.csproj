@@ -2,9 +2,9 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <RootNamespace>Kit.Http</RootNamespace>
+    <RootNamespace>Kit</RootNamespace>
     <Version>1.4.1</Version>
-    <PackageTags>kit http kit.http</PackageTags>
+    <PackageTags>kit json kit.json</PackageTags>
     <Authors>Arkadi Chubrik</Authors>
     <Description>The powerful engine for various C# projects.
 Has advanced diagnostics and the most useful features.</Description>
@@ -14,8 +14,11 @@ Has advanced diagnostics and the most useful features.</Description>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Kit.Http\Kit.Http.csproj" />
-    <ProjectReference Include="..\Kit.Json\Kit.Json.csproj" />
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Kit.Core\Kit.Core.csproj" />
   </ItemGroup>
 
 </Project>
