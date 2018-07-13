@@ -13,14 +13,14 @@ namespace Kit.Http
         public static dynamic GetJson(
             this HttpClient client, string url,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            client.GetJsonAsync<object>(new Uri(url), Kit.CancellationToken,
-                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds).Result;
+            Task.Run(() => client.GetJsonAsync<object>(new Uri(url), Kit.CancellationToken,
+                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
         public static dynamic GetJson(
             this HttpClient client, Uri uri,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            client.GetJsonAsync<object>(uri, Kit.CancellationToken,
-                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds).Result;
+            Task.Run(() => client.GetJsonAsync<object>(uri, Kit.CancellationToken,
+                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
         public static Task<dynamic> GetJsonAsync(
             this HttpClient client, string url,
@@ -54,15 +54,15 @@ namespace Kit.Http
             this HttpClient client, string url,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
             where T : class =>
-            client.GetJsonAsync<T>(new Uri(url), Kit.CancellationToken,
-                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds).Result;
+            Task.Run(() => client.GetJsonAsync<T>(new Uri(url), Kit.CancellationToken,
+                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
         public static T GetJson<T>(
             this HttpClient client, Uri uri,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
             where T : class =>
-            client.GetJsonAsync<T>(uri, Kit.CancellationToken,
-                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds).Result;
+            Task.Run(() => client.GetJsonAsync<T>(uri, Kit.CancellationToken,
+                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
         public static Task<T> GetJsonAsync<T>(
             this HttpClient client, string url,
@@ -104,14 +104,14 @@ namespace Kit.Http
         public static IHttpResponse PostJson(
             this HttpClient client, string url, object json,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            client.PostJsonAsync(new Uri(url), json, Kit.CancellationToken,
-                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds).Result;
+            Task.Run(() => client.PostJsonAsync(new Uri(url), json, Kit.CancellationToken,
+                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
         public static IHttpResponse PostJson(
             this HttpClient client, Uri uri, object json,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            client.PostJsonAsync(uri, json, Kit.CancellationToken,
-                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds).Result;
+            Task.Run(() => client.PostJsonAsync(uri, json, Kit.CancellationToken,
+                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
         public static Task<IHttpResponse> PostJsonAsync(
             this HttpClient client, string url, object json,

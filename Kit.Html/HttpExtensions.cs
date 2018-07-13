@@ -11,14 +11,14 @@ namespace Kit.Html
         public static HtmlDocument GetHtmlDoc(
             this HttpClient client, string url,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            client.GetHtmlDocAsync(new Uri(url), Kit.CancellationToken,
-                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds).Result;
+            Task.Run(() => client.GetHtmlDocAsync(new Uri(url), Kit.CancellationToken,
+                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
         public static HtmlDocument GetHtmlDoc(
             this HttpClient client, Uri uri,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            client.GetHtmlDocAsync(uri, Kit.CancellationToken,
-                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds).Result;
+            Task.Run(() => client.GetHtmlDocAsync(uri, Kit.CancellationToken,
+                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
         public static Task<HtmlDocument> GetHtmlDocAsync(
             this HttpClient client, string url,

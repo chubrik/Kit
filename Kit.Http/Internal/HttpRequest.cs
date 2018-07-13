@@ -77,11 +77,11 @@ namespace Kit.Http
 
         public bool HasContent => Original.Content != null;
 
-        public string GetText() => GetTextAsync().Result;
+        public string GetText() => Task.Run(GetTextAsync).Result;
 
-        public byte[] GetBytes() => GetBytesAsync().Result;
+        public byte[] GetBytes() => Task.Run(GetBytesAsync).Result;
 
-        public Stream GetStream() => GetStreamAsync().Result;
+        public Stream GetStream() => Task.Run(GetStreamAsync).Result;
 
         private string _text;
 

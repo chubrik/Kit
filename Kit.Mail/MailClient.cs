@@ -66,13 +66,16 @@ namespace Kit.Mail
         #region Extensions
 
         public static void Send(string subject, string body) =>
-            SendAsync(subject, body, attachmentPaths: null, cancellationToken: null).Wait();
+            Task.Run(() => SendAsync(
+                subject, body, attachmentPaths: null, cancellationToken: null)).Wait();
 
         public static void Send(string subject, string body, string attachmentPath) =>
-            SendAsync(subject, body, new List<string> { attachmentPath }, cancellationToken: null).Wait();
+            Task.Run(() => SendAsync(
+                subject, body, new List<string> { attachmentPath }, cancellationToken: null)).Wait();
 
         public static void Send(string subject, string body, IEnumerable<string> attachmentPaths) =>
-            SendAsync(subject, body, attachmentPaths, cancellationToken: null).Wait();
+            Task.Run(() => SendAsync(
+                subject, body, attachmentPaths, cancellationToken: null)).Wait();
 
         public static Task SendAsync(
             string subject, string body, CancellationToken? cancellationToken = null) =>

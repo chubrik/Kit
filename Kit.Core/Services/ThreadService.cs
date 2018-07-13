@@ -27,7 +27,7 @@ namespace Kit
             LogService.Log($"{threadName} starting");
 
             var thread = new Thread(new ThreadStart(() =>
-                Kit.ExecuteBaseAsync(delegateAsync, threadName).Wait()));
+                Task.Run(() => Kit.ExecuteBaseAsync(delegateAsync, threadName)).Wait()));
 
             _threads.Add(thread);
             thread.Start();

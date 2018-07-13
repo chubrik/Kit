@@ -49,7 +49,7 @@ namespace Kit.Azure
         #region IDataClient
 
         public void PushToWrite(string path, string text, string targetDirectory = null) =>
-            WriteAsync(path, text, targetDirectory: targetDirectory).Wait(); //todo queue
+            Task.Run(() => WriteAsync(path, text, targetDirectory: targetDirectory)).Wait(); //todo queue
 
         #endregion
 
@@ -67,13 +67,17 @@ namespace Kit.Azure
             _reportCounter++;
             var paddedCount = _reportCounter.ToString().PadLeft(3, '0');
             var fileName = PathHelper.SafeFileName($"{paddedCount} {subject}.txt");
-            WriteAsync(fileName, $"{subject}\r\n\r\n{body}\r\n", targetDirectory: targetDirectory).Wait(); //todo queue
+
+            Task.Run(() => WriteAsync(
+                fileName, $"{subject}\r\n\r\n{body}\r\n", targetDirectory: targetDirectory)).Wait(); //todo queue
+
             var attachmentCounter = 0;
 
             foreach (var attachmentPath in attachmentPaths)
                 using (var stream = FileClient.OpenRead(attachmentPath))
-                    WriteAsync($"{paddedCount}-{++attachmentCounter} {PathHelper.FileName(attachmentPath)}",
-                        stream, targetDirectory: targetDirectory).Wait(); //todo queue
+                    Task.Run(() => WriteAsync(
+                        $"{paddedCount}-{++attachmentCounter} {PathHelper.FileName(attachmentPath)}",
+                        stream, targetDirectory: targetDirectory)).Wait(); //todo queue
         }
 
         #endregion
@@ -83,17 +87,17 @@ namespace Kit.Azure
         #region Extensions
 
         public static string ReadText(string path, string targetDirectory = null) =>
-            ReadTextAsync(path, Kit.CancellationToken, targetDirectory: targetDirectory).Result;
+            Task.Run(() => ReadTextAsync(
+                path, Kit.CancellationToken, targetDirectory: targetDirectory)).Result;
 
         public static Task<string> ReadTextAsync(string path, string targetDirectory = null) =>
             ReadTextAsync(path, Kit.CancellationToken, targetDirectory: targetDirectory);
 
-        public static List<string> ReadLines(
-            string path, string targetDirectory = null) =>
-            ReadLinesAsync(path, Kit.CancellationToken, targetDirectory: targetDirectory).Result;
+        public static List<string> ReadLines(string path, string targetDirectory = null) =>
+            Task.Run(() => ReadLinesAsync(
+                path, Kit.CancellationToken, targetDirectory: targetDirectory)).Result;
 
-        public static Task<List<string>> ReadLinesAsync(
-            string path, string targetDirectory = null) =>
+        public static Task<List<string>> ReadLinesAsync(string path, string targetDirectory = null) =>
             ReadLinesAsync(path, Kit.CancellationToken, targetDirectory: targetDirectory);
 
         public static async Task<List<string>> ReadLinesAsync(
@@ -101,26 +105,30 @@ namespace Kit.Azure
             (await ReadTextAsync(path, cancellationToken, targetDirectory: targetDirectory)).SplitLines();
 
         public static byte[] ReadBytes(string path, string targetDirectory = null) =>
-            ReadBytesAsync(path, Kit.CancellationToken, targetDirectory: targetDirectory).Result;
+            Task.Run(() => ReadBytesAsync(
+                path, Kit.CancellationToken, targetDirectory: targetDirectory)).Result;
 
         public static Task<byte[]> ReadBytesAsync(string path, string targetDirectory = null) =>
             ReadBytesAsync(path, Kit.CancellationToken, targetDirectory: targetDirectory);
 
         public static void ReadTo(string path, Stream target, string targetDirectory = null) =>
-            ReadToAsync(path, target, Kit.CancellationToken, targetDirectory: targetDirectory).Wait();
+            Task.Run(() => ReadToAsync(
+                path, target, Kit.CancellationToken, targetDirectory: targetDirectory)).Wait();
 
         public static Task ReadToAsync(string path, Stream target, string targetDirectory = null) =>
             ReadToAsync(path, target, Kit.CancellationToken, targetDirectory: targetDirectory);
 
         public static Stream OpenRead(string path, string targetDirectory = null) =>
-            OpenReadAsync(path, Kit.CancellationToken, targetDirectory: targetDirectory).Result;
+            Task.Run(() => OpenReadAsync(
+                path, Kit.CancellationToken, targetDirectory: targetDirectory)).Result;
 
         public static Task<Stream> OpenReadAsync(string path, string targetDirectory = null) =>
             OpenReadAsync(path, Kit.CancellationToken, targetDirectory: targetDirectory);
 
         [Obsolete("Use ReadTo() instead")]
         public static void Read(string path, Stream target, string targetDirectory = null) =>
-            ReadAsync(path, target, Kit.CancellationToken, targetDirectory: targetDirectory).Wait();
+            Task.Run(() => ReadAsync(
+                path, target, Kit.CancellationToken, targetDirectory: targetDirectory)).Wait();
 
         [Obsolete("Use ReadToAsync() instead")]
         public static Task ReadAsync(string path, Stream target, string targetDirectory = null) =>
@@ -212,14 +220,16 @@ namespace Kit.Azure
         #region Extensions
 
         public static void Write(string path, string text, string targetDirectory = null) =>
-            WriteAsync(path, text, Kit.CancellationToken, targetDirectory: targetDirectory).Wait();
+            Task.Run(() => WriteAsync(
+                path, text, Kit.CancellationToken, targetDirectory: targetDirectory)).Wait();
 
         public static Task WriteAsync(string path, string text, string targetDirectory = null) =>
             WriteAsync(path, text, Kit.CancellationToken, targetDirectory: targetDirectory);
 
         public static void Write(
             string path, IEnumerable<string> lines, string targetDirectory = null) =>
-            WriteAsync(path, lines.JoinLines(), Kit.CancellationToken, targetDirectory: targetDirectory).Wait();
+            Task.Run(() => WriteAsync(
+                path, lines.JoinLines(), Kit.CancellationToken, targetDirectory: targetDirectory)).Wait();
 
         public static Task WriteAsync(
             string path, IEnumerable<string> lines, string targetDirectory = null) =>
@@ -230,19 +240,22 @@ namespace Kit.Azure
             WriteAsync(path, lines.JoinLines(), cancellationToken, targetDirectory: targetDirectory);
 
         public static void Write(string path, byte[] bytes, string targetDirectory = null) =>
-            WriteAsync(path, bytes, Kit.CancellationToken, targetDirectory: targetDirectory).Wait();
+            Task.Run(() => WriteAsync(
+                path, bytes, Kit.CancellationToken, targetDirectory: targetDirectory)).Wait();
 
         public static Task WriteAsync(string path, byte[] bytes, string targetDirectory = null) =>
             WriteAsync(path, bytes, Kit.CancellationToken, targetDirectory: targetDirectory);
 
         public static void Write(string path, Stream source, string targetDirectory = null) =>
-            WriteAsync(path, source, Kit.CancellationToken, targetDirectory: targetDirectory).Wait();
+            Task.Run(() => WriteAsync(
+                path, source, Kit.CancellationToken, targetDirectory: targetDirectory)).Wait();
 
         public static Task WriteAsync(string path, Stream source, string targetDirectory = null) =>
             WriteAsync(path, source, Kit.CancellationToken, targetDirectory: targetDirectory);
 
         public static Stream OpenWrite(string path, string targetDirectory = null) =>
-            OpenWriteAsync(path, Kit.CancellationToken, targetDirectory: targetDirectory).Result;
+            Task.Run(() => OpenWriteAsync(
+                path, Kit.CancellationToken, targetDirectory: targetDirectory)).Result;
 
         public static Task<Stream> OpenWriteAsync(string path, string targetDirectory = null) =>
             OpenWriteAsync(path, Kit.CancellationToken, targetDirectory: targetDirectory);

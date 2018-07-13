@@ -83,7 +83,7 @@ namespace Kit
                 LogService.LogInfo("Kit started");
                 Initialize();
                 LogService.Log($"Kit ready at {TimeHelper.FormattedLatency(startTime)}");
-                ExecuteBaseAsync(delegateAsync, "Main delegate").Wait();
+                Task.Run(() => ExecuteBaseAsync(delegateAsync, "Main delegate")).Wait();
                 ThreadService.AwaitAll();
 
                 if (_isFailed)
