@@ -44,8 +44,7 @@ namespace Kit.Tests
             Assert.IsTrue(relation.Title == title);
             Assert.IsTrue(relation.Tags["type"] == "multipolygon");
             Assert.IsTrue(relation.Tags["place"] == "island");
-            Assert.IsTrue(relation.MemberIds.Count > 50);
-            Assert.IsTrue(relation.Members.Count == relation.MemberIds.Count);
+            Assert.IsTrue(relation.Members.Count > 50);
         }
     }
 }
