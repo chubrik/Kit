@@ -345,7 +345,7 @@ namespace Kit.Http
             if (cache == CacheMode.Full && _registry.ContainsKey(cachedName))
             {
                 LogService.Log($"Http {actionName} cached: {uri.AbsoluteUri}");
-                var fileInfo = _registry.GetValue(cachedName);
+                var fileInfo = _registry[cachedName];
                 bodyFileName = fileInfo.BodyFileName;
                 paddedCount = bodyFileName.Substring(0, 4);
 
