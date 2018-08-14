@@ -284,7 +284,7 @@ namespace Kit.Azure
             try
             {
                 var nativePath = PathHelper.Combine(targetDirectory ?? _workingDirectory, path);
-                var blob = _container.GetBlockBlobReference(nativePath);
+                var blob = GetBlobToWrite(nativePath);
                 return await blob.OpenWriteAsync(_accessCondition, _options, _operationContext, cancellationToken);
             }
             catch (Exception exception)
@@ -304,7 +304,7 @@ namespace Kit.Azure
 
             try
             {
-                var blob = _container.GetBlockBlobReference(nativePath);
+                var blob = GetBlobToWrite(nativePath);
                 await action(blob);
                 LogService.Log($"{logLabel} completed at {TimeHelper.FormattedLatency(startTime)}");
             }
@@ -313,6 +313,29 @@ namespace Kit.Azure
                 Debug.Assert(exception.IsAllowed());
                 throw;
             }
+        }
+
+        #endregion
+
+        #region Utils
+
+        private static readonly Dictionary<string, string> MimeTypes = new Dictionary<string, string>
+        {
+            { "html", "text/html" },
+            { "json", "application/json" },
+            { "txt", "text/plain" },
+            { "xml", "application/xml" },
+        };
+
+        private static CloudBlockBlob GetBlobToWrite(string nativePath)
+        {
+            var blob = _container.GetBlockBlobReference(nativePath);
+            var extension = PathHelper.FileExtension(nativePath);
+
+            if (extension != null && MimeTypes.ContainsKey(extension))
+                blob.Properties.ContentType = MimeTypes[extension];
+
+            return blob;
         }
 
         #endregion

@@ -64,5 +64,12 @@ namespace Kit
             safeName = Regex.Replace(safeName, @"[\\/:*?<>|]", "_");
             return safeName.Length > 250 ? safeName.Substring(0, 250) : safeName;
         }
+
+        public static string FileExtension(string path)
+        {
+            var fileName = FileName(path);
+            var dotIndex = fileName.LastIndexOf('.');
+            return dotIndex != -1 ? fileName.Substring(dotIndex + 1) : null;
+        }
     }
 }
