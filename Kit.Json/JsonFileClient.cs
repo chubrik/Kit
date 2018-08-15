@@ -64,9 +64,12 @@ namespace Kit
                 LogService.Log($"Create directory: {dirPath}");
             }
 
+            if (Exists(path, targetDirectory))
+                Delete(path, targetDirectory);
+
             try
             {
-                using (var fileStream = OpenWrite(path))
+                using (var fileStream = OpenWrite(path, targetDirectory))
                 using (var streamWriter = new StreamWriter(fileStream))
                 using (var jsonTextWriter = new JsonTextWriter(streamWriter))
                 {
