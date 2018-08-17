@@ -24,7 +24,6 @@
     <ProjectReference Include="..\Kit.Http\Kit.Http.csproj" />
     <ProjectReference Include="..\Kit.Http.Extensions\Kit.Http.Extensions.csproj" />
     <ProjectReference Include="..\Kit.Mail\Kit.Mail.csproj" />
-    <ProjectReference Include="..\Kit.Osm\Kit.Osm.csproj" />
   </ItemGroup>
 
 </Project>
