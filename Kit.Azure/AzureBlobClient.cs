@@ -62,7 +62,7 @@ namespace Kit.Azure
             Debug.Assert(attachmentPaths != null);
 
             if (attachmentPaths == null)
-                throw new InvalidOperationException();
+                throw new ArgumentNullException(nameof(attachmentPaths));
 
             _reportCounter++;
             var paddedCount = _reportCounter.ToString().PadLeft(3, '0');

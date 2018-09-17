@@ -9,8 +9,10 @@ using System.Threading.Tasks;
 
 namespace Kit.Http
 {
-    public class HttpClient : IDisposable
+    public class HttpService : IDisposable
     {
+        public HttpClient Client { get; }
+
         private const string RegistryFileName = "$registry.txt";
         private const string InfoFileSuffix = ".txt";
 
@@ -20,7 +22,6 @@ namespace Kit.Http
         private static int _globalTimeoutSeconds = 60;
         private static int _logCounter = 0;
 
-        private readonly System.Net.Http.HttpClient _client;
         private readonly CookieContainer _cookieContainer = new CookieContainer();
         private readonly CacheMode _cacheMode;
         private readonly string _cacheKey;
@@ -30,10 +31,7 @@ namespace Kit.Http
         #region Setup & Consructor
 
         public static void Setup(
-            string cacheDirectory = null,
-            CacheMode? cache = null,
-            bool? repeat = null,
-            int? timeoutSeconds = null)
+            string cacheDirectory = null, CacheMode? cache = null, bool? repeat = null, int? timeoutSeconds = null)
         {
             if (cacheDirectory != null)
                 _cacheDirectory = cacheDirectory;
@@ -48,7 +46,8 @@ namespace Kit.Http
                 _globalTimeoutSeconds = (int)timeoutSeconds;
         }
 
-        public HttpClient(CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
+        public HttpService(
+            CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
         {
             _cacheMode = cache ?? _globalCacheMode;
             _cacheKey = cacheKey ?? string.Empty;
@@ -62,7 +61,7 @@ namespace Kit.Http
                 //AllowAutoRedirect = false //todo redirect
             };
 
-            _client = new System.Net.Http.HttpClient(handler)
+            Client = new HttpClient(handler)
             {
                 Timeout = Timeout.InfiniteTimeSpan
             };
@@ -71,10 +70,10 @@ namespace Kit.Http
             SetHeader("Accept-Encoding", "gzip, deflate");
             SetHeader("Accept-Language", "en;q=0.9");
             SetHeader("Upgrade-Insecure-Requests", "1");
-            SetHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.79 Safari/537.36");
+            SetHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.92 Safari/537.36");
         }
 
-        public void Dispose() => _client.Dispose();
+        public void Dispose() => Client.Dispose();
 
         #endregion
 
@@ -82,23 +81,33 @@ namespace Kit.Http
 
         public void SetHeader(string name, string value)
         {
-            Debug.Assert(!name.IsNullOrEmpty() && value != null);
+            Debug.Assert(!name.IsNullOrEmpty());
 
-            if (name.IsNullOrEmpty() || value == null)
-                throw new InvalidOperationException();
+            if (name.IsNullOrEmpty())
+                throw new ArgumentNullOrEmptyException(nameof(name));
 
-            _client.DefaultRequestHeaders.Remove(name);
-            _client.DefaultRequestHeaders.TryAddWithoutValidation(name, value);
+            Debug.Assert(value != null);
+
+            if (value == null)
+                throw new ArgumentNullException(nameof(value));
+
+            Client.DefaultRequestHeaders.Remove(name);
+            Client.DefaultRequestHeaders.TryAddWithoutValidation(name, value);
         }
 
         public void AddToHeader(string name, string value)
         {
-            Debug.Assert(!name.IsNullOrEmpty() && value != null);
+            Debug.Assert(!name.IsNullOrEmpty());
 
-            if (name.IsNullOrEmpty() || value == null)
-                throw new InvalidOperationException();
+            if (name.IsNullOrEmpty())
+                throw new ArgumentNullOrEmptyException(nameof(name));
 
-            _client.DefaultRequestHeaders.TryAddWithoutValidation(name, value);
+            Debug.Assert(value != null);
+
+            if (value == null)
+                throw new ArgumentNullException(nameof(value));
+
+            Client.DefaultRequestHeaders.TryAddWithoutValidation(name, value);
         }
 
         public void RemoveHeader(string name)
@@ -106,9 +115,9 @@ namespace Kit.Http
             Debug.Assert(!name.IsNullOrEmpty());
 
             if (name.IsNullOrEmpty())
-                throw new InvalidOperationException();
+                throw new ArgumentNullOrEmptyException(nameof(name));
 
-            _client.DefaultRequestHeaders.Remove(name);
+            Client.DefaultRequestHeaders.Remove(name);
         }
 
         #endregion
@@ -164,7 +173,7 @@ namespace Kit.Http
             try
             {
                 response = await HttpHelper.TimeoutAsync(
-                    timeoutSeconds, cancellationToken, ct => _client.GetAsync(uri, ct));
+                    timeoutSeconds, cancellationToken, ct => Client.GetAsync(uri, ct));
 
                 LogService.Log($"{logLabel} completed at {TimeHelper.FormattedLatency(startTime)}");
             }
@@ -291,7 +300,7 @@ namespace Kit.Http
                 SetHeader("Origin", $"{uri.Scheme}://{uri.Host}");
 
                 response = await HttpHelper.TimeoutAsync(
-                    timeoutSeconds, cancellationToken, ct => _client.PostAsync(uri, content, ct));
+                    timeoutSeconds, cancellationToken, ct => Client.PostAsync(uri, content, ct));
 
                 LogService.Log($"{logLabel} completed at {TimeHelper.FormattedLatency(startTime)}");
             }
@@ -375,7 +384,8 @@ namespace Kit.Http
                 FileClient.Write(bodyFileName, response.GetBytes(), targetDirectory);
 
             lock (RegistryFileName)
-                FileClient.AppendText(RegistryFileName, $"{cachedName} | {response.MimeType} | {bodyFileName}", targetDirectory);
+                FileClient.AppendText(
+                    RegistryFileName, $"{cachedName} | {response.MimeType} | {bodyFileName}", targetDirectory);
 
             _registry[cachedName] = new CacheInfo { MimeType = response.MimeType, BodyFileName = bodyFileName };
             return response;

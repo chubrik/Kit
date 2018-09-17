@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Kit.Http
 {
-    internal class HttpHelper
+    internal static class HttpHelper
     {
         private const int RepeatCount = 10;
         private const int RepeatPauseSeconds = 10;

@@ -13,40 +13,40 @@ namespace Kit.Http
         #region Get text
 
         public static string GetText(
-            this HttpClient client, string url,
+            this HttpService http, string url,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            Task.Run(() => client.GetTextAsync(new Uri(url), Kit.CancellationToken,
+            Task.Run(() => http.GetTextAsync(new Uri(url), Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
         public static string GetText(
-            this HttpClient client, Uri uri,
+            this HttpService http, Uri uri,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            Task.Run(() => client.GetTextAsync(uri, Kit.CancellationToken,
+            Task.Run(() => http.GetTextAsync(uri, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
         public static Task<string> GetTextAsync(
-            this HttpClient client, string url,
+            this HttpService http, string url,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            client.GetTextAsync(new Uri(url), Kit.CancellationToken,
+            http.GetTextAsync(new Uri(url), Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
         public static Task<string> GetTextAsync(
-            this HttpClient client, Uri uri,
+            this HttpService http, Uri uri,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            client.GetTextAsync(uri, Kit.CancellationToken,
+            http.GetTextAsync(uri, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
         public static Task<string> GetTextAsync(
-            this HttpClient client, string url, CancellationToken cancellationToken,
+            this HttpService http, string url, CancellationToken cancellationToken,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            client.GetTextAsync(new Uri(url), cancellationToken,
+            http.GetTextAsync(new Uri(url), cancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
         public static async Task<string> GetTextAsync(
-            this HttpClient client, Uri uri, CancellationToken cancellationToken,
+            this HttpService http, Uri uri, CancellationToken cancellationToken,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
         {
-            using (var response = await client.GetAsync(uri, cancellationToken,
+            using (var response = await http.GetAsync(uri, cancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds))
                 return await response.GetTextAsync();
         }
@@ -56,40 +56,40 @@ namespace Kit.Http
         #region Get bytes
 
         public static byte[] GetBytes(
-            this HttpClient client, string url,
+            this HttpService http, string url,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            Task.Run(() => client.GetBytesAsync(new Uri(url), Kit.CancellationToken,
+            Task.Run(() => http.GetBytesAsync(new Uri(url), Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
         public static byte[] GetBytes(
-            this HttpClient client, Uri uri,
+            this HttpService http, Uri uri,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            Task.Run(() => client.GetBytesAsync(uri, Kit.CancellationToken,
+            Task.Run(() => http.GetBytesAsync(uri, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
         public static Task<byte[]> GetBytesAsync(
-            this HttpClient client, string url,
+            this HttpService http, string url,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            client.GetBytesAsync(new Uri(url), Kit.CancellationToken,
+            http.GetBytesAsync(new Uri(url), Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
         public static Task<byte[]> GetBytesAsync(
-            this HttpClient client, Uri uri,
+            this HttpService http, Uri uri,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            client.GetBytesAsync(uri, Kit.CancellationToken,
+            http.GetBytesAsync(uri, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
         public static Task<byte[]> GetBytesAsync(
-            this HttpClient client, string url, CancellationToken cancellationToken,
+            this HttpService http, string url, CancellationToken cancellationToken,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            client.GetBytesAsync(new Uri(url), cancellationToken,
+            http.GetBytesAsync(new Uri(url), cancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
         public static async Task<byte[]> GetBytesAsync(
-            this HttpClient client, Uri uri, CancellationToken cancellationToken,
+            this HttpService http, Uri uri, CancellationToken cancellationToken,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
         {
-            using (var response = await client.GetAsync(uri, cancellationToken,
+            using (var response = await http.GetAsync(uri, cancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds))
                 return await response.GetBytesAsync();
         }
@@ -99,40 +99,40 @@ namespace Kit.Http
         #region Get stream
 
         public static Stream GetStream(
-            this HttpClient client, string url,
+            this HttpService http, string url,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            Task.Run(() => client.GetStreamAsync(new Uri(url), Kit.CancellationToken,
+            Task.Run(() => http.GetStreamAsync(new Uri(url), Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
         public static Stream GetStream(
-            this HttpClient client, Uri uri,
+            this HttpService http, Uri uri,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            Task.Run(() => client.GetStreamAsync(uri, Kit.CancellationToken,
+            Task.Run(() => http.GetStreamAsync(uri, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
         public static Task<Stream> GetStreamAsync(
-            this HttpClient client, string url,
+            this HttpService http, string url,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            client.GetStreamAsync(new Uri(url), Kit.CancellationToken,
+            http.GetStreamAsync(new Uri(url), Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
         public static Task<Stream> GetStreamAsync(
-            this HttpClient client, Uri uri,
+            this HttpService http, Uri uri,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            client.GetStreamAsync(uri, Kit.CancellationToken,
+            http.GetStreamAsync(uri, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
         public static Task<Stream> GetStreamAsync(
-            this HttpClient client, string url, CancellationToken cancellationToken,
+            this HttpService http, string url, CancellationToken cancellationToken,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            client.GetStreamAsync(new Uri(url), cancellationToken,
+            http.GetStreamAsync(new Uri(url), cancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
         public static async Task<Stream> GetStreamAsync(
-            this HttpClient client, Uri uri, CancellationToken cancellationToken,
+            this HttpService http, Uri uri, CancellationToken cancellationToken,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
         {
-            using (var response = await client.GetAsync(uri, cancellationToken,
+            using (var response = await http.GetAsync(uri, cancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds))
                 return await response.GetStreamAsync();
         }
@@ -142,33 +142,33 @@ namespace Kit.Http
         #region Get response
 
         public static IHttpResponse Get(
-            this HttpClient client, string url,
+            this HttpService http, string url,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            Task.Run(() => client.GetAsync(new Uri(url), Kit.CancellationToken,
+            Task.Run(() => http.GetAsync(new Uri(url), Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
         public static IHttpResponse Get(
-            this HttpClient client, Uri uri,
+            this HttpService http, Uri uri,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            Task.Run(() => client.GetAsync(uri, Kit.CancellationToken,
+            Task.Run(() => http.GetAsync(uri, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
         public static Task<IHttpResponse> GetAsync(
-            this HttpClient client, string url,
+            this HttpService http, string url,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            client.GetAsync(new Uri(url), Kit.CancellationToken,
+            http.GetAsync(new Uri(url), Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
         public static Task<IHttpResponse> GetAsync(
-            this HttpClient client, Uri uri,
+            this HttpService http, Uri uri,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            client.GetAsync(uri, Kit.CancellationToken,
+            http.GetAsync(uri, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
         public static Task<IHttpResponse> GetAsync(
-            this HttpClient client, string url, CancellationToken cancellationToken,
+            this HttpService http, string url, CancellationToken cancellationToken,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            client.GetAsync(new Uri(url), cancellationToken,
+            http.GetAsync(new Uri(url), cancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
         #endregion
@@ -180,33 +180,33 @@ namespace Kit.Http
         #region Post form
 
         public static IHttpResponse PostForm(
-            this HttpClient client, string url, IEnumerable<KeyValuePair<string, string>> form,
+            this HttpService http, string url, IEnumerable<KeyValuePair<string, string>> form,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            Task.Run(() => client.PostFormAsync(new Uri(url), form, Kit.CancellationToken,
+            Task.Run(() => http.PostFormAsync(new Uri(url), form, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
         public static IHttpResponse PostForm(
-            this HttpClient client, Uri uri, IEnumerable<KeyValuePair<string, string>> form,
+            this HttpService http, Uri uri, IEnumerable<KeyValuePair<string, string>> form,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            Task.Run(() => client.PostFormAsync(uri, form, Kit.CancellationToken,
+            Task.Run(() => http.PostFormAsync(uri, form, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
         public static Task<IHttpResponse> PostFormAsync(
-            this HttpClient client, string url, IEnumerable<KeyValuePair<string, string>> form,
+            this HttpService http, string url, IEnumerable<KeyValuePair<string, string>> form,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            client.PostFormAsync(new Uri(url), form, Kit.CancellationToken,
+            http.PostFormAsync(new Uri(url), form, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
         public static Task<IHttpResponse> PostFormAsync(
-            this HttpClient client, Uri uri, IEnumerable<KeyValuePair<string, string>> form,
+            this HttpService http, Uri uri, IEnumerable<KeyValuePair<string, string>> form,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            client.PostFormAsync(uri, form, Kit.CancellationToken,
+            http.PostFormAsync(uri, form, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
         public static Task<IHttpResponse> PostFormAsync(
-            this HttpClient client, string url, IEnumerable<KeyValuePair<string, string>> form, CancellationToken cancellationToken,
+            this HttpService http, string url, IEnumerable<KeyValuePair<string, string>> form, CancellationToken cancellationToken,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            client.PostFormAsync(new Uri(url), form, cancellationToken,
+            http.PostFormAsync(new Uri(url), form, cancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
         #endregion
@@ -214,33 +214,33 @@ namespace Kit.Http
         #region Post multipart
 
         public static IHttpResponse PostMultipart(
-            this HttpClient client, string url, Dictionary<string, string> multipart,
+            this HttpService http, string url, Dictionary<string, string> multipart,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            Task.Run(() => client.PostMultipartAsync(new Uri(url), multipart, Kit.CancellationToken,
+            Task.Run(() => http.PostMultipartAsync(new Uri(url), multipart, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
         public static IHttpResponse PostMultipart(
-            this HttpClient client, Uri uri, Dictionary<string, string> multipart,
+            this HttpService http, Uri uri, Dictionary<string, string> multipart,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            Task.Run(() => client.PostMultipartAsync(uri, multipart, Kit.CancellationToken,
+            Task.Run(() => http.PostMultipartAsync(uri, multipart, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
         public static Task<IHttpResponse> PostMultipartAsync(
-            this HttpClient client, string url, Dictionary<string, string> multipart,
+            this HttpService http, string url, Dictionary<string, string> multipart,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            client.PostMultipartAsync(new Uri(url), multipart, Kit.CancellationToken,
+            http.PostMultipartAsync(new Uri(url), multipart, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
         public static Task<IHttpResponse> PostMultipartAsync(
-            this HttpClient client, Uri uri, Dictionary<string, string> multipart,
+            this HttpService http, Uri uri, Dictionary<string, string> multipart,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            client.PostMultipartAsync(uri, multipart, Kit.CancellationToken,
+            http.PostMultipartAsync(uri, multipart, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
         public static Task<IHttpResponse> PostMultipartAsync(
-            this HttpClient client, string url, Dictionary<string, string> multipart, CancellationToken cancellationToken,
+            this HttpService http, string url, Dictionary<string, string> multipart, CancellationToken cancellationToken,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            client.PostMultipartAsync(new Uri(url), multipart, cancellationToken,
+            http.PostMultipartAsync(new Uri(url), multipart, cancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
         #endregion
@@ -248,33 +248,33 @@ namespace Kit.Http
         #region Post serialized JSON
 
         public static IHttpResponse PostSerializedJson(
-            this HttpClient client, string url, string serializedJson,
+            this HttpService http, string url, string serializedJson,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            Task.Run(() => client.PostSerializedJsonAsync(new Uri(url), serializedJson, Kit.CancellationToken,
+            Task.Run(() => http.PostSerializedJsonAsync(new Uri(url), serializedJson, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
         public static IHttpResponse PostSerializedJson(
-            this HttpClient client, Uri uri, string serializedJson,
+            this HttpService http, Uri uri, string serializedJson,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            Task.Run(() => client.PostSerializedJsonAsync(uri, serializedJson, Kit.CancellationToken,
+            Task.Run(() => http.PostSerializedJsonAsync(uri, serializedJson, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
         public static Task<IHttpResponse> PostSerializedJsonAsync(
-            this HttpClient client, string url, string serializedJson,
+            this HttpService http, string url, string serializedJson,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            client.PostSerializedJsonAsync(new Uri(url), serializedJson, Kit.CancellationToken,
+            http.PostSerializedJsonAsync(new Uri(url), serializedJson, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
         public static Task<IHttpResponse> PostSerializedJsonAsync(
-            this HttpClient client, Uri uri, string serializedJson,
+            this HttpService http, Uri uri, string serializedJson,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            client.PostSerializedJsonAsync(uri, serializedJson, Kit.CancellationToken,
+            http.PostSerializedJsonAsync(uri, serializedJson, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
         public static Task<IHttpResponse> PostSerializedJsonAsync(
-            this HttpClient client, string url, string serializedJson, CancellationToken cancellationToken,
+            this HttpService http, string url, string serializedJson, CancellationToken cancellationToken,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            client.PostSerializedJsonAsync(new Uri(url), serializedJson, cancellationToken,
+            http.PostSerializedJsonAsync(new Uri(url), serializedJson, cancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
         #endregion

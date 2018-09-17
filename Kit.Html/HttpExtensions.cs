@@ -9,48 +9,48 @@ namespace Kit.Html
     public static class HttpExtensions
     {
         public static HtmlDocument GetHtmlDoc(
-            this HttpClient client, string url,
+            this HttpService http, string url,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            Task.Run(() => client.GetHtmlDocAsync(new Uri(url), Kit.CancellationToken,
+            Task.Run(() => http.GetHtmlDocAsync(new Uri(url), Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
         public static HtmlDocument GetHtmlDoc(
-            this HttpClient client, Uri uri,
+            this HttpService http, Uri uri,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            Task.Run(() => client.GetHtmlDocAsync(uri, Kit.CancellationToken,
+            Task.Run(() => http.GetHtmlDocAsync(uri, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
         public static Task<HtmlDocument> GetHtmlDocAsync(
-            this HttpClient client, string url,
+            this HttpService http, string url,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            client.GetHtmlDocAsync(new Uri(url), Kit.CancellationToken,
+            http.GetHtmlDocAsync(new Uri(url), Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
         public static Task<HtmlDocument> GetHtmlDocAsync(
-            this HttpClient client, Uri uri,
+            this HttpService http, Uri uri,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            client.GetHtmlDocAsync(uri, Kit.CancellationToken,
+            http.GetHtmlDocAsync(uri, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
         public static Task<HtmlDocument> GetHtmlDocAsync(
-            this HttpClient client, string url, CancellationToken cancellationToken,
+            this HttpService http, string url, CancellationToken cancellationToken,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            client.GetHtmlDocAsync(new Uri(url), cancellationToken,
+            http.GetHtmlDocAsync(new Uri(url), cancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
         public static async Task<HtmlDocument> GetHtmlDocAsync(
-            this HttpClient client, Uri uri, CancellationToken cancellationToken,
+            this HttpService http, Uri uri, CancellationToken cancellationToken,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
         {
-            using (var response = await client.GetAsync(uri, cancellationToken,
+            using (var response = await http.GetAsync(uri, cancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds))
                 return await response.GetHtmlDocAsync();
         }
 
-        public static HtmlDocument GetHtmlDoc(this IHttpResponse httpResponse) =>
-            httpResponse.GetText().ToHtmlDoc();
+        public static HtmlDocument GetHtmlDoc(this IHttpResponse response) =>
+            response.GetText().ToHtmlDoc();
 
-        public static async Task<HtmlDocument> GetHtmlDocAsync(this IHttpResponse httpResponse) =>
-            (await httpResponse.GetTextAsync()).ToHtmlDoc();
+        public static async Task<HtmlDocument> GetHtmlDocAsync(this IHttpResponse response) =>
+            (await response.GetTextAsync()).ToHtmlDoc();
     }
 }
