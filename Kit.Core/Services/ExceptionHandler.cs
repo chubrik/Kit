@@ -10,9 +10,7 @@ namespace Kit
 
         private static int _counter = 0;
 
-        public static readonly List<IDataClient> DataClients = new List<IDataClient> {
-            FileClient.Instance
-        };
+        public static readonly List<IDataClient> DataClients = new List<IDataClient>();
 
         public static void Register(Exception exception, LogLevel level = LogLevel.Error)
         {

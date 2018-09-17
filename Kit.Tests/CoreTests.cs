@@ -18,6 +18,8 @@ namespace Kit.Tests
             var diagnosticsDir = $"{ProjectNativePath}/$work/$diagnostics/{formattedTime}";
             var reportsDir = $"{diagnosticsDir}/reports";
 
+            Kit.Setup(useFileDiagnostics: true);
+
             Kit.Execute(() =>
             {
                 LogService.LogInfo("Hello World!");

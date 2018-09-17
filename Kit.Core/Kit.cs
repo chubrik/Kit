@@ -28,6 +28,7 @@ namespace Kit
             bool? pressAnyKeyToExit = null,
             string baseDirectory = null,
             string workingDirectory = null,
+            bool useFileDiagnostics = false,
             string diagnosticsDirectory = null,
             bool? test = null)
         {
@@ -39,6 +40,18 @@ namespace Kit
 
             if (workingDirectory != null)
                 WorkingDirectory = workingDirectory;
+
+            if (useFileDiagnostics)
+            {
+                if (!ExceptionHandler.DataClients.Contains(FileClient.Instance))
+                    ExceptionHandler.DataClients.Add(FileClient.Instance);
+
+                if (!LogService.Clients.Contains(FileClient.Instance))
+                    LogService.Clients.Add(FileClient.Instance);
+
+                if (!ReportService.Clients.Contains(FileClient.Instance))
+                    ReportService.Clients.Add(FileClient.Instance);
+            }
 
             if (diagnosticsDirectory != null)
                 _diagnosticsDirectory = diagnosticsDirectory;

@@ -10,9 +10,7 @@ namespace Kit
         private const string ReportsDirectory = "reports";
         private static int _logCounter = 0;
 
-        public static readonly List<IReportClient> Clients = new List<IReportClient> {
-            FileClient.Instance
-        };
+        public static readonly List<IReportClient> Clients = new List<IReportClient>();
 
         #region Extensions
 

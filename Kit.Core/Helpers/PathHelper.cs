@@ -28,7 +28,7 @@ namespace Kit
                     var previous = output.Peek();
 
                     if (previous == string.Empty)
-                        throw new InvalidOperationException("Path is out of root");
+                        throw new InvalidOperationException($"Path \"{combined}\" is out of root");
 
                     if (previous != "..")
                     {

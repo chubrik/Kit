@@ -10,8 +10,7 @@ namespace Kit
 
         public static readonly List<ILogClient> Clients = new List<ILogClient> {
             TraceClient.Instance,
-            ConsoleClient.Instance,
-            FileClient.Instance
+            ConsoleClient.Instance
         };
 
         #region Extensions
