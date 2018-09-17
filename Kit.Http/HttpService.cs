@@ -12,6 +12,7 @@ namespace Kit.Http
     public class HttpService : IDisposable
     {
         public HttpClient Client { get; }
+        public CookieContainer CookieContainer { get; } = new CookieContainer();
 
         private const string RegistryFileName = "$registry.txt";
         private const string InfoFileSuffix = ".txt";
@@ -22,7 +23,6 @@ namespace Kit.Http
         private static int _globalTimeoutSeconds = 60;
         private static int _logCounter = 0;
 
-        private readonly CookieContainer _cookieContainer = new CookieContainer();
         private readonly CacheMode _cacheMode;
         private readonly string _cacheKey;
         private readonly bool _useRepeat;
@@ -57,7 +57,7 @@ namespace Kit.Http
             var handler = new HttpClientHandler
             {
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                CookieContainer = _cookieContainer
+                CookieContainer = CookieContainer
                 //AllowAutoRedirect = false //todo redirect
             };
 
@@ -161,7 +161,7 @@ namespace Kit.Http
             Uri uri, int timeoutSeconds, CancellationToken cancellationToken)
         {
             var logLabel = $"Http get #{++_logCounter}";
-            var requestCookies = _cookieContainer.GetCookies(uri);
+            var requestCookies = CookieContainer.GetCookies(uri);
             var repeat12030Count = 3;
             var repeatLabelPart = string.Empty;
 
@@ -291,7 +291,7 @@ namespace Kit.Http
             var logLabel = $"Http post #{++_logCounter}";
             LogService.Log($"{logLabel}: {uri.AbsoluteUri}");
 
-            var requestCookies = _cookieContainer.GetCookies(uri);
+            var requestCookies = CookieContainer.GetCookies(uri);
             HttpResponseMessage response;
 
             try
