@@ -280,5 +280,15 @@ namespace Kit.Http
         #endregion
 
         #endregion
+
+        #region Cookies
+
+        public static void SetCookie(this HttpService http, string url, string name, string value) =>
+            http.SetCookie(new Uri(url), name, value);
+
+        public static void RemoveCookie(this HttpService http, string url, string name) =>
+            http.RemoveCookie(new Uri(url), name);
+
+        #endregion
     }
 }

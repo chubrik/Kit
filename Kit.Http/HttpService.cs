@@ -28,23 +28,7 @@ namespace Kit.Http
         private readonly bool _useRepeat;
         private readonly int _timeoutSeconds;
 
-        #region Setup & Consructor
-
-        public static void Setup(
-            string cacheDirectory = null, CacheMode? cache = null, bool? repeat = null, int? timeoutSeconds = null)
-        {
-            if (cacheDirectory != null)
-                _cacheDirectory = cacheDirectory;
-
-            if (cache != null)
-                _globalCacheMode = (CacheMode)cache;
-
-            if (repeat != null)
-                _globalUseRepeat = (bool)repeat;
-
-            if (timeoutSeconds != null)
-                _globalTimeoutSeconds = (int)timeoutSeconds;
-        }
+        #region Consructor, Setup & Dispose
 
         public HttpService(
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
@@ -71,6 +55,22 @@ namespace Kit.Http
             SetHeader("Accept-Language", "en;q=0.9");
             SetHeader("Upgrade-Insecure-Requests", "1");
             SetHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.92 Safari/537.36");
+        }
+
+        public static void Setup(
+            string cacheDirectory = null, CacheMode? cache = null, bool? repeat = null, int? timeoutSeconds = null)
+        {
+            if (cacheDirectory != null)
+                _cacheDirectory = cacheDirectory;
+
+            if (cache != null)
+                _globalCacheMode = (CacheMode)cache;
+
+            if (repeat != null)
+                _globalUseRepeat = (bool)repeat;
+
+            if (timeoutSeconds != null)
+                _globalTimeoutSeconds = (int)timeoutSeconds;
         }
 
         public void Dispose() => Client.Dispose();
@@ -118,6 +118,44 @@ namespace Kit.Http
                 throw new ArgumentNullOrEmptyException(nameof(name));
 
             Client.DefaultRequestHeaders.Remove(name);
+        }
+
+        public void SetCookie(Uri uri, string name, string value)
+        {
+            Debug.Assert(uri != null);
+
+            if (uri == null)
+                throw new ArgumentNullException(nameof(name));
+
+            Debug.Assert(!name.IsNullOrEmpty());
+
+            if (name.IsNullOrEmpty())
+                throw new ArgumentNullOrEmptyException(nameof(name));
+
+            Debug.Assert(value != null);
+
+            if (value == null)
+                throw new ArgumentNullException(nameof(value));
+
+            CookieContainer.Add(GetBaseUri(uri), new Cookie(name, value));
+        }
+
+        public void RemoveCookie(Uri uri, string name)
+        {
+            Debug.Assert(uri != null);
+
+            if (uri == null)
+                throw new ArgumentNullException(nameof(name));
+
+            Debug.Assert(!name.IsNullOrEmpty());
+
+            if (name.IsNullOrEmpty())
+                throw new ArgumentNullOrEmptyException(nameof(name));
+
+            var cookie = CookieContainer.GetCookies(GetBaseUri(uri))[name];
+
+            if (cookie != null)
+                cookie.Expired = true;
         }
 
         #endregion
@@ -435,6 +473,9 @@ namespace Kit.Http
 
         private static Uri FixRedirectUri(Uri original, Uri rawPart) =>
             new Uri(new Uri($"{original.Scheme}://{original.Host}"), rawPart);
+
+        private static Uri GetBaseUri(Uri uri) =>
+            new Uri($"{uri.Scheme}://{uri.Host}:{uri.Port}/");
 
         #endregion
     }
