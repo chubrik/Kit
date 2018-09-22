@@ -96,7 +96,7 @@ namespace Kit
                 LogService.LogInfo("Kit started");
                 Initialize();
                 LogService.Log($"Kit ready at {TimeHelper.FormattedLatency(startTime)}");
-                Task.Run(() => ExecuteBaseAsync(delegateAsync, "Main delegate")).Wait();
+                Task.Factory.StartNew(() => ExecuteBaseAsync(delegateAsync, "Main delegate").Wait()).Wait();
                 ThreadService.AwaitAll();
 
                 if (_isFailed)

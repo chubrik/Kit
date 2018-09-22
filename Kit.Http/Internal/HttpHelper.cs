@@ -44,7 +44,7 @@ namespace Kit.Http
         public static async Task<T> TimeoutAsync<T>(
             int timeoutSeconds, CancellationToken cancellationToken, Func<CancellationToken, Task<T>> action)
         {
-            var cts = cancellationToken.GetNestedSource();
+            var cts = cancellationToken.CreateLinkedSource();
             var timeIsOut = false;
 
             var timerTask = Task.Factory.StartNew(async () =>

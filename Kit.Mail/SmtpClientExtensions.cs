@@ -20,7 +20,7 @@ namespace Kit.Mail
         public static async Task SendMailAsync(
             this SmtpClient client, MailMessage message, CancellationToken cancellationToken)
         {
-            var ctsWrapper = new[] { cancellationToken.GetNestedSource() };
+            var ctsWrapper = new[] { cancellationToken.CreateLinkedSource() };
             var mailSent = false;
             Exception exception = null;
 
