@@ -11,6 +11,8 @@ namespace Kit.Http
 {
     public class KitHttpClient : HttpClient
     {
+        #region Properties
+
         public HttpClientHandler Handler { get; }
 
         // Global
@@ -29,6 +31,10 @@ namespace Kit.Http
         private bool _useRepeat;
         private TimeSpan _requestDelay;
         private TimeSpan _requestTimeout;
+
+        private DateTimeOffset _lastCompletedTime;
+
+        #endregion
 
         #region Construction
 
@@ -250,10 +256,171 @@ namespace Kit.Http
 
         #endregion
 
+        #region Get
+
+        public Task<HttpResponseMessage> GetAsync(string requestUri,
+            CacheMode? cacheMode = null, string cacheDirectory = null, string cacheTag = null,
+            bool? useRepeat = null, TimeSpan? delay = null, TimeSpan? timeout = null) =>
+            GetAsync(
+                CreateUri(requestUri),
+                cacheMode, cacheDirectory, cacheTag, useRepeat, delay, timeout);
+
+        public Task<HttpResponseMessage> GetAsync(Uri requestUri,
+            CacheMode? cacheMode = null, string cacheDirectory = null, string cacheTag = null,
+            bool? useRepeat = null, TimeSpan? delay = null, TimeSpan? timeout = null) =>
+            GetAsync(
+                requestUri, HttpCompletionOption.ResponseContentRead,
+                cacheMode, cacheDirectory, cacheTag, useRepeat, delay, timeout);
+
+        public Task<HttpResponseMessage> GetAsync(string requestUri, HttpCompletionOption completionOption,
+            CacheMode? cacheMode = null, string cacheDirectory = null, string cacheTag = null,
+            bool? useRepeat = null, TimeSpan? delay = null, TimeSpan? timeout = null) =>
+            GetAsync(
+                CreateUri(requestUri), completionOption,
+                cacheMode, cacheDirectory, cacheTag, useRepeat, delay, timeout);
+
+        public Task<HttpResponseMessage> GetAsync(Uri requestUri, HttpCompletionOption completionOption,
+            CacheMode? cacheMode = null, string cacheDirectory = null, string cacheTag = null,
+            bool? useRepeat = null, TimeSpan? delay = null, TimeSpan? timeout = null) =>
+            GetAsync(
+                requestUri, completionOption, CancellationToken.None,
+                cacheMode, cacheDirectory, cacheTag, useRepeat, delay, timeout);
+
+        public Task<HttpResponseMessage> GetAsync(string requestUri, CancellationToken cancellationToken,
+            CacheMode? cacheMode = null, string cacheDirectory = null, string cacheTag = null,
+            bool? useRepeat = null, TimeSpan? delay = null, TimeSpan? timeout = null) =>
+            GetAsync(
+                CreateUri(requestUri), cancellationToken,
+                cacheMode, cacheDirectory, cacheTag, useRepeat, delay, timeout);
+
+        public Task<HttpResponseMessage> GetAsync(Uri requestUri, CancellationToken cancellationToken,
+            CacheMode? cacheMode = null, string cacheDirectory = null, string cacheTag = null,
+            bool? useRepeat = null, TimeSpan? delay = null, TimeSpan? timeout = null) =>
+            GetAsync(
+                requestUri, HttpCompletionOption.ResponseContentRead, cancellationToken,
+                cacheMode, cacheDirectory, cacheTag, useRepeat, delay, timeout);
+
+        public Task<HttpResponseMessage> GetAsync(
+            string requestUri, HttpCompletionOption completionOption, CancellationToken cancellationToken,
+            CacheMode? cacheMode = null, string cacheDirectory = null, string cacheTag = null,
+            bool? useRepeat = null, TimeSpan? delay = null, TimeSpan? timeout = null) =>
+            GetAsync(
+                CreateUri(requestUri), completionOption, cancellationToken,
+                cacheMode, cacheDirectory, cacheTag, useRepeat, delay, timeout);
+
+        public Task<HttpResponseMessage> GetAsync(
+            Uri requestUri, HttpCompletionOption completionOption, CancellationToken cancellationToken,
+            CacheMode? cacheMode = null, string cacheDirectory = null, string cacheTag = null,
+            bool? useRepeat = null, TimeSpan? delay = null, TimeSpan? timeout = null) =>
+            SendAsync(
+                new HttpRequestMessage(HttpMethod.Get, requestUri), completionOption, cancellationToken,
+                cacheMode, cacheDirectory, cacheTag, useRepeat, delay, timeout);
+
+        #endregion
+
+        //public Task<HttpResponseMessage> DeleteAsync(Uri requestUri, CancellationToken cancellationToken);
+        //public Task<HttpResponseMessage> DeleteAsync(string requestUri, CancellationToken cancellationToken);
+        //public Task<HttpResponseMessage> DeleteAsync(string requestUri);
+        //public Task<HttpResponseMessage> DeleteAsync(Uri requestUri);
+        //public Task<byte[]> GetByteArrayAsync(string requestUri);
+        //public Task<byte[]> GetByteArrayAsync(Uri requestUri);
+        //public Task<Stream> GetStreamAsync(string requestUri);
+        //public Task<Stream> GetStreamAsync(Uri requestUri);
+        //public Task<string> GetStringAsync(string requestUri);
+        //public Task<string> GetStringAsync(Uri requestUri);
+        //public Task<HttpResponseMessage> PostAsync(string requestUri, HttpContent content);
+        //public Task<HttpResponseMessage> PostAsync(string requestUri, HttpContent content, CancellationToken cancellationToken);
+        //public Task<HttpResponseMessage> PostAsync(Uri requestUri, HttpContent content);
+        //public Task<HttpResponseMessage> PostAsync(Uri requestUri, HttpContent content, CancellationToken cancellationToken);
+        //public Task<HttpResponseMessage> PutAsync(string requestUri, HttpContent content);
+        //public Task<HttpResponseMessage> PutAsync(string requestUri, HttpContent content, CancellationToken cancellationToken);
+        //public Task<HttpResponseMessage> PutAsync(Uri requestUri, HttpContent content);
+        //public Task<HttpResponseMessage> PutAsync(Uri requestUri, HttpContent content, CancellationToken cancellationToken);
+        //public Task<HttpResponseMessage> SendAsync(HttpRequestMessage request);
+        //public Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, HttpCompletionOption completionOption);
+        //public Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationToken cancellationToken);
+        //public override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken);
+
+        public Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request, HttpCompletionOption completionOption, CancellationToken cancellationToken,
+            CacheMode? cacheMode = null, string cacheDirectory = null, string cacheTag = null,
+            bool? useRepeat = null, TimeSpan? delay = null, TimeSpan? timeout = null)
+        {
+            Debug.Assert(request != null);
+
+            return SendDelayedAsync(
+                request ?? throw new ArgumentNullException(nameof(request)),
+                completionOption,
+                cancellationToken,
+                cacheMode ?? _cacheMode,
+                cacheDirectory ?? _cacheDirectory,
+                cacheTag ?? _cacheTag,
+                useRepeat ?? _useRepeat,
+                delay ?? _requestDelay,
+                timeout ?? _requestTimeout);
+        }
+
+        #region Base
+
+        private async Task<HttpResponseMessage> SendDelayedAsync(
+            HttpRequestMessage request, HttpCompletionOption completionOption, CancellationToken cancellationToken,
+            CacheMode cacheMode, string cacheDirectory, string cacheTag, bool useRepeat, TimeSpan delay, TimeSpan timeout)
+        {
+            var now = DateTimeOffset.Now;
+            var nextTime = _lastCompletedTime + delay;
+
+            if (nextTime > now)
+                await Task.Delay(nextTime - now, cancellationToken);
+
+            HttpResponseMessage response;
+
+            if (cacheMode == CacheMode.Disabled)
+                response = await SendRepeatedAsync(request, completionOption, cancellationToken, useRepeat, timeout);
+            else
+                response = await SendCachedAsync(
+                    request, completionOption, cancellationToken, cacheMode, cacheDirectory, cacheTag,
+                    () => SendRepeatedAsync(request, completionOption, cancellationToken, useRepeat, timeout));
+
+            _lastCompletedTime = DateTimeOffset.Now;
+            return response;
+        }
+
+        private async Task<HttpResponseMessage> SendCachedAsync(
+            HttpRequestMessage request, HttpCompletionOption completionOption, CancellationToken cancellationToken,
+            CacheMode cacheMode, string cacheDirectory, string cacheTag, Func<Task<HttpResponseMessage>> httpAction)
+        {
+            throw new NotImplementedException();
+        }
+
+        private async Task<HttpResponseMessage> SendRepeatedAsync(
+            HttpRequestMessage request, HttpCompletionOption completionOption, CancellationToken cancellationToken,
+            bool useRepeat, TimeSpan timeout)
+        {
+            if (!useRepeat)
+                return await SendBaseAsync(request, completionOption, cancellationToken, timeout);
+
+            HttpResponseMessage response = null;
+
+            await HttpHelper.RepeatAsync(
+                async () => response = await SendBaseAsync(request, completionOption, cancellationToken, timeout),
+                cancellationToken);
+
+            return response;
+        }
+
+        private async Task<HttpResponseMessage> SendBaseAsync(
+            HttpRequestMessage request, HttpCompletionOption completionOption, CancellationToken cancellationToken,
+            TimeSpan timeout)
+        {
+            throw new NotImplementedException();
+        }
+
+        #endregion
+
         #region Get content overloads
 
         public Task<string> GetStringAsync(string requestUri, CancellationToken cancellationToken) =>
-            GetStringAsync(new Uri(requestUri), cancellationToken);
+        GetStringAsync(new Uri(requestUri), cancellationToken);
 
         public async Task<string> GetStringAsync(Uri requestUri, CancellationToken cancellationToken)
         {
@@ -278,6 +445,13 @@ namespace Kit.Http
             using (var response = await GetAsync(requestUri, cancellationToken))
                 return await response.EnsureSuccessStatusCode().Content.ReadAsStreamAsync();
         }
+
+        #endregion
+
+        #region Private helpers
+
+        private Uri CreateUri(string uri) =>
+            uri.IsNullOrEmpty() ? null : new Uri(uri, UriKind.RelativeOrAbsolute);
 
         #endregion
     }
