@@ -15,6 +15,9 @@ namespace Kit.Http
 
         public HttpClientHandler Handler { get; }
 
+        private const string RegistryFileName = "$registry.txt";
+        private const string InfoFileSuffix = ".txt";
+
         // Global
         private static bool _globalAddDefaultHeaders = true;
         private static CacheMode _globalCacheMode = CacheMode.Disabled;
@@ -23,6 +26,10 @@ namespace Kit.Http
         private static bool _globalUseRepeat = false;
         private static TimeSpan _globalRequestDelay = TimeSpan.Zero;
         private static TimeSpan _globalRequestTimeout = TimeSpan.FromSeconds(60);
+        private static int _globalRequestCount = 0;
+        private static bool _isCacheInitialized;
+        private static Dictionary<string, CacheInfo> _cacheRegistry;
+        private static int _cachedRequestCount = 0;
 
         // Instance
         private CacheMode _cacheMode;
@@ -31,8 +38,7 @@ namespace Kit.Http
         private bool _useRepeat;
         private TimeSpan _requestDelay;
         private TimeSpan _requestTimeout;
-
-        private DateTimeOffset _lastCompletedTime;
+        private DateTimeOffset _lastRequestCompletedTime;
 
         #endregion
 
@@ -161,6 +167,38 @@ namespace Kit.Http
 
             if (requestTimeout != null)
                 _requestTimeout = requestTimeout.Value;
+        }
+
+        #endregion
+
+        #region Cache initialize
+
+        private static void CacheInitialize()
+        {
+            Debug.Assert(!_isCacheInitialized);
+
+            if (_isCacheInitialized)
+                throw new InvalidOperationException();
+
+            _isCacheInitialized = true;
+            _cacheRegistry = new Dictionary<string, CacheInfo>();
+            var targetDirectory = PathHelper.Combine(Kit.DiagnisticsCurrentDirectory, _globalCacheDirectory);
+
+            if (FileClient.Exists(RegistryFileName, targetDirectory))
+            {
+                var lines = FileClient.ReadLines(RegistryFileName, targetDirectory);
+
+                foreach (var line in lines)
+                {
+                    var splitted = line.Split('|');
+
+                    _cacheRegistry[splitted[0].Trim()] = new CacheInfo
+                    {
+                        MimeType = splitted[1].Trim(),
+                        BodyFileName = splitted[2].Trim()
+                    };
+                }
+            }
         }
 
         #endregion
@@ -318,10 +356,6 @@ namespace Kit.Http
 
         #endregion
 
-        //public Task<HttpResponseMessage> DeleteAsync(Uri requestUri, CancellationToken cancellationToken);
-        //public Task<HttpResponseMessage> DeleteAsync(string requestUri, CancellationToken cancellationToken);
-        //public Task<HttpResponseMessage> DeleteAsync(string requestUri);
-        //public Task<HttpResponseMessage> DeleteAsync(Uri requestUri);
         //public Task<byte[]> GetByteArrayAsync(string requestUri);
         //public Task<byte[]> GetByteArrayAsync(Uri requestUri);
         //public Task<Stream> GetStreamAsync(string requestUri);
@@ -332,14 +366,6 @@ namespace Kit.Http
         //public Task<HttpResponseMessage> PostAsync(string requestUri, HttpContent content, CancellationToken cancellationToken);
         //public Task<HttpResponseMessage> PostAsync(Uri requestUri, HttpContent content);
         //public Task<HttpResponseMessage> PostAsync(Uri requestUri, HttpContent content, CancellationToken cancellationToken);
-        //public Task<HttpResponseMessage> PutAsync(string requestUri, HttpContent content);
-        //public Task<HttpResponseMessage> PutAsync(string requestUri, HttpContent content, CancellationToken cancellationToken);
-        //public Task<HttpResponseMessage> PutAsync(Uri requestUri, HttpContent content);
-        //public Task<HttpResponseMessage> PutAsync(Uri requestUri, HttpContent content, CancellationToken cancellationToken);
-        //public Task<HttpResponseMessage> SendAsync(HttpRequestMessage request);
-        //public Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, HttpCompletionOption completionOption);
-        //public Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationToken cancellationToken);
-        //public override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken);
 
         public Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request, HttpCompletionOption completionOption, CancellationToken cancellationToken,
@@ -367,7 +393,7 @@ namespace Kit.Http
             CacheMode cacheMode, string cacheDirectory, string cacheTag, bool useRepeat, TimeSpan delay, TimeSpan timeout)
         {
             var now = DateTimeOffset.Now;
-            var nextTime = _lastCompletedTime + delay;
+            var nextTime = _lastRequestCompletedTime + delay;
 
             if (nextTime > now)
                 await Task.Delay(nextTime - now, cancellationToken);
@@ -375,44 +401,149 @@ namespace Kit.Http
             HttpResponseMessage response;
 
             if (cacheMode == CacheMode.Disabled)
-                response = await SendRepeatedAsync(request, completionOption, cancellationToken, useRepeat, timeout);
+                response = (await SendRepeatedAsync(request, completionOption, cancellationToken, useRepeat, timeout)).Response;
             else
                 response = await SendCachedAsync(
                     request, completionOption, cancellationToken, cacheMode, cacheDirectory, cacheTag,
                     () => SendRepeatedAsync(request, completionOption, cancellationToken, useRepeat, timeout));
 
-            _lastCompletedTime = DateTimeOffset.Now;
+            // referer
+            _lastRequestCompletedTime = DateTimeOffset.Now;
             return response;
         }
 
-        private async Task<HttpResponseMessage> SendCachedAsync(
+        private Task<HttpResponseMessage> SendCachedAsync(
             HttpRequestMessage request, HttpCompletionOption completionOption, CancellationToken cancellationToken,
-            CacheMode cacheMode, string cacheDirectory, string cacheTag, Func<Task<HttpResponseMessage>> httpAction)
+            CacheMode cacheMode, string cacheDirectory, string cacheTag, Func<Task<HttpResponseContext>> httpAction)
         {
             throw new NotImplementedException();
+            //if (!_isCacheInitialized)
+            //    CacheInitialize();
+
+            //var key = "(" + $"{cacheTag};{request.Method}".TrimStart(';') + ")"; //todo Method
+            //var cachedName = $"{key} {request.RequestUri}";
+            //string paddedCount;
+            //string bodyFileName;
+            //var targetDirectory = PathHelper.Combine(Kit.DiagnisticsCurrentDirectory, cacheDirectory);
+
+            //if (cacheMode == CacheMode.Full && _cacheRegistry.ContainsKey(cachedName))
+            //{
+            //    LogService.Log($"Http {request.Method} cached: {request.RequestUri}");
+            //    var fileInfo = _cacheRegistry[cachedName];
+            //    bodyFileName = fileInfo.BodyFileName;
+            //    paddedCount = bodyFileName.Substring(0, 4);
+
+            //    if (FileClient.Exists(bodyFileName, targetDirectory)) //todo ... && infoFileName
+            //        return new CachedResponse(
+            //            mimeType: fileInfo.MimeType,
+            //            getInfo: () => FileClient.ReadLines(paddedCount + InfoFileSuffix, targetDirectory),
+            //            getText: () => FileClient.ReadText(bodyFileName, targetDirectory),
+            //            getBytes: () => FileClient.ReadBytes(bodyFileName, targetDirectory),
+            //            getStream: () => FileClient.OpenRead(bodyFileName, targetDirectory)
+            //        );
+            //}
+            //else
+            //{
+            //    paddedCount = (++_cachedRequestCount).ToString().PadLeft(4, '0');
+            //    bodyFileName = PathHelper.SafeFileName($"{paddedCount} {key} {request.RequestUri}"); // no .ext
+            //}
+
+            //var responseContext = await httpAction();
+            //var response = responseContext.Response;
+            //var infoFileName = paddedCount + InfoFileSuffix;
+
+            //if (response.IsHtml() && !bodyFileName.EndsWith(".html"))
+            //    bodyFileName += ".html";
+
+            //else if (response.IsText() && !bodyFileName.EndsWith(".txt"))
+            //    bodyFileName += ".txt";
+
+            //FileClient.Write(infoFileName, response.FormattedInfo(), targetDirectory);
+
+            //if (response.IsText())
+            //    FileClient.Write(bodyFileName, await response.Content.ReadAsStringAsync(), targetDirectory);
+            //else
+            //    FileClient.Write(bodyFileName, await response.Content.ReadAsByteArrayAsync(), targetDirectory);
+
+            //lock (RegistryFileName)
+            //    FileClient.AppendText(
+            //        RegistryFileName, $"{cachedName} | {response.MimeType()} | {bodyFileName}", targetDirectory);
+
+            //_cacheRegistry[cachedName] = new CacheInfo { MimeType = response.MimeType(), BodyFileName = bodyFileName };
+            //return response;
         }
 
-        private async Task<HttpResponseMessage> SendRepeatedAsync(
+        private async Task<HttpResponseContext> SendRepeatedAsync(
             HttpRequestMessage request, HttpCompletionOption completionOption, CancellationToken cancellationToken,
             bool useRepeat, TimeSpan timeout)
         {
             if (!useRepeat)
-                return await SendBaseAsync(request, completionOption, cancellationToken, timeout);
+                return await SendTimeoutedAsync(request, completionOption, cancellationToken, timeout);
 
-            HttpResponseMessage response = null;
+            HttpResponseContext response = null;
 
             await HttpHelper.RepeatAsync(
-                async () => response = await SendBaseAsync(request, completionOption, cancellationToken, timeout),
+                async () => response = await SendTimeoutedAsync(request, completionOption, cancellationToken, timeout),
                 cancellationToken);
 
             return response;
         }
 
-        private async Task<HttpResponseMessage> SendBaseAsync(
+        private async Task<HttpResponseContext> SendTimeoutedAsync(
             HttpRequestMessage request, HttpCompletionOption completionOption, CancellationToken cancellationToken,
             TimeSpan timeout)
         {
-            throw new NotImplementedException();
+            var logLabel = $"Http get #{++_globalRequestCount}";
+            var requestUri = request.RequestUri;
+            var repeat12030Count = 3;
+            var repeatLabelPart = string.Empty;
+
+            Retry:
+            var startTime = DateTimeOffset.Now;
+            LogService.Log($"{logLabel}{repeatLabelPart}: {requestUri}");
+            HttpResponseContext response;
+
+            try
+            {
+                response = await HttpHelper.TimeoutAsync(
+                    timeout, cancellationToken, ct => SendBaseAsync(request, completionOption, ct));
+            }
+            catch (Exception exception)
+            {
+                Debug.Assert(exception.IsHttpAllowed() && repeat12030Count > 1);
+
+                if (exception.Has12030() && --repeat12030Count > 0)
+                {
+                    LogService.LogWarning($"{logLabel} terminated with native HTTP error. Will repeat...");
+                    ExceptionHandler.Register(exception, level: LogLevel.Warning);
+                    repeatLabelPart = " (repeat)";
+                    goto Retry;
+                }
+
+                throw;
+            }
+
+            LogService.Log($"{logLabel} completed at {TimeHelper.FormattedLatency(startTime)}");
+            //todo redirect
+
+            if (!response.Response.IsSuccessStatusCode)
+                throw new Exception($"Http get status {(int)response.Response.StatusCode}: {requestUri}");
+
+            return response;
+        }
+
+        private async Task<HttpResponseContext> SendBaseAsync(
+            HttpRequestMessage request, HttpCompletionOption completionOption, CancellationToken cancellationToken)
+        {
+            var cookies = Handler.CookieContainer.GetCookies(request.RequestUri);
+            var response = await base.SendAsync(request, completionOption, cancellationToken);
+            return new HttpResponseContext { Cookies = cookies, Response = response };
+        }
+
+        private class HttpResponseContext
+        {
+            public HttpResponseMessage Response { get; set; }
+            public CookieCollection Cookies { get; set; }
         }
 
         #endregion
@@ -420,7 +551,7 @@ namespace Kit.Http
         #region Get content overloads
 
         public Task<string> GetStringAsync(string requestUri, CancellationToken cancellationToken) =>
-        GetStringAsync(new Uri(requestUri), cancellationToken);
+    GetStringAsync(new Uri(requestUri), cancellationToken);
 
         public async Task<string> GetStringAsync(Uri requestUri, CancellationToken cancellationToken)
         {
@@ -450,7 +581,7 @@ namespace Kit.Http
 
         #region Private helpers
 
-        private Uri CreateUri(string uri) =>
+        private static Uri CreateUri(string uri) =>
             uri.IsNullOrEmpty() ? null : new Uri(uri, UriKind.RelativeOrAbsolute);
 
         #endregion

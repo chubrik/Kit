@@ -41,8 +41,12 @@ namespace Kit.Http
             }
         }
 
+        public static Task<T> TimeoutAsync<T>(
+            int timeoutSeconds, CancellationToken cancellationToken, Func<CancellationToken, Task<T>> action) =>
+            TimeoutAsync(TimeSpan.FromSeconds(timeoutSeconds), cancellationToken, action);
+
         public static async Task<T> TimeoutAsync<T>(
-            int timeoutSeconds, CancellationToken cancellationToken, Func<CancellationToken, Task<T>> action)
+            TimeSpan timeout, CancellationToken cancellationToken, Func<CancellationToken, Task<T>> action)
         {
             var cts = cancellationToken.CreateLinkedSource();
             var timeIsOut = false;
@@ -51,7 +55,7 @@ namespace Kit.Http
             {
                 try
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(timeoutSeconds), cts.Token);
+                    await Task.Delay(timeout, cts.Token);
                     timeIsOut = true;
                     cts.Cancel();
                 }
@@ -68,7 +72,7 @@ namespace Kit.Http
             catch (OperationCanceledException exception)
             {
                 if (timeIsOut)
-                    throw new TimeoutException($"The operation has timed out ({timeoutSeconds} seconds).", exception);
+                    throw new TimeoutException($"The operation has timed out after {timeout.Milliseconds} ms.", exception);
 
                 throw;
             }
