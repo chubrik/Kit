@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>Kit</RootNamespace>
-    <Version>1.5.0</Version>
+    <Version>1.5.1</Version>
     <PackageTags>kit json kit.json</PackageTags>
     <Authors>Arkadi Chubrik</Authors>
     <Description>The powerful engine for various C# projects.
@@ -14,7 +14,7 @@ Has advanced diagnostics and the most useful features.</Description>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
   </ItemGroup>
 
   <ItemGroup>
