@@ -1,17 +1,19 @@
 ﻿using System;
-using System.Globalization;
 
 namespace Kit
 {
     public class TimeHelper
     {
-        public static string FormattedLatency(DateTimeOffset startTime)
-        {
-            var milliseconds = Math.Round((DateTimeOffset.Now - startTime).TotalMilliseconds);
+        public static string FormattedLatency(DateTimeOffset startTime) =>
+            FormattedLatency(DateTimeOffset.Now - startTime);
 
-            return milliseconds < 1000
-                ? $"{milliseconds} ms"
-                : $"{(milliseconds / 1000).ToString(CultureInfo.InvariantCulture)} s";
-        }
+        public static string FormattedLatency(TimeSpan timeSpan) =>
+            timeSpan.Hours > 0
+                ? $@"{timeSpan:H\:mm\:ss}"
+                : timeSpan.Minutes > 0
+                    ? $@"{timeSpan:m\:ss}"
+                    : timeSpan.Seconds > 0
+                        ? $@"{timeSpan:s\.fff} s"
+                        : timeSpan.Milliseconds + " ms";
     }
 }
