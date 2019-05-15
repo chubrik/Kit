@@ -11,7 +11,7 @@ namespace Kit
         private ConsoleClient() { }
 
         public static ConsolePosition Position { get; private set; } = new ConsolePosition(0, 0);
-        private static LogLevel _minLevel = LogLevel.Info;
+        private static LogLevel _minLevel = LogLevel.Log;
         private static ConsoleMode _mode = ConsoleMode.Enabled;
 
         #region Setup

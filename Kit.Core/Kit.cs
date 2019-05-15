@@ -28,7 +28,7 @@ namespace Kit
             bool? pressAnyKeyToExit = null,
             string baseDirectory = null,
             string workingDirectory = null,
-            bool useFileDiagnostics = false,
+            bool useFileDiagnostics = true,
             string diagnosticsDirectory = null,
             bool? test = null)
         {
