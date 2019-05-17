@@ -9,7 +9,7 @@ namespace Kit
 
         public static string FormattedLatency(TimeSpan timeSpan) =>
             timeSpan.Hours > 0
-                ? $@"{timeSpan:H\:mm\:ss}"
+                ? $@"{timeSpan:h\:mm\:ss}"
                 : timeSpan.Minutes > 0
                     ? $@"{timeSpan:m\:ss}"
                     : timeSpan.Seconds > 0
