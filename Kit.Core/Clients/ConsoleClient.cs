@@ -24,6 +24,29 @@ namespace Kit
 
         #endregion
 
+        #region IsAvailable
+
+        // https://stackoverflow.com/questions/6408588/how-to-tell-if-there-is-a-console
+
+        private bool? _isAvailable;
+
+        public bool IsAvailable
+        {
+            get
+            {
+                if (_isAvailable == null)
+                {
+                    _isAvailable = true;
+                    try { var windowHeight = Console.WindowHeight; }
+                    catch { _isAvailable = false; }
+                }
+
+                return _isAvailable.Value;
+            }
+        }
+
+        #endregion
+
         #region ILogClient
 
         private const string LogTimeFormat = "HH:mm:ss";
@@ -41,7 +64,7 @@ namespace Kit
 
         public void PushToLog(string message, LogLevel level = LogLevel.Log)
         {
-            if (level < _minLevel)
+            if (!IsAvailable || level < _minLevel)
                 return;
 
             var now = DateTimeOffset.Now;
