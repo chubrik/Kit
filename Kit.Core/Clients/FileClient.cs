@@ -131,10 +131,6 @@ namespace Kit
             }
         }
 
-        [Obsolete("Use ReadTo() instead")]
-        public static void Read(string path, Stream target, string targetDirectory = null) =>
-            ReadTo(path, target, targetDirectory);
-
         #endregion
 
         #region Write

@@ -125,15 +125,6 @@ namespace Kit.Azure
         public static Task<Stream> OpenReadAsync(string path, string targetDirectory = null) =>
             OpenReadAsync(path, Kit.CancellationToken, targetDirectory: targetDirectory);
 
-        [Obsolete("Use ReadTo() instead")]
-        public static void Read(string path, Stream target, string targetDirectory = null) =>
-            Task.Run(() => ReadAsync(
-                path, target, Kit.CancellationToken, targetDirectory: targetDirectory)).Wait();
-
-        [Obsolete("Use ReadToAsync() instead")]
-        public static Task ReadAsync(string path, Stream target, string targetDirectory = null) =>
-            ReadAsync(path, target, Kit.CancellationToken, targetDirectory: targetDirectory);
-
         #endregion
 
         public static Task<string> ReadTextAsync(
@@ -207,11 +198,6 @@ namespace Kit.Azure
                 throw;
             }
         }
-
-        [Obsolete("Use ReadToAsync() instead")]
-        public static Task ReadAsync(
-            string path, Stream target, CancellationToken cancellationToken, string targetDirectory = null) =>
-            ReadToAsync(path, target, cancellationToken, targetDirectory);
 
         #endregion
 
