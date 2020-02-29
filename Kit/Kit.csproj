@@ -2,19 +2,20 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>1.6.2</Version>
+    <Version>1.6.3</Version>
     <PackageTags>kit helpers tools utils</PackageTags>
     <Authors>Arkadi Chubrik</Authors>
     <Description>The powerful engine for various C# projects.
 Has advanced diagnostics and the most useful features.</Description>
     <PackageProjectUrl>https://github.com/chubrik/Kit</PackageProjectUrl>
-    <PackageIconUrl>https://raw.githubusercontent.com/chubrik/Kit/master/logo-64x64.png</PackageIconUrl>
+    <PackageIcon>icon.png</PackageIcon>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <Copyright>© 2018 Arkadi Chubrik</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\LICENSE" Pack="True" PackagePath="" />
+    <None Include="..\icon.png" Pack="true" PackagePath="" />
+    <None Include="..\LICENSE" Pack="true" PackagePath="" />
   </ItemGroup>
 
   <ItemGroup>
