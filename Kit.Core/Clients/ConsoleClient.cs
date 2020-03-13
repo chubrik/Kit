@@ -78,7 +78,7 @@ namespace Kit
 
             if (message.Length > maxWidth)
             {
-                var separator = '\n' + new String(' ', timePrefix.Length);
+                var separator = '\n' + new string(' ', timePrefix.Length);
                 message = SplitByWords(message, maxWidth).Join(separator);
             }
 

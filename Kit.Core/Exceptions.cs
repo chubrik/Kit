@@ -2,13 +2,13 @@
 
 namespace Kit
 {
-    public class ArgumentNullOrEmptyException : ArgumentException
+    public class ArgumentNullOrEmptyException : ArgumentNullException
     {
-        public ArgumentNullOrEmptyException(string message) : base(message) { }
+        public ArgumentNullOrEmptyException(string paramName) : base(paramName) { }
     }
 
-    public class ArgumentNullOrWhiteSpaceException : ArgumentException
+    public class ArgumentNullOrWhiteSpaceException : ArgumentNullException
     {
-        public ArgumentNullOrWhiteSpaceException(string message) : base(message) { }
+        public ArgumentNullOrWhiteSpaceException(string paramName) : base(paramName) { }
     }
 }
