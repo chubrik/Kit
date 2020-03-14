@@ -93,18 +93,18 @@ namespace Kit
             try
             {
                 var startTime = DateTimeOffset.Now;
-                LogService.LogInfo("Kit started");
+                LogService.Info("Kit started");
                 Initialize();
                 LogService.Log($"Kit ready at {TimeHelper.FormattedLatency(startTime)}");
                 Task.Factory.StartNew(() => ExecuteBaseAsync(delegateAsync, "Main delegate").Wait()).Wait();
                 ThreadService.AwaitAll();
 
                 if (_isFailed)
-                    LogService.LogError($"Failed at {TimeHelper.FormattedLatency(startTime)}");
+                    LogService.Error($"Failed at {TimeHelper.FormattedLatency(startTime)}");
                 else if (_isCanceled)
-                    LogService.LogWarning($"Canceled at {TimeHelper.FormattedLatency(startTime)}");
+                    LogService.Warning($"Canceled at {TimeHelper.FormattedLatency(startTime)}");
                 else
-                    LogService.LogInfo($"Completed at {TimeHelper.FormattedLatency(startTime)}");
+                    LogService.Info($"Completed at {TimeHelper.FormattedLatency(startTime)}");
             }
             catch (Exception exception)
             {
@@ -152,7 +152,7 @@ namespace Kit
                     _isCanceled = true;
                     ExceptionHandler.Register(exception, level: LogLevel.Warning);
                     LogService.Log($"{delegateName} cancellation time is {TimeHelper.FormattedLatency(_cancellationRequestTime)}");
-                    LogService.LogWarning($"{delegateName} canceled at {TimeHelper.FormattedLatency(startTime)}");
+                    LogService.Warning($"{delegateName} canceled at {TimeHelper.FormattedLatency(startTime)}");
                 }
                 else
                 {
@@ -163,7 +163,7 @@ namespace Kit
 
                     ExceptionHandler.Register(exception);
                     ReportService.ReportError(exception.Message, exception.ToString());
-                    LogService.LogError($"{delegateName} failed at {TimeHelper.FormattedLatency(startTime)}");
+                    LogService.Error($"{delegateName} failed at {TimeHelper.FormattedLatency(startTime)}");
                     Cancel();
                 }
 

@@ -2,8 +2,8 @@
 {
     public enum LogLevel
     {
-        Unknown = 0,
-        Log,
+        Trace = 0,
+        Debug,
         Info,
         Success,
         Warning,

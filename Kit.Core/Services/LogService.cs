@@ -19,16 +19,22 @@ namespace Kit
 
         #region Extensions
 
-        public static void LogInfo(string message) => Log(message, LogLevel.Info);
-        public static void LogSuccess(string message) => Log(message, LogLevel.Success);
-        public static void LogWarning(string message) => Log(message, LogLevel.Warning);
-        public static void LogError(string message) => Log(message, LogLevel.Error);
+        public static void Trace(string message) => Log(message, LogLevel.Trace);
+        public static void Debug(string message) => Log(message, LogLevel.Debug);
+        public static void Info(string message) => Log(message, LogLevel.Info);
+        public static void Success(string message) => Log(message, LogLevel.Success);
+        public static void Warning(string message) => Log(message, LogLevel.Warning);
+        public static void Error(string message) => Log(message, LogLevel.Error);
 
+        public static void BeginTrace(string message) => Begin(message, LogLevel.Trace);
+        public static void BeginDebug(string message) => Begin(message, LogLevel.Debug);
         public static void BeginInfo(string message) => Begin(message, LogLevel.Info);
         public static void BeginSuccess(string message) => Begin(message, LogLevel.Success);
         public static void BeginWarning(string message) => Begin(message, LogLevel.Warning);
         public static void BeginError(string message) => Begin(message, LogLevel.Error);
 
+        public static void EndTrace(string message) => End(message, LogLevel.Trace);
+        public static void EndDebug(string message) => End(message, LogLevel.Debug);
         public static void EndInfo(string message) => End(message, LogLevel.Info);
         public static void EndSuccess(string message) => End(message, LogLevel.Success);
         public static void EndWarning(string message) => End(message, LogLevel.Warning);
@@ -36,7 +42,7 @@ namespace Kit
 
         #endregion
 
-        public static void Log(string message, LogLevel level = LogLevel.Log)
+        public static void Log(string message, LogLevel level)
         {
             var indentedMessage = string.Concat(Enumerable.Repeat("- ", _stopwatches.Count)) + message;
 
@@ -44,7 +50,7 @@ namespace Kit
                 client.PushToLog(indentedMessage, level);
         }
 
-        public static void Begin(string message, LogLevel level = LogLevel.Log)
+        public static void Begin(string message, LogLevel level)
         {
             Log(message, level);
 
@@ -52,7 +58,7 @@ namespace Kit
                 _stopwatches.Push(Stopwatch.StartNew());
         }
 
-        public static void End(string message, LogLevel level = LogLevel.Log)
+        public static void End(string message, LogLevel level)
         {
             Stopwatch sw;
 

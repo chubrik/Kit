@@ -55,7 +55,8 @@ namespace Kit
         private static readonly Dictionary<LogLevel, ConsoleColor?> _logColors =
             new Dictionary<LogLevel, ConsoleColor?>
             {
-                { LogLevel.Log, ConsoleColor.DarkGray },
+                { LogLevel.Trace, ConsoleColor.DarkGray },
+                { LogLevel.Debug, ConsoleColor.Gray },
                 { LogLevel.Info, null },
                 { LogLevel.Success, ConsoleColor.Green },
                 { LogLevel.Warning, ConsoleColor.Yellow },
