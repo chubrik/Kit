@@ -23,6 +23,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kit.Tests", "Kit.Tests\Kit.
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{9BE14101-8F9B-4D79-961C-8531ABACA68D}"
 	ProjectSection(SolutionItems) = preProject
+		.travis.yml = .travis.yml
 		Directory.Build.props = Directory.Build.props
 	EndProjectSection
 EndProject
