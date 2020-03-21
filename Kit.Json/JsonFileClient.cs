@@ -16,29 +16,22 @@ namespace Kit
             if (path == null)
                 throw new ArgumentNullException(nameof(path));
 
-            var startTime = DateTimeOffset.Now;
             var nativePath = NativePath(path, targetDirectory);
-            LogService.Log($"Read json file: {nativePath}");
-            T obj;
 
-            try
+            return LogService.Log($"Read json file \"{LogPath(nativePath)}\"", () =>
             {
-                using (var fileStream = OpenRead(path, targetDirectory))
+                using (var fileStream = File.OpenRead(nativePath))
                 using (var streamReader = new StreamReader(fileStream))
                 using (var jsonTextReader = new JsonTextReader(streamReader))
-                    obj = new JsonSerializer().Deserialize<T>(jsonTextReader);
+                {
+                    var obj = new JsonSerializer().Deserialize<T>(jsonTextReader);
 
-                if (obj.Equals(null))
-                    throw new InvalidOperationException($"Wrong json content: {nativePath}");
+                    if (obj.Equals(null))
+                        throw new InvalidOperationException($"Wrong json content \"{LogPath(nativePath)}\"");
 
-                LogService.Log($"Read json file completed at {TimeHelper.FormattedLatency(startTime)}");
-                return obj;
-            }
-            catch (Exception exception)
-            {
-                Debug.Assert(exception.IsAllowed());
-                throw;
-            }
+                    return obj;
+                }
+            });
         }
 
         public static void Write<T>(string path, T obj, string targetDirectory = null) where T : class
@@ -53,36 +46,44 @@ namespace Kit
             if (obj == null)
                 throw new ArgumentNullException(nameof(obj));
 
-            var startTime = DateTimeOffset.Now;
             var nativePath = NativePath(path, targetDirectory);
-            LogService.Log($"Write json file: {nativePath}");
-            var dirPath = PathHelper.Parent(nativePath);
 
-            if (!Directory.Exists(dirPath))
+            LogService.Log($"Write json file \"{LogPath(nativePath)}\"", () =>
             {
-                Directory.CreateDirectory(dirPath);
-                LogService.Log($"Create directory: {dirPath}");
-            }
+                var dirPath = PathHelper.Parent(nativePath);
 
-            if (Exists(path, targetDirectory))
-                Delete(path, targetDirectory);
+                if (!Directory.Exists(dirPath))
+                {
+                    Directory.CreateDirectory(dirPath);
+                    LogService.Log($"Create directory \"{LogPath(dirPath)}\"");
+                }
 
-            try
-            {
-                using (var fileStream = OpenWrite(path, targetDirectory))
+                if (Exists(path, targetDirectory))
+                {
+                    LogService.Log("Delete previous file");
+                    File.Delete(nativePath);
+                }
+
+                CreateDir(nativePath);
+
+                using (var fileStream = File.OpenWrite(nativePath))
                 using (var streamWriter = new StreamWriter(fileStream))
                 using (var jsonTextWriter = new JsonTextWriter(streamWriter))
                 {
                     new JsonSerializer().Serialize(jsonTextWriter, obj);
                     jsonTextWriter.Close();
                 }
+            });
+        }
 
-                LogService.Log($"Write json file completed at {TimeHelper.FormattedLatency(startTime)}");
-            }
-            catch (Exception exception)
+        private static void CreateDir(string nativeFilePath)
+        {
+            var nativeDir = PathHelper.Parent(nativeFilePath);
+
+            if (!Directory.Exists(nativeDir))
             {
-                Debug.Assert(exception.IsAllowed());
-                throw;
+                Directory.CreateDirectory(nativeDir);
+                LogService.Log($"Create directory \"{LogPath(nativeDir)}\"");
             }
         }
     }

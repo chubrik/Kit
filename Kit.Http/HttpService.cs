@@ -221,7 +221,7 @@ namespace Kit.Http
 
                 if (exception.Has12030() && --repeat12030Count > 0)
                 {
-                    LogService.LogWarning($"{logLabel} terminated with native HTTP error. Will repeat...");
+                    LogService.Warning($"{logLabel} terminated with native HTTP error. Will repeat...");
                     ExceptionHandler.Register(exception, level: LogLevel.Warning);
                     repeatLabelPart = " (repeat)";
                     goto Retry;
@@ -245,7 +245,7 @@ namespace Kit.Http
                 if (statusCode != HttpStatusCode.NotFound)
                     throw new Exception(message);
 
-                LogService.LogWarning(message);
+                LogService.Warning(message);
             }
 
             return new HttpResponse(response, requestCookies);

@@ -22,7 +22,7 @@ namespace Kit.Tests
 
             Kit.Execute(() =>
             {
-                LogService.LogInfo("Hello World!");
+                LogService.Info("Hello World!");
             });
 
             Assert.IsTrue(Directory.Exists(diagnosticsDir));

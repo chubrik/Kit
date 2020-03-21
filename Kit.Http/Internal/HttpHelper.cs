@@ -17,7 +17,7 @@ namespace Kit.Http
             try
             {
                 if (++count > 1)
-                    LogService.LogInfo($"Repeat {count} of {RepeatCount}:");
+                    LogService.Info($"Repeat {count} of {RepeatCount}:");
 
                 await action();
                 return;
@@ -30,10 +30,10 @@ namespace Kit.Http
                 ExceptionHandler.Register(exception, LogLevel.Warning);
 
                 if (exception.IsTimeoutOrCanceled())
-                    LogService.LogWarning($"Repeat {count} of {RepeatCount} failed by timeout");
+                    LogService.Warning($"Repeat {count} of {RepeatCount} failed by timeout");
                 else
                 {
-                    LogService.LogWarning($"Repeat {count} of {RepeatCount} failed. Waiting {RepeatPauseSeconds} seconds...");
+                    LogService.Warning($"Repeat {count} of {RepeatCount} failed. Waiting {RepeatPauseSeconds} seconds...");
                     await Task.Delay(TimeSpan.FromSeconds(RepeatPauseSeconds), cancellationToken);
                 }
 

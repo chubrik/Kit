@@ -73,7 +73,7 @@ namespace Kit
                 WriteBase($"\n{now.ToString("dd.MM.yyyy")}\n\n", color: null, position: null, isLog: true);
 
             _previousDate = now;
-            var timePrefix = $"{now.ToString(LogTimeFormat)} - ";
+            var timePrefix = now.ToString(LogTimeFormat) + " ";
             var maxWidth = Console.WindowWidth - timePrefix.Length - 1;
 
             if (message.Length > maxWidth)

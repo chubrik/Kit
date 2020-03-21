@@ -49,16 +49,15 @@ namespace Kit
         private const string LogTimeFormat = "dd.MM.yyyy HH:mm:ss.fff";
         private bool _isLogInitialized;
         private string _logNativeFilePath;
-        private bool _logIndent = false;
-        private static readonly object _lock = new object();
 
         private static readonly Dictionary<LogLevel, string> _logBadges =
             new Dictionary<LogLevel, string>
             {
-                { LogLevel.Info, "INFO" },
-                { LogLevel.Success, "SUCCESS" },
-                { LogLevel.Warning, "WARNING" },
-                { LogLevel.Error, "ERROR" },
+                { LogLevel.Log,     " log   " },
+                { LogLevel.Info,    "[INFO] " },
+                { LogLevel.Success, "[SUCC] " },
+                { LogLevel.Warning, "[WARN] " },
+                { LogLevel.Error,   "[ERROR]" },
             };
 
         public void PushToLog(string message, LogLevel level = LogLevel.Log)
@@ -66,19 +65,8 @@ namespace Kit
             if (!_isLogInitialized)
                 LogInitialize();
 
-            var textLine = $"{DateTimeOffset.Now.ToString(LogTimeFormat)} - {message}\r\n";
-
-            lock (_lock)
-                if (level == LogLevel.Log)
-                {
-                    File.AppendAllText(_logNativeFilePath, _logIndent ? $"\r\n{textLine}" : textLine);
-                    _logIndent = false;
-                }
-                else
-                {
-                    File.AppendAllText(_logNativeFilePath, $"\r\n--- {_logBadges[level]} ---\r\n{textLine}");
-                    _logIndent = true;
-                }
+            var dateTime = DateTimeOffset.Now.ToString(LogTimeFormat);
+            File.AppendAllText(_logNativeFilePath, $"{dateTime}  {_logBadges[level]} {message}\r\n");
         }
 
         private void LogInitialize()
@@ -121,7 +109,7 @@ namespace Kit
             try
             {
                 var nativePath = NativePath(path, targetDirectory);
-                LogService.Log($"Read file: {nativePath}");
+                LogService.Log($"Read file \"{LogPath(nativePath)}\"");
                 return readFunc(nativePath);
             }
             catch (Exception exception)
@@ -159,7 +147,7 @@ namespace Kit
             {
                 var nativePath = NativePath(path, targetDirectory);
                 CreateDir(nativePath);
-                LogService.Log($"Write file: {nativePath}");
+                LogService.Log($"Write file \"{LogPath(nativePath)}\"");
                 return File.OpenWrite(nativePath);
             }
             catch (Exception exception)
@@ -175,7 +163,7 @@ namespace Kit
             {
                 var nativePath = NativePath(path, targetDirectory);
                 CreateDir(nativePath);
-                LogService.Log($"Write file: {nativePath}");
+                LogService.Log($"Write file \"{LogPath(nativePath)}\"");
                 writeAction(nativePath);
             }
             catch (Exception exception)
@@ -199,14 +187,14 @@ namespace Kit
         {
             var nativePath = NativePath(path, targetDirectory);
             CreateDir(nativePath);
-            LogService.Log($"Append file: {nativePath}");
+            LogService.Log($"Append file \"{LogPath(nativePath)}\"");
             File.AppendAllText(nativePath, $"{text}\r\n");
         }
 
         public static void Delete(string path, string targetDirectory = null)
         {
             var nativePath = NativePath(path, targetDirectory);
-            LogService.Log($"Delete file: {nativePath}");
+            LogService.Log($"Delete file \"{LogPath(nativePath)}\"");
             File.Delete(nativePath);
         }
 
@@ -220,9 +208,12 @@ namespace Kit
             if (!Directory.Exists(nativeDir))
             {
                 Directory.CreateDirectory(nativeDir);
-                LogService.Log($"Create directory: {nativeDir}");
+                LogService.Log($"Create directory \"{LogPath(nativeDir)}\"");
             }
         }
+
+        public static string LogPath(string path) =>
+            path.StartsWith(Kit.BaseDirectory) ? "." + path.Substring(Kit.BaseDirectory.Length) : path;
 
         #endregion
     }
