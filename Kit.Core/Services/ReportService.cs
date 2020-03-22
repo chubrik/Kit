@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Kit
 {
@@ -49,7 +50,15 @@ namespace Kit
             var targetDirectory = PathHelper.Combine(Kit.DiagnisticsCurrentDirectory, ReportsDirectory);
 
             foreach (var client in Clients)
-                client.PushToReport(subject, body, attachmentPaths, targetDirectory);
+                try
+                {
+                    client.PushToReport(subject, body, attachmentPaths, targetDirectory);
+                }
+                catch (Exception reportException)
+                {
+                    Debug.Fail(reportException.ToString());
+                    // no throw for report exception
+                }
 
             LogService.Log($"{logLabel} completed at {TimeHelper.FormattedLatency(startTime)}");
         }

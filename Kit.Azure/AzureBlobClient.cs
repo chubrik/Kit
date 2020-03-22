@@ -40,7 +40,7 @@ namespace Kit.Azure
             if (workingDirectory != null)
                 _workingDirectory = workingDirectory;
 
-            ExceptionHandler.DataClients.Add(Instance);
+            ExceptionHandler.Clients.Add(Instance);
             ReportService.Clients.Add(Instance);
         }
 

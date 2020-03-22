@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,11 +15,11 @@ namespace Kit
 
         public static string BaseDirectory { get; private set; } =
             Environment.GetEnvironmentVariable("VisualStudioDir") != null
-                ? PathHelper.Combine(Environment.CurrentDirectory, "../../..")
+                ? Path.GetFullPath(Environment.CurrentDirectory + @"\..\..\..")
                 : Environment.CurrentDirectory;
 
         public static string WorkingDirectory { get; private set; } = "$work";
-        private static string _diagnosticsDirectory = $"{WorkingDirectory}/$diagnostics";
+        private static string _diagnosticsDirectory = @$"{WorkingDirectory}\$diagnostics";
         private static DateTimeOffset _cancellationRequestTime;
         private static bool _isCanceled;
         private static bool _isFailed;
@@ -48,8 +49,8 @@ namespace Kit
 
             if (useFileDiagnostics)
             {
-                if (!ExceptionHandler.DataClients.Contains(FileClient.Instance))
-                    ExceptionHandler.DataClients.Add(FileClient.Instance);
+                if (!ExceptionHandler.Clients.Contains(FileClient.Instance))
+                    ExceptionHandler.Clients.Add(FileClient.Instance);
 
                 if (!LogService.Clients.Contains(FileClient.Instance))
                     LogService.Clients.Add(FileClient.Instance);

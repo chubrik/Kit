@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 
 namespace Kit
@@ -10,7 +11,7 @@ namespace Kit
 
         private static int _counter = 0;
 
-        public static readonly List<IDataClient> DataClients = new List<IDataClient>();
+        public static readonly List<IDataClient> Clients = new List<IDataClient>();
 
         public static void Register(Exception exception, LogLevel level = LogLevel.Error)
         {
@@ -22,8 +23,16 @@ namespace Kit
             var fullText = $"{logLabel}\r\n{message}\r\n{ExtendedDump(exception)}";
             var fileName = PathHelper.SafeFileName($"{count.ToString().PadLeft(3, '0')} {message}.txt");
 
-            foreach (var client in DataClients)
-                client.PushToWrite(fileName, fullText, Kit.DiagnisticsCurrentDirectory);
+            foreach (var client in Clients)
+                try
+                {
+                    client.PushToWrite(fileName, fullText, Kit.DiagnisticsCurrentDirectory);
+                }
+                catch (Exception registerException)
+                {
+                    Debug.Fail(registerException.ToString());
+                    // no throw for register exception
+                }
 
             LogService.Log($"{logLabel} registered at {TimeHelper.FormattedLatency(startTime)}");
         }

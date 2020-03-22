@@ -212,8 +212,14 @@ namespace Kit
             }
         }
 
-        public static string LogPath(string path) =>
-            path.StartsWith(Kit.BaseDirectory) ? "." + path.Substring(Kit.BaseDirectory.Length) : path;
+        public static string LogPath(string path)
+        {
+            path = path.Replace("/", @"\");
+
+            return path.StartsWith(Kit.BaseDirectory.Replace("/", @"\"))
+                ? "." + path.Substring(Kit.BaseDirectory.Length)
+                : path;
+        }
 
         #endregion
     }

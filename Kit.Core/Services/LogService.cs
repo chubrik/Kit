@@ -45,7 +45,15 @@ namespace Kit
             var indentedMessage = string.Concat(Enumerable.Repeat("- ", _stopwatches.Count)) + message;
 
             foreach (var client in Clients)
-                client.PushToLog(indentedMessage, level);
+                try
+                {
+                    client.PushToLog(indentedMessage, level);
+                }
+                catch (Exception logException)
+                {
+                    Debug.Fail(logException.ToString());
+                    // no throw for log exception
+                }
         }
 
         public static void Begin(string message, LogLevel level = LogLevel.Log)
@@ -107,13 +115,13 @@ namespace Kit
 
         private static Exception ProceedException(string message, Exception exception)
         {
+            ExceptionHandler.Register(exception);
             Stopwatch sw;
 
             lock (_stopwatches)
                 sw = _stopwatches.Pop();
 
             sw.Stop();
-            ExceptionHandler.Register(exception);
 
             if (exception.IsCanceled())
                 Warning($"{message} - canceled at {TimeHelper.FormattedLatency(sw.Elapsed)}");
