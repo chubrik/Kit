@@ -21,11 +21,11 @@ namespace Kit.Http
         IReadOnlyDictionary<string, IReadOnlyList<string>> Headers { get; }
         string RawHeaders { get; }
 
-        string GetText();
-        byte[] GetBytes();
-        Stream GetStream();
-        Task<string> GetTextAsync();
-        Task<byte[]> GetBytesAsync();
-        Task<Stream> GetStreamAsync();
+        string ReadText();
+        byte[] ReadBytes();
+        Stream ReadStream();
+        Task<string> ReadTextAsync();
+        Task<byte[]> ReadBytesAsync();
+        Task<Stream> ReadStreamAsync();
     }
 }

@@ -23,7 +23,8 @@ namespace Kit.Http
 
         public IReadOnlyDictionary<string, IReadOnlyList<string>> Headers
         {
-            get {
+            get
+            {
                 if (_headers != null)
                     return _headers;
 
@@ -55,7 +56,8 @@ namespace Kit.Http
 
         public string RawHeaders
         {
-            get {
+            get
+            {
                 if (_rawHeaders != null)
                     return _rawHeaders;
 
@@ -77,23 +79,23 @@ namespace Kit.Http
 
         public bool HasContent => Original.Content != null;
 
-        public string GetText() => Task.Run(GetTextAsync).Result;
+        public string ReadText() => Task.Run(ReadTextAsync).Result;
 
-        public byte[] GetBytes() => Task.Run(GetBytesAsync).Result;
+        public byte[] ReadBytes() => Task.Run(ReadBytesAsync).Result;
 
-        public Stream GetStream() => Task.Run(GetStreamAsync).Result;
+        public Stream ReadStream() => Task.Run(ReadStreamAsync).Result;
 
         private string _text;
 
-        public async Task<string> GetTextAsync() =>
-            _text ?? (_text = await Original.Content.ReadAsStringAsync());
+        public async Task<string> ReadTextAsync() =>
+            _text ??= await Original.Content.ReadAsStringAsync();
 
         private byte[] _bytes;
 
-        public async Task<byte[]> GetBytesAsync() =>
-            _bytes ?? (_bytes = await Original.Content.ReadAsByteArrayAsync());
+        public async Task<byte[]> ReadBytesAsync() =>
+            _bytes ??= await Original.Content.ReadAsByteArrayAsync();
 
-        public Task<Stream> GetStreamAsync() => Original.Content.ReadAsStreamAsync();
+        public Task<Stream> ReadStreamAsync() => Original.Content.ReadAsStreamAsync();
 
         #endregion
 

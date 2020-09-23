@@ -19,7 +19,7 @@ namespace Kit.Http
 
         #region Headers
 
-        private readonly Func<List<string>> _getInfo;
+        private readonly Func<List<string>> _readInfo;
 
         public IReadOnlyDictionary<string, IReadOnlyList<string>> Headers =>
             throw new NotImplementedException();
@@ -31,48 +31,48 @@ namespace Kit.Http
         #region Content
 
         private string _text;
-        public string GetText() => _text ?? (_text = _getText());
+        public string ReadText() => _text ??= _readText();
 
         private byte[] _bytes;
-        public byte[] GetBytes() => _bytes ?? (_bytes = _getBytes());
+        public byte[] ReadBytes() => _bytes ??= _readBytes();
 
-        public Stream GetStream() => _getStream();
+        public Stream ReadStream() => _readStream();
 
-        public Task<string> GetTextAsync() => Task.FromResult(GetText());
+        public Task<string> ReadTextAsync() => Task.FromResult(ReadText());
 
-        public Task<byte[]> GetBytesAsync() => Task.FromResult(GetBytes());
+        public Task<byte[]> ReadBytesAsync() => Task.FromResult(ReadBytes());
 
-        public Task<Stream> GetStreamAsync() => Task.FromResult(GetStream());
+        public Task<Stream> ReadStreamAsync() => Task.FromResult(ReadStream());
 
         #endregion
 
         #region Constructor & Dispose
 
-        private readonly Func<string> _getText;
-        private readonly Func<byte[]> _getBytes;
-        private readonly Func<Stream> _getStream;
+        private readonly Func<string> _readText;
+        private readonly Func<byte[]> _readBytes;
+        private readonly Func<Stream> _readStream;
 
         public CachedResponse(
             string mimeType,
-            Func<List<string>> getInfo,
-            Func<string> getText,
-            Func<byte[]> getBytes,
-            Func<Stream> getStream)
+            Func<List<string>> readInfo,
+            Func<string> readText,
+            Func<byte[]> readBytes,
+            Func<Stream> readStream)
         {
             Debug.Assert(mimeType != null);
             MimeType = mimeType ?? throw new ArgumentNullException(nameof(mimeType));
 
-            Debug.Assert(getInfo != null);
-            _getInfo = getInfo ?? throw new ArgumentNullException(nameof(getInfo));
+            Debug.Assert(readInfo != null);
+            _readInfo = readInfo ?? throw new ArgumentNullException(nameof(readInfo));
 
-            Debug.Assert(getText != null);
-            _getText = getText ?? throw new ArgumentNullException(nameof(getText));
+            Debug.Assert(readText != null);
+            _readText = readText ?? throw new ArgumentNullException(nameof(readText));
 
-            Debug.Assert(getBytes != null);
-            _getBytes = getBytes ?? throw new ArgumentNullException(nameof(getBytes));
+            Debug.Assert(readBytes != null);
+            _readBytes = readBytes ?? throw new ArgumentNullException(nameof(readBytes));
 
-            Debug.Assert(getStream != null);
-            _getStream = getStream ?? throw new ArgumentNullException(nameof(getStream));
+            Debug.Assert(readStream != null);
+            _readStream = readStream ?? throw new ArgumentNullException(nameof(readStream));
         }
 
         public void Dispose() { }

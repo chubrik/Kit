@@ -407,10 +407,10 @@ namespace Kit.Http
                 if (FileClient.Exists(bodyFileName, targetDirectory)) //todo ... && infoFileName
                     return new CachedResponse(
                         mimeType: fileInfo.MimeType,
-                        getInfo: () => FileClient.ReadLines(paddedCount + InfoFileSuffix, targetDirectory),
-                        getText: () => FileClient.ReadText(bodyFileName, targetDirectory),
-                        getBytes: () => FileClient.ReadBytes(bodyFileName, targetDirectory),
-                        getStream: () => FileClient.OpenRead(bodyFileName, targetDirectory)
+                        readInfo: () => FileClient.ReadLines(paddedCount + InfoFileSuffix, targetDirectory),
+                        readText: () => FileClient.ReadText(bodyFileName, targetDirectory),
+                        readBytes: () => FileClient.ReadBytes(bodyFileName, targetDirectory),
+                        readStream: () => FileClient.OpenRead(bodyFileName, targetDirectory)
                     );
             }
             else
@@ -425,9 +425,9 @@ namespace Kit.Http
             FileClient.Write(infoFileName, response.FormattedInfo, targetDirectory);
 
             if (response.IsText)
-                FileClient.Write(bodyFileName, response.GetText(), targetDirectory);
+                FileClient.Write(bodyFileName, response.ReadText(), targetDirectory);
             else
-                FileClient.Write(bodyFileName, response.GetBytes(), targetDirectory);
+                FileClient.Write(bodyFileName, response.ReadBytes(), targetDirectory);
 
             lock (RegistryFileName)
                 FileClient.AppendText(

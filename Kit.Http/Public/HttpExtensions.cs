@@ -48,7 +48,7 @@ namespace Kit.Http
         {
             using var response = await http.GetAsync(uri, cancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
-            return await response.GetTextAsync();
+            return await response.ReadTextAsync();
         }
 
         #endregion
@@ -91,7 +91,7 @@ namespace Kit.Http
         {
             using var response = await http.GetAsync(uri, cancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
-            return await response.GetBytesAsync();
+            return await response.ReadBytesAsync();
         }
 
         #endregion
@@ -134,7 +134,7 @@ namespace Kit.Http
         {
             using var response = await http.GetAsync(uri, cancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
-            return await response.GetStreamAsync();
+            return await response.ReadStreamAsync();
         }
 
         #endregion

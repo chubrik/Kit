@@ -17,7 +17,7 @@ namespace Kit.Http
 
         public static async Task<T> GetJsonAsync<T>(this IHttpResponse response) where T : class
         {
-            using var stream = await response.GetStreamAsync();
+            using var stream = await response.ReadStreamAsync();
             using var streamReader = new StreamReader(stream);
             using var jsonTextReader = new JsonTextReader(streamReader);
             return new JsonSerializer().Deserialize<T>(jsonTextReader);

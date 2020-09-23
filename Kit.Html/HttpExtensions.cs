@@ -48,9 +48,9 @@ namespace Kit.Html
         }
 
         public static HtmlDocument GetHtmlDoc(this IHttpResponse response) =>
-            response.GetText().ToHtmlDoc();
+            response.ReadText().ToHtmlDoc();
 
         public static async Task<HtmlDocument> GetHtmlDocAsync(this IHttpResponse response) =>
-            (await response.GetTextAsync()).ToHtmlDoc();
+            (await response.ReadTextAsync()).ToHtmlDoc();
     }
 }
