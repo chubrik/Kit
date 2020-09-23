@@ -74,12 +74,12 @@ namespace Kit.Http
         private string _text;
 
         public async Task<string> GetTextAsync() =>
-            _text ?? (_text = await Original.Content.ReadAsStringAsync());
+            _text ??= await Original.Content.ReadAsStringAsync();
 
         private byte[] _bytes;
 
         public async Task<byte[]> GetBytesAsync() =>
-            _bytes ?? (_bytes = await Original.Content.ReadAsByteArrayAsync());
+            _bytes ??= await Original.Content.ReadAsByteArrayAsync();
 
         public Task<Stream> GetStreamAsync() => Original.Content.ReadAsStreamAsync();
 

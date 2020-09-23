@@ -90,11 +90,11 @@ namespace Kit.Http
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
             where T : class
         {
-            using (var stream = await http.GetStreamAsync(uri, cancellationToken,
-                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds))
-            using (var streamReader = new StreamReader(stream))
-            using (var jsonTextReader = new JsonTextReader(streamReader))
-                return new JsonSerializer().Deserialize<T>(jsonTextReader);
+            using var stream = await http.GetStreamAsync(uri, cancellationToken,
+                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
+            using var streamReader = new StreamReader(stream);
+            using var jsonTextReader = new JsonTextReader(streamReader);
+            return new JsonSerializer().Deserialize<T>(jsonTextReader);
         }
 
         #endregion

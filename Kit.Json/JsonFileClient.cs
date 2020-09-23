@@ -20,31 +20,29 @@ namespace Kit
 
             return LogService.Log($"Read json file \"{LogPath(nativePath)}\"", () =>
             {
-                using (var fileStream = File.OpenRead(nativePath))
-                using (var streamReader = new StreamReader(fileStream))
-                using (var jsonTextReader = new JsonTextReader(streamReader))
-                {
-                    var obj = new JsonSerializer().Deserialize<T>(jsonTextReader);
+                using var fileStream = File.OpenRead(nativePath);
+                using var streamReader = new StreamReader(fileStream);
+                using var jsonTextReader = new JsonTextReader(streamReader);
+                var json = new JsonSerializer().Deserialize<T>(jsonTextReader);
 
-                    if (obj.Equals(null))
-                        throw new InvalidOperationException($"Wrong json content \"{LogPath(nativePath)}\"");
+                if (json.Equals(null))
+                    throw new InvalidOperationException($"Wrong json content \"{LogPath(nativePath)}\"");
 
-                    return obj;
-                }
+                return json;
             });
         }
 
-        public static void Write<T>(string path, T obj, string targetDirectory = null) where T : class
+        public static void Write<T>(string path, T json, string targetDirectory = null) where T : class
         {
             Debug.Assert(path != null);
 
             if (path == null)
                 throw new ArgumentNullException(nameof(path));
 
-            Debug.Assert(obj != null);
+            Debug.Assert(json != null);
 
-            if (obj == null)
-                throw new ArgumentNullException(nameof(obj));
+            if (json == null)
+                throw new ArgumentNullException(nameof(json));
 
             var nativePath = NativePath(path, targetDirectory);
 
@@ -66,13 +64,11 @@ namespace Kit
 
                 CreateDir(nativePath);
 
-                using (var fileStream = File.OpenWrite(nativePath))
-                using (var streamWriter = new StreamWriter(fileStream))
-                using (var jsonTextWriter = new JsonTextWriter(streamWriter))
-                {
-                    new JsonSerializer().Serialize(jsonTextWriter, obj);
-                    jsonTextWriter.Close();
-                }
+                using var fileStream = File.OpenWrite(nativePath);
+                using var streamWriter = new StreamWriter(fileStream);
+                using var jsonTextWriter = new JsonTextWriter(streamWriter);
+                new JsonSerializer().Serialize(jsonTextWriter, json);
+                jsonTextWriter.Close();
             });
         }
 

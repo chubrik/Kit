@@ -42,9 +42,9 @@ namespace Kit.Html
             this HttpService http, Uri uri, CancellationToken cancellationToken,
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
         {
-            using (var response = await http.GetAsync(uri, cancellationToken,
-                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds))
-                return await response.GetHtmlDocAsync();
+            using var response = await http.GetAsync(uri, cancellationToken,
+                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
+            return await response.GetHtmlDocAsync();
         }
 
         public static HtmlDocument GetHtmlDoc(this IHttpResponse response) =>
