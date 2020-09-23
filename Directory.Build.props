@@ -3,6 +3,6 @@
     <LangVersion>latest</LangVersion>
     <NetCoreAppTargetFramework>netcoreapp3.1</NetCoreAppTargetFramework>
     <NetStandardTargetFramework>netstandard2.1</NetStandardTargetFramework>
-    <KitPackagesVersion>1.7.2</KitPackagesVersion>
+    <KitPackagesVersion>1.7.3</KitPackagesVersion>
   </PropertyGroup>
 </Project>
