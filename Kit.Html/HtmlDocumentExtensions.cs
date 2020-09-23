@@ -2,7 +2,7 @@
 
 namespace Kit.Html
 {
-    public static class HtmlExtensions
+    public static class HtmlDocumentExtensions
     {
         public static string InnerHtml(this HtmlDocument document) =>
             document.DocumentNode.InnerHtml;

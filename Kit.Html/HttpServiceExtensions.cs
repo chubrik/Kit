@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Kit.Html
 {
-    public static class HttpExtensions
+    public static class HttpServiceExtensions
     {
         public static HtmlDocument GetHtmlDoc(
             this HttpService http, string url,
@@ -44,13 +44,7 @@ namespace Kit.Html
         {
             using var response = await http.GetAsync(uri, cancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
-            return await response.GetHtmlDocAsync();
+            return await response.ReadHtmlDocAsync();
         }
-
-        public static HtmlDocument GetHtmlDoc(this IHttpResponse response) =>
-            response.ReadText().ToHtmlDoc();
-
-        public static async Task<HtmlDocument> GetHtmlDocAsync(this IHttpResponse response) =>
-            (await response.ReadTextAsync()).ToHtmlDoc();
     }
 }
