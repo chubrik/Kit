@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -50,11 +51,11 @@ namespace Kit.Http
                 Timeout = Timeout.InfiniteTimeSpan
             };
 
-            SetHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8");
+            SetHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9");
             SetHeader("Accept-Encoding", "gzip, deflate");
             SetHeader("Accept-Language", "en;q=0.9");
             SetHeader("Upgrade-Insecure-Requests", "1");
-            SetHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.92 Safari/537.36");
+            SetHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36");
         }
 
         public static void Setup(
@@ -286,6 +287,15 @@ namespace Kit.Http
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
         {
             var content = new StringContent(serializedJson, Encoding.UTF8, "application/json");
+            return await PostAsync(uri, content, cancellationToken, cache, cacheKey, repeat, timeoutSeconds);
+        }
+
+        public async Task<IHttpResponse> PostBytesAsync(
+            Uri uri, byte[] bytes, CancellationToken cancellationToken,
+            CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
+        {
+            var content = new ByteArrayContent(bytes);
+            content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
             return await PostAsync(uri, content, cancellationToken, cache, cacheKey, repeat, timeoutSeconds);
         }
 

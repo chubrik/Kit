@@ -279,6 +279,40 @@ namespace Kit.Http
 
         #endregion
 
+        #region Post bytes
+
+        public static IHttpResponse PostBytes(
+            this HttpService http, string url, byte[] bytes,
+            CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
+            Task.Run(() => http.PostBytesAsync(new Uri(url), bytes, Kit.CancellationToken,
+                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
+
+        public static IHttpResponse PostBytes(
+            this HttpService http, Uri uri, byte[] bytes,
+            CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
+            Task.Run(() => http.PostBytesAsync(uri, bytes, Kit.CancellationToken,
+                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
+
+        public static Task<IHttpResponse> PostBytesAsync(
+            this HttpService http, string url, byte[] bytes,
+            CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
+            http.PostBytesAsync(new Uri(url), bytes, Kit.CancellationToken,
+                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
+
+        public static Task<IHttpResponse> PostBytesAsync(
+            this HttpService http, Uri uri, byte[] bytes,
+            CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
+            http.PostBytesAsync(uri, bytes, Kit.CancellationToken,
+                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
+
+        public static Task<IHttpResponse> PostBytesAsync(
+            this HttpService http, string url, byte[] bytes, CancellationToken cancellationToken,
+            CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
+            http.PostBytesAsync(new Uri(url), bytes, cancellationToken,
+                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
+
+        #endregion
+
         #endregion
 
         #region Cookies
