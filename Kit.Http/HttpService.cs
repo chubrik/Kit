@@ -29,7 +29,7 @@ namespace Kit.Http
         private readonly bool _useRepeat;
         private readonly int _timeoutSeconds;
 
-        #region Consructor, Setup & Dispose
+        #region Consructor & Setup
 
         public HttpService(
             CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
@@ -73,8 +73,6 @@ namespace Kit.Http
             if (timeoutSeconds != null)
                 _globalTimeoutSeconds = (int)timeoutSeconds;
         }
-
-        public void Dispose() => Client.Dispose();
 
         #endregion
 
@@ -475,6 +473,31 @@ namespace Kit.Http
 
             else if (response.IsText && !fileName.EndsWith(".txt"))
                 fileName += ".txt";
+        }
+
+        #endregion
+
+        #region Dispose
+
+        // https://docs.microsoft.com/en-us/visualstudio/code-quality/ca1063?view=vs-2019
+
+        private bool _isDisposed;
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_isDisposed)
+                return;
+
+            if (disposing)
+                Client.Dispose();
+
+            _isDisposed = true;
         }
 
         #endregion

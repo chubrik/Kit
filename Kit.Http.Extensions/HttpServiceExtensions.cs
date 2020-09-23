@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Kit.Http
 {
-    public static class HttpExtensions
+    public static class HttpServiceExtensions
     {
         #region Get JSON dynamic
 
