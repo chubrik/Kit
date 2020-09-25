@@ -6,8 +6,8 @@ namespace Kit
 {
     public class TraceClient : ILogClient
     {
-        private static TraceClient _instance;
-        public static TraceClient Instance => _instance ?? (_instance = new TraceClient());
+        private static TraceClient? _instance;
+        public static TraceClient Instance => _instance ??= new TraceClient();
         private TraceClient() { }
 
         #region ILogClient

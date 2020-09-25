@@ -5,6 +5,8 @@ namespace Kit
 {
     public static class StringExtensions
     {
+        public static bool IsEmpty(this string value) => value.Length == 0;
+
         public static bool IsNullOrEmpty(this string value) => string.IsNullOrEmpty(value);
 
         public static bool IsNullOrWhiteSpace(this string value) => string.IsNullOrWhiteSpace(value);
@@ -13,7 +15,7 @@ namespace Kit
         {
             var result = value.Split('\n').Select(i => i.TrimEnd('\r')).ToList();
 
-            if (result.Last() == string.Empty)
+            if (result.Last().IsEmpty())
                 result.RemoveAt(result.Count - 1);
 
             return result;

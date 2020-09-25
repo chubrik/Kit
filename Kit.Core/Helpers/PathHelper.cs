@@ -6,13 +6,13 @@ using System.Text.RegularExpressions;
 
 namespace Kit
 {
-    public class PathHelper
+    public static class PathHelper
     {
         public static string Combine(params string[] paths)
         {
             var combined = Path.Combine(paths);
 
-            if (combined == string.Empty)
+            if (combined.IsEmpty())
                 return combined;
 
             var segments = Regex.Replace(combined, @"[\\/]+", "/").TrimEnd('/').Split('/');
@@ -27,7 +27,7 @@ namespace Kit
                 {
                     var previous = output.Peek();
 
-                    if (previous == string.Empty)
+                    if (previous.IsEmpty())
                         throw new InvalidOperationException($"Path \"{combined}\" is out of root");
 
                     if (previous != "..")
@@ -40,7 +40,7 @@ namespace Kit
                 output.Push(segment);
             }
 
-            return output.Count == 1 && output.Peek() == string.Empty
+            return output.Count == 1 && output.Peek().IsEmpty()
                 ? "/"
                 : output.Reverse().Join("/");
         }
@@ -65,7 +65,7 @@ namespace Kit
             return safeName.Length > 250 ? safeName.Substring(0, 250) : safeName;
         }
 
-        public static string FileExtension(string path)
+        public static string? FileExtension(string path)
         {
             var fileName = FileName(path);
             var dotIndex = fileName.LastIndexOf('.');

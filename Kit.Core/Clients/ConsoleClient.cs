@@ -6,8 +6,8 @@ namespace Kit
 {
     public class ConsoleClient : ILogClient
     {
-        private static ConsoleClient _instance;
-        public static ConsoleClient Instance => _instance ?? (_instance = new ConsoleClient());
+        private static ConsoleClient? _instance;
+        public static ConsoleClient Instance => _instance ??= new ConsoleClient();
         private ConsoleClient() { }
 
         public static ConsolePosition Position { get; private set; } = new ConsolePosition(0, 0);
@@ -70,7 +70,7 @@ namespace Kit
             var now = DateTimeOffset.Now;
 
             if (now.Day != _previousDate.Day)
-                WriteBase($"\n{now.ToString("dd.MM.yyyy")}\n\n", color: null, position: null, isLog: true);
+                WriteBase($"\n{now:dd.MM.yyyy}\n\n", color: null, position: null, isLog: true);
 
             _previousDate = now;
             var timePrefix = now.ToString(LogTimeFormat) + " ";
@@ -111,17 +111,17 @@ namespace Kit
         public static ConsolePosition WriteLine() => WriteLine(string.Empty);
 
         public static ConsolePosition WriteLine(
-            string text, ConsoleColor? color = null, ConsolePosition position = null) =>
+            string text, ConsoleColor? color = null, ConsolePosition? position = null) =>
             WriteBase($"{text}\n", color, position, isLog: false);
 
         public static ConsolePosition Write(
-            string text, ConsoleColor? color = null, ConsolePosition position = null) =>
+            string text, ConsoleColor? color = null, ConsolePosition? position = null) =>
             WriteBase(text, color, position, isLog: false);
 
         private static readonly object _lock = new object();
 
         private static ConsolePosition WriteBase(
-            string text, ConsoleColor? color, ConsolePosition position, bool isLog)
+            string text, ConsoleColor? color, ConsolePosition? position, bool isLog)
         {
             lock (_lock)
             {
@@ -142,7 +142,7 @@ namespace Kit
                     if (isMoved)
                     {
                         Console.CursorVisible = false;
-                        Console.SetCursorPosition(position.Left, position.Top);
+                        Console.SetCursorPosition(position!.Left, position.Top);
                     }
 
                     if (isLog && origLeft > 0)

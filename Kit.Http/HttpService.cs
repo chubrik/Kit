@@ -32,7 +32,7 @@ namespace Kit.Http
         #region Consructor & Setup
 
         public HttpService(
-            CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
+            CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
         {
             _cacheMode = cache ?? _globalCacheMode;
             _cacheKey = cacheKey ?? string.Empty;
@@ -59,7 +59,7 @@ namespace Kit.Http
         }
 
         public static void Setup(
-            string cacheDirectory = null, CacheMode? cache = null, bool? repeat = null, int? timeoutSeconds = null)
+            string? cacheDirectory = null, CacheMode? cache = null, bool? repeat = null, int? timeoutSeconds = null)
         {
             if (cacheDirectory != null)
                 _cacheDirectory = cacheDirectory;
@@ -163,7 +163,7 @@ namespace Kit.Http
 
         public async Task<IHttpResponse> GetAsync(
             Uri uri, CancellationToken cancellationToken,
-            CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
+            CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
         {
             var response =
                 await CacheAsync(
@@ -185,13 +185,13 @@ namespace Kit.Http
             if (!repeat)
                 return await GetBaseAsync(uri, timeoutSeconds, cancellationToken);
 
-            HttpResponse response = null;
+            HttpResponse? response = null;
 
             await HttpHelper.RepeatAsync(
                 async () => response = await GetBaseAsync(uri, timeoutSeconds, cancellationToken),
                 cancellationToken);
 
-            return response;
+            return response!;
         }
 
         private async Task<HttpResponse> GetBaseAsync(
@@ -205,7 +205,7 @@ namespace Kit.Http
             Retry:
             var startTime = DateTimeOffset.Now;
             LogService.Log($"{logLabel}{repeatLabelPart}: {uri.AbsoluteUri}");
-            HttpResponseMessage response = null;
+            HttpResponseMessage? response = null;
 
             try
             {
@@ -256,7 +256,7 @@ namespace Kit.Http
 
         public async Task<IHttpResponse> PostFormAsync(
             Uri uri, IEnumerable<KeyValuePair<string, string>> form, CancellationToken cancellationToken,
-            CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
+            CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
         {
             return await PostAsync(
                 uri, new FormUrlEncodedContent(form), cancellationToken, cache, cacheKey, repeat, timeoutSeconds);
@@ -264,7 +264,7 @@ namespace Kit.Http
 
         public async Task<IHttpResponse> PostMultipartAsync(
             Uri uri, Dictionary<string, string> multipart, CancellationToken cancellationToken,
-            CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
+            CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
         {
             var context = new MultipartFormDataContent(
                 "----WebKitFormBoundary" + DateTimeOffset.Now.Ticks.ToString("x"));
@@ -282,7 +282,7 @@ namespace Kit.Http
 
         public async Task<IHttpResponse> PostSerializedJsonAsync(
             Uri uri, string serializedJson, CancellationToken cancellationToken,
-            CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
+            CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
         {
             var content = new StringContent(serializedJson, Encoding.UTF8, "application/json");
             return await PostAsync(uri, content, cancellationToken, cache, cacheKey, repeat, timeoutSeconds);
@@ -290,7 +290,7 @@ namespace Kit.Http
 
         public async Task<IHttpResponse> PostBytesAsync(
             Uri uri, byte[] bytes, CancellationToken cancellationToken,
-            CacheMode? cache = null, string cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
+            CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
         {
             var content = new ByteArrayContent(bytes);
             content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
@@ -299,7 +299,7 @@ namespace Kit.Http
 
         private async Task<IHttpResponse> PostAsync(
             Uri uri, HttpContent content, CancellationToken cancellationToken,
-            CacheMode? cache, string cacheKey, bool? repeat, int? timeoutSeconds)
+            CacheMode? cache, string? cacheKey, bool? repeat, int? timeoutSeconds)
         {
             var response =
                 await CacheAsync(
@@ -321,13 +321,13 @@ namespace Kit.Http
             if (!repeat)
                 return await PostBaseAsync(uri, content, timeoutSeconds, cancellationToken);
 
-            HttpResponse response = null;
+            HttpResponse? response = null;
 
             await HttpHelper.RepeatAsync(
                 async () => response = await PostBaseAsync(uri, content, timeoutSeconds, cancellationToken),
                 cancellationToken);
 
-            return response;
+            return response!;
         }
 
         private async Task<HttpResponse> PostBaseAsync(
@@ -379,7 +379,7 @@ namespace Kit.Http
         #region Cache
 
         private static bool _isCacheInitialized;
-        private static Dictionary<string, CacheInfo> _registry;
+        private static Dictionary<string, CacheInfo>? _registry;
         private static int _cacheCounter = 0;
 
         private async Task<IHttpResponse> CacheAsync(
@@ -397,7 +397,7 @@ namespace Kit.Http
             string bodyFileName;
             var targetDirectory = PathHelper.Combine(Kit.DiagnisticsCurrentDirectory, _cacheDirectory);
 
-            if (cache == CacheMode.Full && _registry.ContainsKey(cachedName))
+            if (cache == CacheMode.Full && _registry!.ContainsKey(cachedName))
             {
                 LogService.Log($"Http {actionName} cached: {uri.AbsoluteUri}");
                 var fileInfo = _registry[cachedName];
@@ -433,7 +433,7 @@ namespace Kit.Http
                 FileClient.AppendText(
                     RegistryFileName, $"{cachedName} | {response.MimeType} | {bodyFileName}", targetDirectory);
 
-            _registry[cachedName] = new CacheInfo { MimeType = response.MimeType, BodyFileName = bodyFileName };
+            _registry![cachedName] = new CacheInfo(mimeType: response.MimeType, bodyFileName: bodyFileName);
             return response;
         }
 
@@ -457,11 +457,9 @@ namespace Kit.Http
                     var splitted = line.Split('|');
 
                     _registry[splitted[0].Trim()] =
-                        new CacheInfo
-                        {
-                            MimeType = splitted[1].Trim(),
-                            BodyFileName = splitted[2].Trim()
-                        };
+                        new CacheInfo(
+                            mimeType: splitted[1].Trim(),
+                            bodyFileName: splitted[2].Trim());
                 }
             }
         }

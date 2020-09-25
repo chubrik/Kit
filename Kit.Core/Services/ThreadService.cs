@@ -5,10 +5,8 @@ using System.Threading.Tasks;
 
 namespace Kit
 {
-    public class ThreadService
+    public static class ThreadService
     {
-        private ThreadService() { }
-
         private static readonly List<Thread> _threads = new List<Thread>();
 
         public static void StartNew(Action @delegate) =>

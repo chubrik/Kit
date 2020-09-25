@@ -6,16 +6,16 @@ namespace Kit.Http
 {
     public static class HttpResponseExtensions
     {
-        public static dynamic ReadJson(this IHttpResponse response) =>
+        public static dynamic? ReadJson(this IHttpResponse response) =>
             Task.Run(() => response.ReadJsonAsync<object>()).Result;
 
-        public static Task<dynamic> ReadJsonAsync(this IHttpResponse response) =>
+        public static Task<dynamic?> ReadJsonAsync(this IHttpResponse response) =>
             response.ReadJsonAsync<object>();
 
-        public static T ReadJson<T>(this IHttpResponse response) where T : class =>
+        public static T? ReadJson<T>(this IHttpResponse response) where T : class =>
             Task.Run(() => response.ReadJsonAsync<T>()).Result;
 
-        public static async Task<T> ReadJsonAsync<T>(this IHttpResponse response) where T : class
+        public static async Task<T?> ReadJsonAsync<T>(this IHttpResponse response) where T : class
         {
             using var stream = await response.ReadStreamAsync();
             using var streamReader = new StreamReader(stream);

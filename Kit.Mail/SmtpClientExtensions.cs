@@ -13,8 +13,8 @@ namespace Kit.Mail
             this SmtpClient client, string from, string recipients, string subject, string body,
             CancellationToken cancellationToken)
         {
-            using (var message = new MailMessage(from, recipients, subject, body))
-                await client.SendMailAsync(message, cancellationToken);
+            using var message = new MailMessage(from, recipients, subject, body);
+            await client.SendMailAsync(message, cancellationToken);
         }
 
         public static async Task SendMailAsync(
@@ -22,7 +22,7 @@ namespace Kit.Mail
         {
             var ctsWrapper = new[] { cancellationToken.CreateLinkedSource() };
             var mailSent = false;
-            Exception exception = null;
+            Exception? exception = null;
 
             void onCompleted(object sender, AsyncCompletedEventArgs e)
             {

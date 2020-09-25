@@ -32,10 +32,10 @@ namespace Kit
 
         public static void Setup(
             bool? pressAnyKeyToExit = null,
-            string baseDirectory = null,
-            string workingDirectory = null,
+            string? baseDirectory = null,
+            string? workingDirectory = null,
             bool useFileDiagnostics = true,
-            string diagnosticsDirectory = null,
+            string? diagnosticsDirectory = null,
             bool? test = null)
         {
             if (pressAnyKeyToExit != null)
@@ -185,7 +185,7 @@ namespace Kit
 
         public static void Cancel()
         {
-            if (_cancellationRequestTime == default(DateTimeOffset))
+            if (_cancellationRequestTime == default)
                 _cancellationRequestTime = DateTimeOffset.Now;
 
             LogService.Log("Kit cancel requested", level: _isFailed ? LogLevel.Log : LogLevel.Warning);

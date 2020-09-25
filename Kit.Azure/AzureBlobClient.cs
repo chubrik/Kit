@@ -12,8 +12,8 @@ namespace Kit.Azure
 {
     public class AzureBlobClient : IDataClient, IReportClient
     {
-        private static AzureBlobClient _instance;
-        public static AzureBlobClient Instance => _instance ?? (_instance = new AzureBlobClient());
+        private static AzureBlobClient? _instance;
+        public static AzureBlobClient Instance => _instance ??= new AzureBlobClient();
         private AzureBlobClient() { }
 
         private static readonly AccessCondition _accessCondition = new AccessCondition();
@@ -26,10 +26,10 @@ namespace Kit.Azure
         #region Setup
 
         public static void Setup(
-            string accountName = null,
-            string accountKey = null,
-            string containerName = null,
-            string workingDirectory = null)
+            string? accountName = null,
+            string? accountKey = null,
+            string? containerName = null,
+            string? workingDirectory = null)
         {
             var account = CloudStorageAccount.Parse(
                 $"DefaultEndpointsProtocol=https;AccountName={accountName};AccountKey={accountKey}");
@@ -48,7 +48,7 @@ namespace Kit.Azure
 
         #region IDataClient
 
-        public void PushToWrite(string path, string text, string targetDirectory = null) =>
+        public void PushToWrite(string path, string text, string? targetDirectory = null) =>
             Task.Run(() => WriteAsync(path, text, targetDirectory: targetDirectory)).Wait(); //todo queue
 
         #endregion
@@ -86,59 +86,59 @@ namespace Kit.Azure
 
         #region Extensions
 
-        public static string ReadText(string path, string targetDirectory = null) =>
+        public static string ReadText(string path, string? targetDirectory = null) =>
             Task.Run(() => ReadTextAsync(
                 path, Kit.CancellationToken, targetDirectory: targetDirectory)).Result;
 
-        public static Task<string> ReadTextAsync(string path, string targetDirectory = null) =>
+        public static Task<string> ReadTextAsync(string path, string? targetDirectory = null) =>
             ReadTextAsync(path, Kit.CancellationToken, targetDirectory: targetDirectory);
 
-        public static List<string> ReadLines(string path, string targetDirectory = null) =>
+        public static List<string> ReadLines(string path, string? targetDirectory = null) =>
             Task.Run(() => ReadLinesAsync(
                 path, Kit.CancellationToken, targetDirectory: targetDirectory)).Result;
 
-        public static Task<List<string>> ReadLinesAsync(string path, string targetDirectory = null) =>
+        public static Task<List<string>> ReadLinesAsync(string path, string? targetDirectory = null) =>
             ReadLinesAsync(path, Kit.CancellationToken, targetDirectory: targetDirectory);
 
         public static async Task<List<string>> ReadLinesAsync(
-            string path, CancellationToken cancellationToken, string targetDirectory = null) =>
+            string path, CancellationToken cancellationToken, string? targetDirectory = null) =>
             (await ReadTextAsync(path, cancellationToken, targetDirectory: targetDirectory)).SplitLines();
 
-        public static byte[] ReadBytes(string path, string targetDirectory = null) =>
+        public static byte[] ReadBytes(string path, string? targetDirectory = null) =>
             Task.Run(() => ReadBytesAsync(
                 path, Kit.CancellationToken, targetDirectory: targetDirectory)).Result;
 
-        public static Task<byte[]> ReadBytesAsync(string path, string targetDirectory = null) =>
+        public static Task<byte[]> ReadBytesAsync(string path, string? targetDirectory = null) =>
             ReadBytesAsync(path, Kit.CancellationToken, targetDirectory: targetDirectory);
 
-        public static void ReadTo(string path, Stream target, string targetDirectory = null) =>
+        public static void ReadTo(string path, Stream target, string? targetDirectory = null) =>
             Task.Run(() => ReadToAsync(
                 path, target, Kit.CancellationToken, targetDirectory: targetDirectory)).Wait();
 
-        public static Task ReadToAsync(string path, Stream target, string targetDirectory = null) =>
+        public static Task ReadToAsync(string path, Stream target, string? targetDirectory = null) =>
             ReadToAsync(path, target, Kit.CancellationToken, targetDirectory: targetDirectory);
 
-        public static Stream OpenRead(string path, string targetDirectory = null) =>
+        public static Stream OpenRead(string path, string? targetDirectory = null) =>
             Task.Run(() => OpenReadAsync(
                 path, Kit.CancellationToken, targetDirectory: targetDirectory)).Result;
 
-        public static Task<Stream> OpenReadAsync(string path, string targetDirectory = null) =>
+        public static Task<Stream> OpenReadAsync(string path, string? targetDirectory = null) =>
             OpenReadAsync(path, Kit.CancellationToken, targetDirectory: targetDirectory);
 
         #endregion
 
         public static Task<string> ReadTextAsync(
-            string path, CancellationToken cancellationToken, string targetDirectory = null) =>
+            string path, CancellationToken cancellationToken, string? targetDirectory = null) =>
             ReadBaseAsync(path, targetDirectory, blob =>
                 blob.DownloadTextAsync(
                     Encoding.UTF8, _accessCondition, _options, _operationContext, cancellationToken));
 
         public static Task<byte[]> ReadBytesAsync(
-            string path, CancellationToken cancellationToken, string targetDirectory = null) =>
+            string path, CancellationToken cancellationToken, string? targetDirectory = null) =>
             throw new NotImplementedException();
 
         public static async Task ReadToAsync(
-            string path, Stream target, CancellationToken cancellationToken, string targetDirectory = null)
+            string path, Stream target, CancellationToken cancellationToken, string? targetDirectory = null)
         {
             var startTime = DateTimeOffset.Now;
             var nativePath = PathHelper.Combine(targetDirectory ?? _workingDirectory, path);
@@ -162,7 +162,7 @@ namespace Kit.Azure
         }
 
         public static async Task<Stream> OpenReadAsync(
-            string path, CancellationToken cancellationToken, string targetDirectory = null)
+            string path, CancellationToken cancellationToken, string? targetDirectory = null)
         {
             try
             {
@@ -178,7 +178,7 @@ namespace Kit.Azure
         }
 
         private static async Task<T> ReadBaseAsync<T>(
-            string path, string targetDirectory, Func<CloudBlockBlob, Task<T>> action)
+            string path, string? targetDirectory, Func<CloudBlockBlob, Task<T>> action)
         {
             var startTime = DateTimeOffset.Now;
             var nativePath = PathHelper.Combine(targetDirectory ?? _workingDirectory, path);
@@ -205,67 +205,67 @@ namespace Kit.Azure
 
         #region Extensions
 
-        public static void Write(string path, string text, string targetDirectory = null) =>
+        public static void Write(string path, string text, string? targetDirectory = null) =>
             Task.Run(() => WriteAsync(
                 path, text, Kit.CancellationToken, targetDirectory: targetDirectory)).Wait();
 
-        public static Task WriteAsync(string path, string text, string targetDirectory = null) =>
+        public static Task WriteAsync(string path, string text, string? targetDirectory = null) =>
             WriteAsync(path, text, Kit.CancellationToken, targetDirectory: targetDirectory);
 
         public static void Write(
-            string path, IEnumerable<string> lines, string targetDirectory = null) =>
+            string path, IEnumerable<string> lines, string? targetDirectory = null) =>
             Task.Run(() => WriteAsync(
                 path, lines.JoinLines(), Kit.CancellationToken, targetDirectory: targetDirectory)).Wait();
 
         public static Task WriteAsync(
-            string path, IEnumerable<string> lines, string targetDirectory = null) =>
+            string path, IEnumerable<string> lines, string? targetDirectory = null) =>
             WriteAsync(path, lines.JoinLines(), Kit.CancellationToken, targetDirectory: targetDirectory);
 
         public static Task WriteAsync(
-            string path, IEnumerable<string> lines, CancellationToken cancellationToken, string targetDirectory = null) =>
+            string path, IEnumerable<string> lines, CancellationToken cancellationToken, string? targetDirectory = null) =>
             WriteAsync(path, lines.JoinLines(), cancellationToken, targetDirectory: targetDirectory);
 
-        public static void Write(string path, byte[] bytes, string targetDirectory = null) =>
+        public static void Write(string path, byte[] bytes, string? targetDirectory = null) =>
             Task.Run(() => WriteAsync(
                 path, bytes, Kit.CancellationToken, targetDirectory: targetDirectory)).Wait();
 
-        public static Task WriteAsync(string path, byte[] bytes, string targetDirectory = null) =>
+        public static Task WriteAsync(string path, byte[] bytes, string? targetDirectory = null) =>
             WriteAsync(path, bytes, Kit.CancellationToken, targetDirectory: targetDirectory);
 
-        public static void Write(string path, Stream source, string targetDirectory = null) =>
+        public static void Write(string path, Stream source, string? targetDirectory = null) =>
             Task.Run(() => WriteAsync(
                 path, source, Kit.CancellationToken, targetDirectory: targetDirectory)).Wait();
 
-        public static Task WriteAsync(string path, Stream source, string targetDirectory = null) =>
+        public static Task WriteAsync(string path, Stream source, string? targetDirectory = null) =>
             WriteAsync(path, source, Kit.CancellationToken, targetDirectory: targetDirectory);
 
-        public static Stream OpenWrite(string path, string targetDirectory = null) =>
+        public static Stream OpenWrite(string path, string? targetDirectory = null) =>
             Task.Run(() => OpenWriteAsync(
                 path, Kit.CancellationToken, targetDirectory: targetDirectory)).Result;
 
-        public static Task<Stream> OpenWriteAsync(string path, string targetDirectory = null) =>
+        public static Task<Stream> OpenWriteAsync(string path, string? targetDirectory = null) =>
             OpenWriteAsync(path, Kit.CancellationToken, targetDirectory: targetDirectory);
 
         #endregion
 
         public static Task WriteAsync(
-            string path, string text, CancellationToken cancellationToken, string targetDirectory = null) =>
+            string path, string text, CancellationToken cancellationToken, string? targetDirectory = null) =>
             WriteBaseAsync(path, targetDirectory, blob =>
                 blob.UploadTextAsync(
                     text, Encoding.UTF8, _accessCondition, _options, _operationContext, cancellationToken));
 
         public static Task WriteAsync(
-            string path, byte[] bytes, CancellationToken cancellationToken, string targetDirectory = null) =>
+            string path, byte[] bytes, CancellationToken cancellationToken, string? targetDirectory = null) =>
             throw new NotImplementedException();
 
         public static Task WriteAsync(
-            string path, Stream source, CancellationToken cancellationToken, string targetDirectory = null) =>
+            string path, Stream source, CancellationToken cancellationToken, string? targetDirectory = null) =>
             WriteBaseAsync(path, targetDirectory, blob =>
                 blob.UploadFromStreamAsync(
                     source, _accessCondition, _options, _operationContext, cancellationToken));
 
         public static async Task<Stream> OpenWriteAsync(
-            string path, CancellationToken cancellationToken, string targetDirectory = null)
+            string path, CancellationToken cancellationToken, string? targetDirectory = null)
         {
             try
             {
@@ -281,7 +281,7 @@ namespace Kit.Azure
         }
 
         private static async Task WriteBaseAsync(
-            string path, string targetDirectory, Func<CloudBlockBlob, Task> action)
+            string path, string? targetDirectory, Func<CloudBlockBlob, Task> action)
         {
             var startTime = DateTimeOffset.Now;
             var nativePath = PathHelper.Combine(targetDirectory ?? _workingDirectory, path);

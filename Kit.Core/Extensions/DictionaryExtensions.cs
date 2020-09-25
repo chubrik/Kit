@@ -6,6 +6,6 @@ namespace Kit
     {
         public static bool Contains<TKey, TValue>(
             this IReadOnlyDictionary<TKey, TValue> dictionary, TKey key, TValue value) =>
-            dictionary.TryGetValue(key, out var i) && i.Equals(value);
+            dictionary.TryGetValue(key, out var i) && i!.Equals(value);
     }
 }

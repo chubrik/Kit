@@ -11,27 +11,27 @@ namespace Kit.Mail
 {
     public class MailClient : IReportClient
     {
-        private static MailClient _instance;
-        public static MailClient Instance => _instance ?? (_instance = new MailClient());
+        private static MailClient? _instance;
+        public static MailClient Instance => _instance ??= new MailClient();
         private MailClient() { }
 
         private static bool _isEnable = true;
-        private static string _host;
+        private static string? _host;
         private static int _port;
-        private static NetworkCredential _credentials;
-        private static string _from;
-        private static string _to;
+        private static NetworkCredential? _credentials;
+        private static string? _from;
+        private static string? _to;
         private static int _logCounter = 0;
 
         #region Setup
 
         public static void Setup(
-            string host = null,
+            string? host = null,
             int? port = null,
-            string userName = null,
-            string password = null,
-            string from = null,
-            string to = null)
+            string? userName = null,
+            string? password = null,
+            string? from = null,
+            string? to = null)
         {
             if (host != null)
                 _host = host;
@@ -88,7 +88,7 @@ namespace Kit.Mail
         #endregion
 
         public static async Task SendAsync(
-            string subject, string body, IEnumerable<string> attachmentPaths, CancellationToken? cancellationToken = null)
+            string subject, string body, IEnumerable<string>? attachmentPaths, CancellationToken? cancellationToken = null)
         {
             if (!_isEnable)
                 return;
@@ -119,12 +119,13 @@ namespace Kit.Mail
 
                 try
                 {
-                    using (var client = new SmtpClient(_host, _port))
+                    using var client = new SmtpClient(_host, _port)
                     {
-                        client.EnableSsl = true;
-                        client.Credentials = _credentials;
-                        await client.SendMailAsync(message, cancellationToken ?? Kit.CancellationToken);
-                    }
+                        EnableSsl = true,
+                        Credentials = _credentials
+                    };
+
+                    await client.SendMailAsync(message, cancellationToken ?? Kit.CancellationToken);
                 }
                 catch (Exception exception)
                 {

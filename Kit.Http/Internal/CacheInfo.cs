@@ -2,7 +2,14 @@
 {
     internal class CacheInfo
     {
-        public string MimeType { get; set; }
-        public string BodyFileName { get; set; }
+        public string MimeType { get; }
+
+        public string BodyFileName { get; }
+
+        public CacheInfo(string mimeType, string bodyFileName)
+        {
+            MimeType = mimeType;
+            BodyFileName = bodyFileName;
+        }
     }
 }

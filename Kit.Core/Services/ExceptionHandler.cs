@@ -5,10 +5,8 @@ using System.Text.RegularExpressions;
 
 namespace Kit
 {
-    public class ExceptionHandler
+    public static class ExceptionHandler
     {
-        private ExceptionHandler() { }
-
         private static int _counter = 0;
 
         public static readonly List<IDataClient> Clients = new List<IDataClient>();

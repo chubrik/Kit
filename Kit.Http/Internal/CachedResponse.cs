@@ -30,10 +30,10 @@ namespace Kit.Http
 
         #region Content
 
-        private string _text;
+        private string? _text;
         public string ReadText() => _text ??= _readText();
 
-        private byte[] _bytes;
+        private byte[]? _bytes;
         public byte[] ReadBytes() => _bytes ??= _readBytes();
 
         public Stream ReadStream() => _readStream();

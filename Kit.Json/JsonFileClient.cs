@@ -9,7 +9,7 @@ namespace Kit
     {
         private JsonFileClient() { }
 
-        public static T Read<T>(string path, string targetDirectory = null) where T : class
+        public static T Read<T>(string path, string? targetDirectory = null) where T : class
         {
             Debug.Assert(path != null);
 
@@ -25,14 +25,14 @@ namespace Kit
                 using var jsonTextReader = new JsonTextReader(streamReader);
                 var json = new JsonSerializer().Deserialize<T>(jsonTextReader);
 
-                if (json.Equals(null))
+                if (json == null)
                     throw new InvalidOperationException($"Wrong json content \"{LogPath(nativePath)}\"");
 
                 return json;
             });
         }
 
-        public static void Write<T>(string path, T json, string targetDirectory = null) where T : class
+        public static void Write<T>(string path, T json, string? targetDirectory = null) where T : class
         {
             Debug.Assert(path != null);
 

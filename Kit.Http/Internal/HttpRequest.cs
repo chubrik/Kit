@@ -19,7 +19,7 @@ namespace Kit.Http
 
         #region Headers
 
-        private IReadOnlyDictionary<string, IReadOnlyList<string>> _headers;
+        private IReadOnlyDictionary<string, IReadOnlyList<string>>? _headers;
 
         public IReadOnlyDictionary<string, IReadOnlyList<string>> Headers
         {
@@ -52,7 +52,7 @@ namespace Kit.Http
             }
         }
 
-        private string _rawHeaders;
+        private string? _rawHeaders;
 
         public string RawHeaders
         {
@@ -85,12 +85,12 @@ namespace Kit.Http
 
         public Stream ReadStream() => Task.Run(ReadStreamAsync).Result;
 
-        private string _text;
+        private string? _text;
 
         public async Task<string> ReadTextAsync() =>
             _text ??= await Original.Content.ReadAsStringAsync();
 
-        private byte[] _bytes;
+        private byte[]? _bytes;
 
         public async Task<byte[]> ReadBytesAsync() =>
             _bytes ??= await Original.Content.ReadAsByteArrayAsync();

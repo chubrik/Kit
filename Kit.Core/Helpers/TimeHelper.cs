@@ -2,7 +2,7 @@
 
 namespace Kit
 {
-    public class TimeHelper
+    public static class TimeHelper
     {
         public static string FormattedLatency(DateTimeOffset startTime) =>
             FormattedLatency(DateTimeOffset.Now - startTime);

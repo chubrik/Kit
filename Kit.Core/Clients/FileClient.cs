@@ -8,13 +8,13 @@ namespace Kit
 {
     public class FileClient : IDataClient, ILogClient, IReportClient
     {
-        private static FileClient _instance;
-        public static FileClient Instance => _instance ?? (_instance = new FileClient());
+        private static FileClient? _instance;
+        public static FileClient Instance => _instance ??= new FileClient();
         protected FileClient() { }
 
         #region IDataClient
 
-        public void PushToWrite(string path, string text, string targetDirectory = null) =>
+        public void PushToWrite(string path, string text, string? targetDirectory = null) =>
             WriteBase(path, nativePath => File.WriteAllText(nativePath, text), targetDirectory);
 
         #endregion
@@ -48,7 +48,7 @@ namespace Kit
 
         private const string LogTimeFormat = "dd.MM.yyyy HH:mm:ss.fff";
         private bool _isLogInitialized;
-        private string _logNativeFilePath;
+        private string? _logNativeFilePath;
 
         private static readonly Dictionary<LogLevel, string> _logBadges =
             new Dictionary<LogLevel, string>
@@ -66,7 +66,7 @@ namespace Kit
                 LogInitialize();
 
             var dateTime = DateTimeOffset.Now.ToString(LogTimeFormat);
-            File.AppendAllText(_logNativeFilePath, $"{dateTime}  {_logBadges[level]} {message}\r\n");
+            File.AppendAllText(_logNativeFilePath!, $"{dateTime}  {_logBadges[level]} {message}\r\n");
         }
 
         private void LogInitialize()
@@ -85,26 +85,26 @@ namespace Kit
 
         #region Read
 
-        public static string ReadText(string path, string targetDirectory = null) =>
+        public static string ReadText(string path, string? targetDirectory = null) =>
             ReadBase(path, nativePath => File.ReadAllText(nativePath), targetDirectory);
 
-        public static List<string> ReadLines(string path, string targetDirectory = null) =>
+        public static List<string> ReadLines(string path, string? targetDirectory = null) =>
             ReadBase(path, nativePath => File.ReadAllLines(nativePath).ToList(), targetDirectory);
 
-        public static byte[] ReadBytes(string path, string targetDirectory = null) =>
+        public static byte[] ReadBytes(string path, string? targetDirectory = null) =>
             ReadBase(path, nativePath => File.ReadAllBytes(nativePath), targetDirectory);
 
-        public static void ReadTo(string path, Stream target, string targetDirectory = null)
+        public static void ReadTo(string path, Stream target, string? targetDirectory = null)
         {
-            using (var fs = OpenRead(path, targetDirectory))
-                fs.CopyTo(target);
+            using var fs = OpenRead(path, targetDirectory);
+            fs.CopyTo(target);
         }
 
-        public static FileStream OpenRead(string path, string targetDirectory = null) =>
+        public static FileStream OpenRead(string path, string? targetDirectory = null) =>
             ReadBase(path, nativePath => File.OpenRead(nativePath), targetDirectory);
 
         private static T ReadBase<T>(
-            string path, Func<string, T> readFunc, string targetDirectory)
+            string path, Func<string, T> readFunc, string? targetDirectory)
         {
             try
             {
@@ -123,25 +123,25 @@ namespace Kit
 
         #region Write
 
-        public static void Write(string path, string text, string targetDirectory = null) =>
+        public static void Write(string path, string text, string? targetDirectory = null) =>
             WriteBase(path, nativePath => File.WriteAllText(nativePath, text), targetDirectory);
 
-        public static void Write(string path, string[] lines, string targetDirectory = null) =>
+        public static void Write(string path, string[] lines, string? targetDirectory = null) =>
             WriteBase(path, nativePath => File.WriteAllLines(nativePath, lines), targetDirectory);
 
-        public static void Write(string path, IEnumerable<string> lines, string targetDirectory = null) =>
+        public static void Write(string path, IEnumerable<string> lines, string? targetDirectory = null) =>
             WriteBase(path, nativePath => File.WriteAllLines(nativePath, lines.ToArray()), targetDirectory);
 
-        public static void Write(string path, byte[] bytes, string targetDirectory = null) =>
+        public static void Write(string path, byte[] bytes, string? targetDirectory = null) =>
             WriteBase(path, nativePath => File.WriteAllBytes(nativePath, bytes), targetDirectory);
 
-        public static void Write(string path, Stream source, string targetDirectory = null)
+        public static void Write(string path, Stream source, string? targetDirectory = null)
         {
-            using (var fs = OpenWrite(path, targetDirectory))
-                source.CopyTo(fs);
+            using var fs = OpenWrite(path, targetDirectory);
+            source.CopyTo(fs);
         }
 
-        public static FileStream OpenWrite(string path, string targetDirectory = null)
+        public static FileStream OpenWrite(string path, string? targetDirectory = null)
         {
             try
             {
@@ -157,7 +157,7 @@ namespace Kit
             }
         }
 
-        private static void WriteBase(string path, Action<string> writeAction, string targetDirectory)
+        private static void WriteBase(string path, Action<string> writeAction, string? targetDirectory)
         {
             try
             {
@@ -177,13 +177,13 @@ namespace Kit
 
         #region Utils
 
-        public static string NativePath(string path, string targetDirectory = null) =>
+        public static string NativePath(string path, string? targetDirectory = null) =>
             PathHelper.Combine(Kit.BaseDirectory, targetDirectory ?? Kit.WorkingDirectory, path);
 
-        public static bool Exists(string path, string targetDirectory = null) =>
+        public static bool Exists(string path, string? targetDirectory = null) =>
             File.Exists(NativePath(path, targetDirectory));
 
-        public static void AppendText(string path, string text, string targetDirectory = null)
+        public static void AppendText(string path, string text, string? targetDirectory = null)
         {
             var nativePath = NativePath(path, targetDirectory);
             CreateDir(nativePath);
@@ -191,14 +191,14 @@ namespace Kit
             File.AppendAllText(nativePath, $"{text}\r\n");
         }
 
-        public static void Delete(string path, string targetDirectory = null)
+        public static void Delete(string path, string? targetDirectory = null)
         {
             var nativePath = NativePath(path, targetDirectory);
             LogService.Log($"Delete file \"{LogPath(nativePath)}\"");
             File.Delete(nativePath);
         }
 
-        public static List<string> FileNames(string path, string targetDirectory = null) =>
+        public static List<string> FileNames(string path, string? targetDirectory = null) =>
             Directory.GetFiles(NativePath(path, targetDirectory)).Select(PathHelper.FileName).ToList();
 
         private static void CreateDir(string nativeFilePath)
