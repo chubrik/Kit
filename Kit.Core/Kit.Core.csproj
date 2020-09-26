@@ -19,4 +19,8 @@ Has advanced diagnostics and the most useful features.</Description>
     <None Include="..\LICENSE" Pack="true" PackagePath="" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+  </ItemGroup>
+
 </Project>
