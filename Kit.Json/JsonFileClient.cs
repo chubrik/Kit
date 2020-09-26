@@ -9,14 +9,14 @@ namespace Kit
     {
         private JsonFileClient() { }
 
-        public static T Read<T>(string path, string? targetDirectory = null) where T : class
+        public static T Read<T>(string path) where T : class
         {
             Debug.Assert(path != null);
 
             if (path == null)
                 throw new ArgumentNullException(nameof(path));
 
-            var nativePath = NativePath(path, targetDirectory);
+            var nativePath = NativePath(path);
 
             return LogService.Log($"Read json file \"{LogPath(nativePath)}\"", () =>
             {
@@ -32,7 +32,7 @@ namespace Kit
             });
         }
 
-        public static void Write<T>(string path, T json, string? targetDirectory = null) where T : class
+        public static void Write<T>(string path, T json) where T : class
         {
             Debug.Assert(path != null);
 
@@ -44,7 +44,7 @@ namespace Kit
             if (json == null)
                 throw new ArgumentNullException(nameof(json));
 
-            var nativePath = NativePath(path, targetDirectory);
+            var nativePath = NativePath(path);
 
             LogService.Log($"Write json file \"{LogPath(nativePath)}\"", () =>
             {
@@ -56,7 +56,7 @@ namespace Kit
                     LogService.Log($"Create directory \"{LogPath(dirPath)}\"");
                 }
 
-                if (Exists(path, targetDirectory))
+                if (Exists(path))
                 {
                     LogService.Log("Delete previous file");
                     File.Delete(nativePath);

@@ -395,7 +395,7 @@ namespace Kit.Http
             var cachedName = $"{key} {uri.AbsoluteUri}";
             string paddedCount;
             string bodyFileName;
-            var targetDirectory = PathHelper.Combine(Kit.DiagnisticsCurrentDirectory, _cacheDirectory);
+            var cacheDir = PathHelper.Combine(Kit.DiagnisticsCurrentDirectory, _cacheDirectory);
 
             if (cache == CacheMode.Full && _registry!.ContainsKey(cachedName))
             {
@@ -403,14 +403,15 @@ namespace Kit.Http
                 var fileInfo = _registry[cachedName];
                 bodyFileName = fileInfo.BodyFileName;
                 paddedCount = bodyFileName.Substring(0, 4);
+                var bodyFilePath = PathHelper.Combine(cacheDir, bodyFileName);
 
-                if (FileClient.Exists(bodyFileName, targetDirectory)) //todo ... && infoFileName
+                if (FileClient.Exists(bodyFilePath)) //todo ... && infoFileName
                     return new CachedResponse(
                         mimeType: fileInfo.MimeType,
-                        readInfo: () => FileClient.ReadLines(paddedCount + InfoFileSuffix, targetDirectory),
-                        readText: () => FileClient.ReadText(bodyFileName, targetDirectory),
-                        readBytes: () => FileClient.ReadBytes(bodyFileName, targetDirectory),
-                        readStream: () => FileClient.OpenRead(bodyFileName, targetDirectory)
+                        readInfo: () => FileClient.ReadLines(PathHelper.Combine(cacheDir, paddedCount + InfoFileSuffix)),
+                        readText: () => FileClient.ReadText(bodyFilePath),
+                        readBytes: () => FileClient.ReadBytes(bodyFilePath),
+                        readStream: () => FileClient.OpenRead(bodyFilePath)
                     );
             }
             else
@@ -422,16 +423,16 @@ namespace Kit.Http
             var response = await httpAction();
             var infoFileName = paddedCount + InfoFileSuffix;
             FixCacheFileExtension(response, ref bodyFileName);
-            FileClient.Write(infoFileName, response.FormattedInfo, targetDirectory);
+            FileClient.Write(PathHelper.Combine(cacheDir, infoFileName), response.FormattedInfo);
 
             if (response.IsText)
-                FileClient.Write(bodyFileName, response.ReadText(), targetDirectory);
+                FileClient.Write(PathHelper.Combine(cacheDir, bodyFileName), response.ReadText());
             else
-                FileClient.Write(bodyFileName, response.ReadBytes(), targetDirectory);
+                FileClient.Write(PathHelper.Combine(cacheDir, bodyFileName), response.ReadBytes());
 
             lock (RegistryFileName)
                 FileClient.AppendText(
-                    RegistryFileName, $"{cachedName} | {response.MimeType} | {bodyFileName}", targetDirectory);
+                    PathHelper.Combine(cacheDir, RegistryFileName), $"{cachedName} | {response.MimeType} | {bodyFileName}");
 
             _registry![cachedName] = new CacheInfo(mimeType: response.MimeType, bodyFileName: bodyFileName);
             return response;
@@ -446,11 +447,11 @@ namespace Kit.Http
 
             _isCacheInitialized = true;
             _registry = new Dictionary<string, CacheInfo>();
-            var targetDirectory = PathHelper.Combine(Kit.DiagnisticsCurrentDirectory, _cacheDirectory);
+            var registryFilePath = PathHelper.Combine(Kit.DiagnisticsCurrentDirectory, _cacheDirectory, RegistryFileName);
 
-            if (FileClient.Exists(RegistryFileName, targetDirectory))
+            if (FileClient.Exists(registryFilePath))
             {
-                var lines = FileClient.ReadLines(RegistryFileName, targetDirectory);
+                var lines = FileClient.ReadLines(registryFilePath);
 
                 foreach (var line in lines)
                 {

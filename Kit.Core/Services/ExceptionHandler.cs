@@ -24,7 +24,7 @@ namespace Kit
             foreach (var client in Clients)
                 try
                 {
-                    client.PushToWrite(fileName, fullText, Kit.DiagnisticsCurrentDirectory);
+                    client.PushToWrite(PathHelper.Combine(Kit.DiagnisticsCurrentDirectory, fileName), fullText);
                 }
                 catch (Exception registerException)
                 {

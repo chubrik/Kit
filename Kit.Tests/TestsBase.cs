@@ -5,22 +5,20 @@ namespace Kit.Tests
 {
     public abstract class TestsBase
     {
-        protected const string ProjectNativePath = "../../..";
-
         [TestInitialize]
         public void BaseInitialize()
         {
-            Kit.Setup(test: true, baseDirectory: ProjectNativePath);
+            Kit.Setup(test: true);
             ConsoleClient.Setup(minLevel: LogLevel.Log);
         }
 
-        public void TestInitialize(string testName)
+        public static void TestInitialize(string testName)
         {
             var workingDir = "$work/" + testName;
-            Kit.Setup(workingDirectory: workingDir);
+            Kit.Setup(workingDirectory: workingDir, diagnosticsDirectory: "$diagnostics");
             ConsoleClient.Setup(minLevel: LogLevel.Log);
 
-            var nativeWorkingDir = ProjectNativePath + "/" + workingDir;
+            var nativeWorkingDir = "../../../" + workingDir;
 
             if (Directory.Exists(nativeWorkingDir))
             {

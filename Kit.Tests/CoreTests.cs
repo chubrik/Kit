@@ -14,17 +14,15 @@ namespace Kit.Tests
         {
             var testName = $"{GetType().Name}.{nameof(Execute)}";
             TestInitialize(testName);
-            var formattedTime = DateTimeOffset.Now.ToString("dd.MM.yyyy HH.mm.ss");
-            var diagnosticsDir = $"{ProjectNativePath}/$work/$diagnostics/{formattedTime}";
-            var reportsDir = $"{diagnosticsDir}/reports";
-
-            Kit.Setup(useFileDiagnostics: true);
 
             Kit.Execute(() =>
             {
                 LogService.Info("Hello World!");
             });
 
+            var formattedTime = DateTimeOffset.Now.ToString("dd.MM.yyyy HH.mm.ss");
+            var diagnosticsDir = $"../../../$work/{testName}/$diagnostics/{formattedTime}";
+            var reportsDir = $"{diagnosticsDir}/reports";
             Assert.IsTrue(Directory.Exists(diagnosticsDir));
             var diagnosticsFileNames = Directory.GetFiles(diagnosticsDir).Select(Path.GetFileName).ToList();
             Assert.IsTrue(diagnosticsFileNames.Count == 2);
