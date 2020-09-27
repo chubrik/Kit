@@ -49,7 +49,7 @@ namespace Kit.Azure
         #region IDataClient
 
         public void PushToWrite(string path, string text) =>
-            Task.Run(() => WriteAsync(path, text)).Wait(); //todo queue
+            Task.Run(() => WriteTextAsync(path, text)).Wait(); //todo queue
 
         #endregion
 
@@ -67,14 +67,14 @@ namespace Kit.Azure
             _reportCounter++;
             var paddedCount = _reportCounter.ToString().PadLeft(3, '0');
             var filePath = PathHelper.Combine(targetDirectory, PathHelper.SafeFileName($"{paddedCount} {subject}.txt"));
-            Task.Run(() => WriteAsync(filePath, $"{subject}\r\n\r\n{body}\r\n")).Wait(); //todo queue
+            Task.Run(() => WriteTextAsync(filePath, $"{subject}\r\n\r\n{body}\r\n")).Wait(); //todo queue
 
             var attachmentCounter = 0;
 
             foreach (var attachmentPath in attachmentPaths)
-                using (var stream = FileClient.OpenRead(attachmentPath))
+                using (var readStream = FileClient.OpenRead(attachmentPath))
                     Task.Run(() =>
-                        WriteAsync($"{paddedCount}-{++attachmentCounter} {PathHelper.FileName(attachmentPath)}", stream)
+                        WriteFromAsync($"{paddedCount}-{++attachmentCounter} {PathHelper.FileName(attachmentPath)}", readStream)
                     ).Wait(); //todo queue
         }
 
@@ -98,13 +98,13 @@ namespace Kit.Azure
 
         public static async Task<List<string>> ReadLinesAsync(string path, CancellationToken cancellationToken) =>
             (await ReadTextAsync(path, cancellationToken)).SplitLines();
-
+#if DEBUG
         public static byte[] ReadBytes(string path) =>
             Task.Run(() => ReadBytesAsync(path, Kit.CancellationToken)).Result;
 
         public static Task<byte[]> ReadBytesAsync(string path) =>
             ReadBytesAsync(path, Kit.CancellationToken);
-
+#endif
         public static void ReadTo(string path, Stream target) =>
             Task.Run(() => ReadToAsync(path, target, Kit.CancellationToken)).Wait();
 
@@ -191,32 +191,32 @@ namespace Kit.Azure
 
         #region Extensions
 
-        public static void Write(string path, string text) =>
-            Task.Run(() => WriteAsync(path, text, Kit.CancellationToken)).Wait();
+        public static void WriteText(string path, string text) =>
+            Task.Run(() => WriteTextAsync(path, text, Kit.CancellationToken)).Wait();
 
-        public static Task WriteAsync(string path, string text) =>
-            WriteAsync(path, text, Kit.CancellationToken);
+        public static Task WriteTextAsync(string path, string text) =>
+            WriteTextAsync(path, text, Kit.CancellationToken);
 
-        public static void Write(string path, IEnumerable<string> lines) =>
-            Task.Run(() => WriteAsync(path, lines.JoinLines(), Kit.CancellationToken)).Wait();
+        public static void WriteLines(string path, IEnumerable<string> lines) =>
+            Task.Run(() => WriteTextAsync(path, lines.JoinLines(), Kit.CancellationToken)).Wait();
 
-        public static Task WriteAsync(string path, IEnumerable<string> lines) =>
-            WriteAsync(path, lines.JoinLines(), Kit.CancellationToken);
+        public static Task WriteLinesAsync(string path, IEnumerable<string> lines) =>
+            WriteTextAsync(path, lines.JoinLines(), Kit.CancellationToken);
 
-        public static Task WriteAsync(string path, IEnumerable<string> lines, CancellationToken cancellationToken) =>
-            WriteAsync(path, lines.JoinLines(), cancellationToken);
+        public static Task WriteLinesAsync(string path, IEnumerable<string> lines, CancellationToken cancellationToken) =>
+            WriteTextAsync(path, lines.JoinLines(), cancellationToken);
+#if DEBUG
+        public static void WriteBytes(string path, byte[] bytes) =>
+            Task.Run(() => WriteBytesAsync(path, bytes, Kit.CancellationToken)).Wait();
 
-        public static void Write(string path, byte[] bytes) =>
-            Task.Run(() => WriteAsync(path, bytes, Kit.CancellationToken)).Wait();
+        public static Task WriteBytesAsync(string path, byte[] bytes) =>
+            WriteBytesAsync(path, bytes, Kit.CancellationToken);
+#endif
+        public static void WriteFrom(string path, Stream source) =>
+            Task.Run(() => WriteFromAsync(path, source, Kit.CancellationToken)).Wait();
 
-        public static Task WriteAsync(string path, byte[] bytes) =>
-            WriteAsync(path, bytes, Kit.CancellationToken);
-
-        public static void Write(string path, Stream source) =>
-            Task.Run(() => WriteAsync(path, source, Kit.CancellationToken)).Wait();
-
-        public static Task WriteAsync(string path, Stream source) =>
-            WriteAsync(path, source, Kit.CancellationToken);
+        public static Task WriteFromAsync(string path, Stream source) =>
+            WriteFromAsync(path, source, Kit.CancellationToken);
 
         public static Stream OpenWrite(string path) =>
             Task.Run(() => OpenWriteAsync(path, Kit.CancellationToken)).Result;
@@ -226,14 +226,14 @@ namespace Kit.Azure
 
         #endregion
 
-        public static Task WriteAsync(string path, string text, CancellationToken cancellationToken) =>
+        public static Task WriteTextAsync(string path, string text, CancellationToken cancellationToken) =>
             WriteBaseAsync(path, blob => blob.UploadTextAsync(
                 text, Encoding.UTF8, _accessCondition, _options, _operationContext, cancellationToken));
 #if DEBUG
-        public static Task WriteAsync(string path, byte[] bytes, CancellationToken cancellationToken) =>
+        public static Task WriteBytesAsync(string path, byte[] bytes, CancellationToken cancellationToken) =>
             throw new NotImplementedException();
 #endif
-        public static Task WriteAsync(string path, Stream source, CancellationToken cancellationToken) =>
+        public static Task WriteFromAsync(string path, Stream source, CancellationToken cancellationToken) =>
             WriteBaseAsync(path, blob => blob.UploadFromStreamAsync(
                 source, _accessCondition, _options, _operationContext, cancellationToken));
 

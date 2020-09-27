@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -34,12 +33,12 @@ namespace Kit
             _reportCounter++;
             var paddedCount = _reportCounter.ToString().PadLeft(3, '0');
             var filePath = PathHelper.Combine(targetDirectory, PathHelper.SafeFileName($"{paddedCount} {subject}.txt"));
-            Write(filePath, $"{subject}\r\n\r\n{body}\r\n");
+            WriteText(filePath, $"{subject}\r\n\r\n{body}\r\n");
             var attachmentCounter = 0;
 
             foreach (var attachmentPath in attachmentPaths)
-                using (var stream = OpenRead(attachmentPath))
-                    Write($"{paddedCount}-{++attachmentCounter} {PathHelper.FileName(attachmentPath)}", stream);
+                using (var readStream = OpenRead(attachmentPath))
+                    WriteFrom($"{paddedCount}-{++attachmentCounter} {PathHelper.FileName(attachmentPath)}", readStream);
         }
 
         #endregion
@@ -94,35 +93,19 @@ namespace Kit
         public static byte[] ReadBytes(string path) =>
             ReadBase(path, nativePath => File.ReadAllBytes(nativePath));
 
-        public static dynamic ReadJson(string path) => ReadJson<object>(path);
+        public static dynamic ReadObject(string path) => ReadObject<object>(path);
 
-        public static T ReadJson<T>(string path) where T : class
-        {
-            Debug.Assert(path != null);
-
-            if (path == null)
-                throw new ArgumentNullException(nameof(path));
-
-            var nativePath = NativePath(path);
-
-            return LogService.Log($"Read json file \"{LogPath(nativePath)}\"", () =>
+        public static T ReadObject<T>(string path) where T : class =>
+            ReadBase(path, nativePath =>
             {
-                using var fileStream = File.OpenRead(nativePath);
-                using var streamReader = new StreamReader(fileStream);
-                using var jsonTextReader = new JsonTextReader(streamReader);
-                var json = new JsonSerializer().Deserialize<T>(jsonTextReader);
-
-                if (json == null)
-                    throw new InvalidOperationException($"Wrong json content \"{LogPath(nativePath)}\"");
-
-                return json;
+                using var readStream = File.OpenRead(nativePath);
+                return JsonHelper.Deserialize<T>(readStream);
             });
-        }
 
         public static void ReadTo(string path, Stream target)
         {
-            using var fs = OpenRead(path);
-            fs.CopyTo(target);
+            using var source = OpenRead(path);
+            source.CopyTo(target);
         }
 
         public static FileStream OpenRead(string path) =>
@@ -147,62 +130,26 @@ namespace Kit
 
         #region Write
 
-        public static void Write(string path, string text) =>
+        public static void WriteText(string path, string text) =>
             WriteBase(path, nativePath => File.WriteAllText(nativePath, text));
 
-        public static void Write(string path, string[] lines) =>
-            WriteBase(path, nativePath => File.WriteAllLines(nativePath, lines));
-
-        public static void Write(string path, IEnumerable<string> lines) =>
+        public static void WriteLines(string path, IEnumerable<string> lines) =>
             WriteBase(path, nativePath => File.WriteAllLines(nativePath, lines.ToArray()));
 
-        public static void Write(string path, byte[] bytes) =>
+        public static void WriteBytes(string path, byte[] bytes) =>
             WriteBase(path, nativePath => File.WriteAllBytes(nativePath, bytes));
 
-        public static void Write<T>(string path, T json) where T : class
-        {
-            Debug.Assert(path != null);
-
-            if (path == null)
-                throw new ArgumentNullException(nameof(path));
-
-            Debug.Assert(json != null);
-
-            if (json == null)
-                throw new ArgumentNullException(nameof(json));
-
-            var nativePath = NativePath(path);
-
-            LogService.Log($"Write json file \"{LogPath(nativePath)}\"", () =>
+        public static void WriteObject(string path, object obj) =>
+            WriteBase(path, nativePath =>
             {
-                var dirPath = PathHelper.Parent(nativePath);
-
-                if (!Directory.Exists(dirPath))
-                {
-                    Directory.CreateDirectory(dirPath);
-                    LogService.Log($"Create directory \"{LogPath(dirPath)}\"");
-                }
-
-                if (Exists(path))
-                {
-                    LogService.Log("Delete previous file");
-                    File.Delete(nativePath);
-                }
-
-                CreateDir(nativePath);
-
-                using var fileStream = File.OpenWrite(nativePath);
-                using var streamWriter = new StreamWriter(fileStream);
-                using var jsonTextWriter = new JsonTextWriter(streamWriter);
-                new JsonSerializer().Serialize(jsonTextWriter, json);
-                jsonTextWriter.Close();
+                using var writeStream = File.OpenWrite(nativePath);
+                JsonHelper.Serialize(obj, writeStream);
             });
-        }
 
-        public static void Write(string path, Stream source)
+        public static void WriteFrom(string path, Stream source)
         {
-            using var fs = OpenWrite(path);
-            source.CopyTo(fs);
+            using var target = OpenWrite(path);
+            source.CopyTo(target);
         }
 
         public static FileStream OpenWrite(string path)

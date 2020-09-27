@@ -14,10 +14,10 @@ namespace Kit.Tests
             var testFileName = "test.xml";
 
             using (var fileStream = FileClient.OpenRead("../../Kit.Tests.csproj"))
-                AzureBlobClient.Write(testFileName, fileStream);
+                AzureBlobClient.WriteFrom(testFileName, fileStream);
 
             using (var blobStream = AzureBlobClient.OpenRead(testFileName))
-                FileClient.Write(testFileName, blobStream);
+                FileClient.WriteFrom(testFileName, blobStream);
         }
 
         private static void Setup()

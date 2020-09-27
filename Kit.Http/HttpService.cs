@@ -280,20 +280,21 @@ namespace Kit.Http
             return await PostAsync(uri, context, cancellationToken, cache, cacheKey, repeat, timeoutSeconds);
         }
 
-        public async Task<IHttpResponse> PostSerializedJsonAsync(
-            Uri uri, string serializedJson, CancellationToken cancellationToken,
-            CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
-        {
-            var content = new StringContent(serializedJson, Encoding.UTF8, "application/json");
-            return await PostAsync(uri, content, cancellationToken, cache, cacheKey, repeat, timeoutSeconds);
-        }
-
         public async Task<IHttpResponse> PostBytesAsync(
             Uri uri, byte[] bytes, CancellationToken cancellationToken,
             CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
         {
             var content = new ByteArrayContent(bytes);
             content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+            return await PostAsync(uri, content, cancellationToken, cache, cacheKey, repeat, timeoutSeconds);
+        }
+
+        public async Task<IHttpResponse> PostObjectAsync(
+            Uri uri, object obj, CancellationToken cancellationToken,
+            CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
+        {
+            var serialized = JsonHelper.Serialize(obj);
+            var content = new StringContent(serialized, Encoding.UTF8, "application/json");
             return await PostAsync(uri, content, cancellationToken, cache, cacheKey, repeat, timeoutSeconds);
         }
 
@@ -423,12 +424,8 @@ namespace Kit.Http
             var response = await httpAction();
             var infoFileName = paddedCount + InfoFileSuffix;
             FixCacheFileExtension(response, ref bodyFileName);
-            FileClient.Write(PathHelper.Combine(cacheDir, infoFileName), response.FormattedInfo);
-
-            if (response.IsText)
-                FileClient.Write(PathHelper.Combine(cacheDir, bodyFileName), response.ReadText());
-            else
-                FileClient.Write(PathHelper.Combine(cacheDir, bodyFileName), response.ReadBytes());
+            FileClient.WriteText(PathHelper.Combine(cacheDir, infoFileName), response.FormattedInfo);
+            FileClient.WriteFrom(PathHelper.Combine(cacheDir, bodyFileName), response.ReadStream());
 
             lock (RegistryFileName)
                 FileClient.AppendText(

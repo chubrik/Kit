@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -95,93 +94,91 @@ namespace Kit.Http
 
         #endregion
 
-        #region Get JSON dynamic
+        #region Get dynamic object
 
-        public static dynamic? GetJson(
+        public static dynamic GetObject(
             this HttpService http, string url,
             CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            Task.Run(() => http.GetJsonAsync<object>(new Uri(url), Kit.CancellationToken,
+            Task.Run(() => http.GetObjectAsync<object>(new Uri(url), Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
-        public static dynamic? GetJson(
+        public static dynamic GetObject(
             this HttpService http, Uri uri,
             CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            Task.Run(() => http.GetJsonAsync<object>(uri, Kit.CancellationToken,
+            Task.Run(() => http.GetObjectAsync<object>(uri, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
-        public static Task<dynamic?> GetJsonAsync(
+        public static Task<dynamic> GetObjectAsync(
             this HttpService http, string url,
             CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            http.GetJsonAsync<object>(new Uri(url), Kit.CancellationToken,
+            http.GetObjectAsync<object>(new Uri(url), Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
-        public static Task<dynamic?> GetJsonAsync(
+        public static Task<dynamic> GetObjectAsync(
             this HttpService http, Uri uri,
             CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            http.GetJsonAsync<object>(uri, Kit.CancellationToken,
+            http.GetObjectAsync<object>(uri, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
-        public static Task<dynamic?> GetJsonAsync(
+        public static Task<dynamic> GetObjectAsync(
             this HttpService http, string url, CancellationToken cancellationToken,
             CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            http.GetJsonAsync<object>(new Uri(url), cancellationToken,
+            http.GetObjectAsync<object>(new Uri(url), cancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
-        public static Task<dynamic?> GetJsonAsync(
+        public static Task<dynamic> GetObjectAsync(
             this HttpService http, Uri uri, CancellationToken cancellationToken,
             CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            http.GetJsonAsync<object>(uri, cancellationToken,
+            http.GetObjectAsync<object>(uri, cancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
         #endregion
 
-        #region Get JSON generic
+        #region Get generic object
 
-        public static T? GetJson<T>(
+        public static T GetObject<T>(
             this HttpService http, string url,
             CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
             where T : class =>
-            Task.Run(() => http.GetJsonAsync<T>(new Uri(url), Kit.CancellationToken,
+            Task.Run(() => http.GetObjectAsync<T>(new Uri(url), Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
-        public static T? GetJson<T>(
+        public static T GetObject<T>(
             this HttpService http, Uri uri,
             CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
             where T : class =>
-            Task.Run(() => http.GetJsonAsync<T>(uri, Kit.CancellationToken,
+            Task.Run(() => http.GetObjectAsync<T>(uri, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
-        public static Task<T?> GetJsonAsync<T>(
+        public static Task<T> GetObjectAsync<T>(
             this HttpService http, string url,
             CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
             where T : class =>
-            http.GetJsonAsync<T>(new Uri(url), Kit.CancellationToken,
+            http.GetObjectAsync<T>(new Uri(url), Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
-        public static Task<T?> GetJsonAsync<T>(
+        public static Task<T> GetObjectAsync<T>(
             this HttpService http, Uri uri,
             CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
             where T : class =>
-            http.GetJsonAsync<T>(uri, Kit.CancellationToken,
+            http.GetObjectAsync<T>(uri, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
-        public static Task<T?> GetJsonAsync<T>(
+        public static Task<T> GetObjectAsync<T>(
             this HttpService http, string url, CancellationToken cancellationToken,
             CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
             where T : class =>
-            http.GetJsonAsync<T>(new Uri(url), cancellationToken,
+            http.GetObjectAsync<T>(new Uri(url), cancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
-        public static async Task<T?> GetJsonAsync<T>(
+        public static async Task<T> GetObjectAsync<T>(
             this HttpService http, Uri uri, CancellationToken cancellationToken,
             CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
             where T : class
         {
-            using var stream = await http.GetStreamAsync(uri, cancellationToken,
+            using var responseStream = await http.GetStreamAsync(uri, cancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
-            using var streamReader = new StreamReader(stream);
-            using var jsonTextReader = new JsonTextReader(streamReader);
-            return new JsonSerializer().Deserialize<T>(jsonTextReader);
+            return JsonHelper.Deserialize<T>(responseStream);
         }
 
         #endregion
@@ -331,40 +328,6 @@ namespace Kit.Http
 
         #endregion
 
-        #region Post serialized JSON
-
-        public static IHttpResponse PostSerializedJson(
-            this HttpService http, string url, string serializedJson,
-            CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            Task.Run(() => http.PostSerializedJsonAsync(new Uri(url), serializedJson, Kit.CancellationToken,
-                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
-
-        public static IHttpResponse PostSerializedJson(
-            this HttpService http, Uri uri, string serializedJson,
-            CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            Task.Run(() => http.PostSerializedJsonAsync(uri, serializedJson, Kit.CancellationToken,
-                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
-
-        public static Task<IHttpResponse> PostSerializedJsonAsync(
-            this HttpService http, string url, string serializedJson,
-            CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            http.PostSerializedJsonAsync(new Uri(url), serializedJson, Kit.CancellationToken,
-                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
-
-        public static Task<IHttpResponse> PostSerializedJsonAsync(
-            this HttpService http, Uri uri, string serializedJson,
-            CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            http.PostSerializedJsonAsync(uri, serializedJson, Kit.CancellationToken,
-                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
-
-        public static Task<IHttpResponse> PostSerializedJsonAsync(
-            this HttpService http, string url, string serializedJson, CancellationToken cancellationToken,
-            CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            http.PostSerializedJsonAsync(new Uri(url), serializedJson, cancellationToken,
-                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
-
-        #endregion
-
         #region Post bytes
 
         public static IHttpResponse PostBytes(
@@ -399,42 +362,36 @@ namespace Kit.Http
 
         #endregion
 
-        #region Post JSON
+        #region Post object
 
-        public static IHttpResponse PostJson(
-            this HttpService http, string url, object json,
+        public static IHttpResponse PostObject(
+            this HttpService http, string url, object obj,
             CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            Task.Run(() => http.PostJsonAsync(new Uri(url), json, Kit.CancellationToken,
+            Task.Run(() => http.PostObjectAsync(new Uri(url), obj, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
-        public static IHttpResponse PostJson(
-            this HttpService http, Uri uri, object json,
+        public static IHttpResponse PostObject(
+            this HttpService http, Uri uri, object obj,
             CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            Task.Run(() => http.PostJsonAsync(uri, json, Kit.CancellationToken,
+            Task.Run(() => http.PostObjectAsync(uri, obj, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
-        public static Task<IHttpResponse> PostJsonAsync(
-            this HttpService http, string url, object json,
+        public static Task<IHttpResponse> PostObjectAsync(
+            this HttpService http, string url, object obj,
             CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            http.PostJsonAsync(new Uri(url), json, Kit.CancellationToken,
+            http.PostObjectAsync(new Uri(url), obj, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
-        public static Task<IHttpResponse> PostJsonAsync(
-            this HttpService http, Uri uri, object json,
+        public static Task<IHttpResponse> PostObjectAsync(
+            this HttpService http, Uri uri, object obj,
             CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            http.PostJsonAsync(uri, json, Kit.CancellationToken,
+            http.PostObjectAsync(uri, obj, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
-        public static Task<IHttpResponse> PostJsonAsync(
-            this HttpService http, string url, object json, CancellationToken cancellationToken,
+        public static Task<IHttpResponse> PostObjectAsync(
+            this HttpService http, string url, object obj, CancellationToken cancellationToken,
             CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            http.PostJsonAsync(new Uri(url), json, cancellationToken,
-                cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
-
-        public static Task<IHttpResponse> PostJsonAsync(
-            this HttpService http, Uri uri, object json, CancellationToken cancellationToken,
-            CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
-            http.PostSerializedJsonAsync(uri, JsonConvert.SerializeObject(json), cancellationToken,
+            http.PostObjectAsync(new Uri(url), obj, cancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
         #endregion
