@@ -8,7 +8,7 @@ namespace Kit.Tests
         [TestInitialize]
         public void BaseInitialize()
         {
-            Kit.Setup(test: true);
+            Kit.Setup(isTest: true, useFileDiagnostics: true);
             ConsoleClient.Setup(minLevel: LogLevel.Log);
         }
 

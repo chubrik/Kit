@@ -19,10 +19,7 @@ Has advanced diagnostics and the most useful features.</Description>
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Kit.Core\Kit.Core.csproj" />
-    <ProjectReference Include="..\Kit.Html\Kit.Html.csproj" />
-    <ProjectReference Include="..\Kit.Http\Kit.Http.csproj" />
-    <ProjectReference Include="..\Kit.Mail\Kit.Mail.csproj" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
   </ItemGroup>
 
 </Project>

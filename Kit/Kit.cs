@@ -34,9 +34,9 @@ namespace Kit
             bool? pressAnyKeyToExit = null,
             string? baseDirectory = null,
             string? workingDirectory = null,
-            bool useFileDiagnostics = true,
+            bool? useFileDiagnostics = null,
             string? diagnosticsDirectory = null,
-            bool? test = null)
+            bool? isTest = null)
         {
             if (pressAnyKeyToExit != null)
                 _pressAnyKeyToExit = (bool)pressAnyKeyToExit;
@@ -47,7 +47,7 @@ namespace Kit
             if (workingDirectory != null)
                 WorkingDirectory = workingDirectory;
 
-            if (useFileDiagnostics)
+            if (useFileDiagnostics == true)
             {
                 if (!ExceptionHandler.Clients.Contains(FileClient.Instance))
                     ExceptionHandler.Clients.Add(FileClient.Instance);
@@ -62,8 +62,8 @@ namespace Kit
             if (diagnosticsDirectory != null)
                 _diagnosticsDirectory = diagnosticsDirectory;
 
-            if (test != null)
-                IsTest = (bool)test;
+            if (isTest != null)
+                IsTest = (bool)isTest;
         }
 
         private static void Initialize()
