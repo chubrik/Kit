@@ -18,6 +18,10 @@ namespace Kit
             jsonTextWriter.Close();
         }
 
+        public static dynamic Deserialize(string value) => Deserialize<object>(value);
+
+        public static dynamic Deserialize(Stream source) => Deserialize<object>(source);
+
         public static T Deserialize<T>(string value) where T : class
         {
             var obj = JsonConvert.DeserializeObject<T>(value);

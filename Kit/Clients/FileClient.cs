@@ -116,7 +116,7 @@ namespace Kit
             try
             {
                 var nativePath = NativePath(path);
-                LogService.Log($"Read file \"{LogPath(nativePath)}\"");
+                LogService.Log($"Read file \"{PathForLog(nativePath)}\"");
                 return readFunc(nativePath);
             }
             catch (Exception exception)
@@ -158,7 +158,7 @@ namespace Kit
             {
                 var nativePath = NativePath(path);
                 CreateDir(nativePath);
-                LogService.Log($"Write file \"{LogPath(nativePath)}\"");
+                LogService.Log($"Write file \"{PathForLog(nativePath)}\"");
                 return File.OpenWrite(nativePath);
             }
             catch (Exception exception)
@@ -174,7 +174,7 @@ namespace Kit
             {
                 var nativePath = NativePath(path);
                 CreateDir(nativePath);
-                LogService.Log($"Write file \"{LogPath(nativePath)}\"");
+                LogService.Log($"Write file \"{PathForLog(nativePath)}\"");
                 writeAction(nativePath);
             }
             catch (Exception exception)
@@ -198,14 +198,14 @@ namespace Kit
         {
             var nativePath = NativePath(path);
             CreateDir(nativePath);
-            LogService.Log($"Append file \"{LogPath(nativePath)}\"");
+            LogService.Log($"Append file \"{PathForLog(nativePath)}\"");
             File.AppendAllText(nativePath, $"{text}\r\n");
         }
 
         public static void Delete(string path)
         {
             var nativePath = NativePath(path);
-            LogService.Log($"Delete file \"{LogPath(nativePath)}\"");
+            LogService.Log($"Delete file \"{PathForLog(nativePath)}\"");
             File.Delete(nativePath);
         }
 
@@ -219,11 +219,11 @@ namespace Kit
             if (!Directory.Exists(nativeDir))
             {
                 Directory.CreateDirectory(nativeDir);
-                LogService.Log($"Create directory \"{LogPath(nativeDir)}\"");
+                LogService.Log($"Create directory \"{PathForLog(nativeDir)}\"");
             }
         }
 
-        private static string LogPath(string path)
+        public static string PathForLog(string path)
         {
             path = path.Replace("/", @"\");
 

@@ -7,9 +7,9 @@ namespace Kit
     {
         public static bool IsEmpty(this string value) => value.Length == 0;
 
-        public static bool IsNullOrEmpty(this string value) => string.IsNullOrEmpty(value);
+        public static bool IsNullOrEmpty(this string? value) => string.IsNullOrEmpty(value);
 
-        public static bool IsNullOrWhiteSpace(this string value) => string.IsNullOrWhiteSpace(value);
+        public static bool IsNullOrWhiteSpace(this string? value) => string.IsNullOrWhiteSpace(value);
 
         public static List<string> SplitLines(this string value)
         {
