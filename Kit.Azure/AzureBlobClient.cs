@@ -59,8 +59,6 @@ namespace Kit.Azure
 
         public void PushToReport(string subject, string body, IEnumerable<string> attachmentPaths, string targetDirectory)
         {
-            Debug.Assert(attachmentPaths != null);
-
             if (attachmentPaths == null)
                 throw new ArgumentNullException(nameof(attachmentPaths));
 

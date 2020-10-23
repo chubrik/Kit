@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -59,19 +58,10 @@ namespace Kit.Http
             Func<byte[]> readBytes,
             Func<Stream> readStream)
         {
-            Debug.Assert(mimeType != null);
             MimeType = mimeType ?? throw new ArgumentNullException(nameof(mimeType));
-
-            Debug.Assert(readInfo != null);
             _readInfo = readInfo ?? throw new ArgumentNullException(nameof(readInfo));
-
-            Debug.Assert(readText != null);
             _readText = readText ?? throw new ArgumentNullException(nameof(readText));
-
-            Debug.Assert(readBytes != null);
             _readBytes = readBytes ?? throw new ArgumentNullException(nameof(readBytes));
-
-            Debug.Assert(readStream != null);
             _readStream = readStream ?? throw new ArgumentNullException(nameof(readStream));
         }
 

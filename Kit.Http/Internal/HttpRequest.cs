@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -105,10 +104,7 @@ namespace Kit.Http
 
         public HttpRequest(HttpRequestMessage request, CookieCollection cookies)
         {
-            Debug.Assert(request != null);
             Original = request ?? throw new ArgumentNullException(nameof(request));
-
-            Debug.Assert(cookies != null);
             _cookies = cookies ?? throw new ArgumentNullException(nameof(cookies));
         }
 

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -119,7 +118,6 @@ namespace Kit.Http
 
         public HttpResponse(HttpResponseMessage response, CookieCollection requestCookies)
         {
-            Debug.Assert(response != null);
             Original = response ?? throw new ArgumentNullException(nameof(response));
             Request = new HttpRequest(response.RequestMessage, requestCookies);
         }

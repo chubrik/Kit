@@ -25,8 +25,6 @@ namespace Kit
 
         public void PushToReport(string subject, string body, IEnumerable<string> attachmentPaths, string targetDirectory)
         {
-            Debug.Assert(attachmentPaths != null);
-
             if (attachmentPaths == null)
                 throw new ArgumentNullException(nameof(attachmentPaths));
 
@@ -70,8 +68,6 @@ namespace Kit
 
         private void LogInitialize()
         {
-            Debug.Assert(!_isLogInitialized);
-
             if (_isLogInitialized)
                 throw new InvalidOperationException();
 

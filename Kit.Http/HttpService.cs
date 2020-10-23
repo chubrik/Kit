@@ -80,12 +80,8 @@ namespace Kit.Http
 
         public void SetHeader(string name, string value)
         {
-            Debug.Assert(!name.IsNullOrEmpty());
-
             if (name.IsNullOrEmpty())
                 throw new ArgumentNullOrEmptyException(nameof(name));
-
-            Debug.Assert(value != null);
 
             if (value == null)
                 throw new ArgumentNullException(nameof(value));
@@ -96,12 +92,8 @@ namespace Kit.Http
 
         public void AddToHeader(string name, string value)
         {
-            Debug.Assert(!name.IsNullOrEmpty());
-
             if (name.IsNullOrEmpty())
                 throw new ArgumentNullOrEmptyException(nameof(name));
-
-            Debug.Assert(value != null);
 
             if (value == null)
                 throw new ArgumentNullException(nameof(value));
@@ -111,8 +103,6 @@ namespace Kit.Http
 
         public void RemoveHeader(string name)
         {
-            Debug.Assert(!name.IsNullOrEmpty());
-
             if (name.IsNullOrEmpty())
                 throw new ArgumentNullOrEmptyException(nameof(name));
 
@@ -121,17 +111,11 @@ namespace Kit.Http
 
         public void SetCookie(Uri uri, string name, string value)
         {
-            Debug.Assert(uri != null);
-
             if (uri == null)
                 throw new ArgumentNullException(nameof(name));
 
-            Debug.Assert(!name.IsNullOrEmpty());
-
             if (name.IsNullOrEmpty())
                 throw new ArgumentNullOrEmptyException(nameof(name));
-
-            Debug.Assert(value != null);
 
             if (value == null)
                 throw new ArgumentNullException(nameof(value));
@@ -141,12 +125,8 @@ namespace Kit.Http
 
         public void RemoveCookie(Uri uri, string name)
         {
-            Debug.Assert(uri != null);
-
             if (uri == null)
                 throw new ArgumentNullException(nameof(name));
-
-            Debug.Assert(!name.IsNullOrEmpty());
 
             if (name.IsNullOrEmpty())
                 throw new ArgumentNullOrEmptyException(nameof(name));
@@ -437,8 +417,6 @@ namespace Kit.Http
 
         private static void CacheInitialize()
         {
-            Debug.Assert(!_isCacheInitialized);
-
             if (_isCacheInitialized)
                 throw new InvalidOperationException();
 
