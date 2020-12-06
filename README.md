@@ -1,7 +1,7 @@
-# [![Kit project](https://raw.githubusercontent.com/chubrik/Kit/master/icon.png)](#) Kit
+# [![Kit project](https://raw.githubusercontent.com/chubrik/Kit/main/icon.png)](#) Kit
 [![NuGet](https://img.shields.io/nuget/v/Kit.svg)](https://www.nuget.org/packages/Kit/)
-[![Build Status](https://travis-ci.org/chubrik/Kit.svg?branch=master)](https://travis-ci.org/chubrik/Kit)
-[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/chubrik/Kit/blob/master/LICENSE)
+[![Build Status](https://travis-ci.org/chubrik/Kit.svg?branch=main)](https://travis-ci.org/chubrik/Kit)
+[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/chubrik/Kit/blob/main/LICENSE)
 
 The powerful engine for various C# projects.<br>Has advanced diagnostics and the most useful features.
 

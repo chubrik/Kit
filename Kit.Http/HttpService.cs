@@ -269,8 +269,8 @@ namespace Kit.Http
             return await PostAsync(uri, content, cancellationToken, cache, cacheKey, repeat, timeoutSeconds);
         }
 
-        public async Task<IHttpResponse> PostObjectAsync(
-            Uri uri, object obj, CancellationToken cancellationToken,
+        public async Task<IHttpResponse> PostObjectAsync<T>(
+            Uri uri, T obj, CancellationToken cancellationToken,
             CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
         {
             var serialized = JsonHelper.Serialize(obj);

@@ -4,6 +4,6 @@
     <Nullable>enable</Nullable>
     <NetCoreAppTargetFramework>netcoreapp3.1</NetCoreAppTargetFramework>
     <NetStandardTargetFramework>netstandard2.1</NetStandardTargetFramework>
-    <KitPackagesVersion>1.9.3</KitPackagesVersion>
+    <KitPackagesVersion>1.10.0</KitPackagesVersion>
   </PropertyGroup>
 </Project>

@@ -91,7 +91,7 @@ namespace Kit
 
         public static dynamic ReadObject(string path) => ReadObject<object>(path);
 
-        public static T ReadObject<T>(string path) where T : class =>
+        public static T ReadObject<T>(string path) where T : class, new() =>
             ReadBase(path, nativePath =>
             {
                 using var readStream = File.OpenRead(nativePath);
@@ -135,10 +135,10 @@ namespace Kit
         public static void WriteBytes(string path, byte[] bytes) =>
             WriteBase(path, nativePath => File.WriteAllBytes(nativePath, bytes));
 
-        public static void WriteObject(string path, object obj) =>
+        public static void WriteObject<T>(string path, T obj) =>
             WriteBase(path, nativePath =>
             {
-                using var writeStream = File.OpenWrite(nativePath);
+                using var writeStream = File.Create(nativePath);
                 JsonHelper.Serialize(obj, writeStream);
             });
 

@@ -139,42 +139,42 @@ namespace Kit.Http
         public static T GetObject<T>(
             this HttpService http, string url,
             CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
-            where T : class =>
+            where T : class, new() =>
             Task.Run(() => http.GetObjectAsync<T>(new Uri(url), Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
         public static T GetObject<T>(
             this HttpService http, Uri uri,
             CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
-            where T : class =>
+            where T : class, new() =>
             Task.Run(() => http.GetObjectAsync<T>(uri, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
         public static Task<T> GetObjectAsync<T>(
             this HttpService http, string url,
             CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
-            where T : class =>
+            where T : class, new() =>
             http.GetObjectAsync<T>(new Uri(url), Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
         public static Task<T> GetObjectAsync<T>(
             this HttpService http, Uri uri,
             CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
-            where T : class =>
+            where T : class, new() =>
             http.GetObjectAsync<T>(uri, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
         public static Task<T> GetObjectAsync<T>(
             this HttpService http, string url, CancellationToken cancellationToken,
             CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
-            where T : class =>
+            where T : class, new() =>
             http.GetObjectAsync<T>(new Uri(url), cancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
         public static async Task<T> GetObjectAsync<T>(
             this HttpService http, Uri uri, CancellationToken cancellationToken,
             CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null)
-            where T : class
+            where T : class, new()
         {
             using var responseStream = await http.GetStreamAsync(uri, cancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
@@ -364,32 +364,32 @@ namespace Kit.Http
 
         #region Post object
 
-        public static IHttpResponse PostObject(
-            this HttpService http, string url, object obj,
+        public static IHttpResponse PostObject<T>(
+            this HttpService http, string url, T obj,
             CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
             Task.Run(() => http.PostObjectAsync(new Uri(url), obj, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
-        public static IHttpResponse PostObject(
-            this HttpService http, Uri uri, object obj,
+        public static IHttpResponse PostObject<T>(
+            this HttpService http, Uri uri, T obj,
             CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
             Task.Run(() => http.PostObjectAsync(uri, obj, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds)).Result;
 
-        public static Task<IHttpResponse> PostObjectAsync(
-            this HttpService http, string url, object obj,
+        public static Task<IHttpResponse> PostObjectAsync<T>(
+            this HttpService http, string url, T obj,
             CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
             http.PostObjectAsync(new Uri(url), obj, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
-        public static Task<IHttpResponse> PostObjectAsync(
-            this HttpService http, Uri uri, object obj,
+        public static Task<IHttpResponse> PostObjectAsync<T>(
+            this HttpService http, Uri uri, T obj,
             CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
             http.PostObjectAsync(uri, obj, Kit.CancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
 
-        public static Task<IHttpResponse> PostObjectAsync(
-            this HttpService http, string url, object obj, CancellationToken cancellationToken,
+        public static Task<IHttpResponse> PostObjectAsync<T>(
+            this HttpService http, string url, T obj, CancellationToken cancellationToken,
             CacheMode? cache = null, string? cacheKey = null, bool? repeat = null, int? timeoutSeconds = null) =>
             http.PostObjectAsync(new Uri(url), obj, cancellationToken,
                 cache: cache, cacheKey: cacheKey, repeat: repeat, timeoutSeconds: timeoutSeconds);
