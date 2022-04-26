@@ -7,7 +7,7 @@ using System.Net.Mime;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Kit.Mail
+namespace Chubrik.Kit.Mail
 {
     public class MailClient : IReportClient
     {

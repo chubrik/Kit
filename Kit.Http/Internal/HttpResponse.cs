@@ -6,7 +6,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace Kit.Http
+namespace Chubrik.Kit.Http
 {
     internal class HttpResponse : IHttpResponse
     {

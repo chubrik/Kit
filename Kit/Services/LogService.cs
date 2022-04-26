@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
-namespace Kit
+namespace Chubrik.Kit
 {
     public static class LogService
     {

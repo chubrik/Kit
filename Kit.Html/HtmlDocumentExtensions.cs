@@ -1,6 +1,6 @@
 ﻿using HtmlAgilityPack;
 
-namespace Kit.Html
+namespace Chubrik.Kit.Html
 {
     public static class HtmlDocumentExtensions
     {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace Kit.Http
+namespace Chubrik.Kit.Http
 {
     internal class CachedResponse : IHttpResponse
     {

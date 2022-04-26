@@ -1,4 +1,4 @@
-﻿namespace Kit.Http
+﻿namespace Chubrik.Kit.Http
 {
     internal class CacheInfo
     {

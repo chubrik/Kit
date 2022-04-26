@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Kit
+namespace Chubrik.Kit
 {
     public interface IReportClient
     {

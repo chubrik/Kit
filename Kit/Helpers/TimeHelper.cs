@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Kit
+namespace Chubrik.Kit
 {
     public static class TimeHelper
     {

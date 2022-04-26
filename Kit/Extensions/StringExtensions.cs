@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace Kit
+namespace Chubrik.Kit
 {
     public static class StringExtensions
     {

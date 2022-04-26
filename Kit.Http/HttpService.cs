@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Kit.Http
+namespace Chubrik.Kit.Http
 {
     public class HttpService : IDisposable
     {

@@ -1,10 +1,10 @@
-﻿using HtmlAgilityPack;
-using Kit.Http;
+﻿using Chubrik.Kit.Http;
+using HtmlAgilityPack;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Kit.Html
+namespace Chubrik.Kit.Html
 {
     public static class HttpServiceExtensions
     {

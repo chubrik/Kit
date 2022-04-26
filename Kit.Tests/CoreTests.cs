@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace Kit.Tests
+namespace Chubrik.Kit.Tests
 {
     [TestClass]
     public class CoreTests : TestsBase

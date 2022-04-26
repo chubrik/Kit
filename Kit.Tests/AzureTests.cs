@@ -1,7 +1,7 @@
-﻿using Kit.Azure;
+﻿using Chubrik.Kit.Azure;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Kit.Tests
+namespace Chubrik.Kit.Tests
 {
     [TestClass]
     public class AzureTests : TestsBase

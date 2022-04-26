@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <TargetFrameworks>net6.0;net5.0;netstandard2.0;netframework462</TargetFrameworks>
+    <AssemblyName>Chubrik.$(MSBuildProjectName)</AssemblyName>
+    <RootNamespace>$(AssemblyName)</RootNamespace>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
   </PropertyGroup>

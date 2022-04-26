@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Kit.Http
+namespace Chubrik.Kit.Http
 {
     internal static class HttpHelper
     {

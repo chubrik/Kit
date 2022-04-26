@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
-namespace Kit
+namespace Chubrik.Kit
 {
     public class FileClient : IDataClient, ILogClient, IReportClient
     {

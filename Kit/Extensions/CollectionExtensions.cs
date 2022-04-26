@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Kit
+namespace Chubrik.Kit
 {
     public static class CollectionExtensions
     {

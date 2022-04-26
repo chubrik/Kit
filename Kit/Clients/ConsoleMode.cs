@@ -1,4 +1,4 @@
-﻿namespace Kit
+﻿namespace Chubrik.Kit
 {
     internal enum ConsoleMode
     {

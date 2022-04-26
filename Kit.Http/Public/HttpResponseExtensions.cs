@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace Kit.Http
+namespace Chubrik.Kit.Http
 {
     public static class HttpResponseExtensions
     {

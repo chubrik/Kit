@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 
-namespace Kit
+namespace Chubrik.Kit
 {
     public static class ExceptionHandler
     {

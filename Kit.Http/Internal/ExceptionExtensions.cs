@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 
-namespace Kit.Http
+namespace Chubrik.Kit.Http
 {
     internal static class ExceptionExtensions
     {

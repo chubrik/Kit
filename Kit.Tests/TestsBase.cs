@@ -1,7 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.IO;
 
-namespace Kit.Tests
+namespace Chubrik.Kit.Tests
 {
     public abstract class TestsBase
     {

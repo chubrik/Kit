@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace Kit
+namespace Chubrik.Kit
 {
     public static class PathHelper
     {

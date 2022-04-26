@@ -1,5 +1,5 @@
 # [![Kit project](https://raw.githubusercontent.com/chubrik/Kit/main/icon.png)](#) Kit
-[![NuGet package](https://img.shields.io/nuget/v/Kit)](https://www.nuget.org/packages/Kit/)
+[![NuGet package](https://img.shields.io/nuget/v/Chubrik.Kit)](https://www.nuget.org/packages/Chubrik.Kit/)
 [![MIT license](https://img.shields.io/github/license/chubrik/Kit)](https://github.com/chubrik/Kit/blob/main/LICENSE)
 
 Small engine for various projects. Has advanced diagnostics and the most useful features.
@@ -7,6 +7,8 @@ Small engine for various projects. Has advanced diagnostics and the most useful 
 
 ## Usage
 ```csharp
+using Chubrik.Kit;
+
 void Main(string[] args) {
   Kit.Setup(...); // optional
   Kit.Execute(MyApp);

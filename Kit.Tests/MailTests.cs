@@ -1,10 +1,10 @@
-﻿using Kit.Mail;
+﻿using Chubrik.Kit.Mail;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Net.Mail;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Kit.Tests
+namespace Chubrik.Kit.Tests
 {
     [TestClass]
     public class MailTests : TestsBase
