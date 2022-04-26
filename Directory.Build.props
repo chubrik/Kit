@@ -1,9 +1,26 @@
 <Project>
+
   <PropertyGroup>
+    <TargetFrameworks>net6.0;net5.0;netstandard2.0;netframework462</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
-    <NetCoreAppTargetFramework>netcoreapp3.1</NetCoreAppTargetFramework>
-    <NetStandardTargetFramework>netstandard2.1</NetStandardTargetFramework>
-    <KitPackagesVersion>1.10.1</KitPackagesVersion>
   </PropertyGroup>
+
+  <PropertyGroup>
+    <Authors>Arkadi Chubrik</Authors>
+    <Copyright>© 2018 Arkadi Chubrik</Copyright>
+    <Description>Small engine for various projects. Has advanced diagnostics and the most useful features.</Description>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/chubrik/Kit</RepositoryUrl>
+    <Version>1.11.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\icon.png" Link="Pack\icon.png" Pack="true" PackagePath="" />
+    <None Include="..\LICENSE" Link="Pack\LICENSE" Pack="true" PackagePath="" />
+    <None Include="..\README.md" Link="Pack\README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
 </Project>
