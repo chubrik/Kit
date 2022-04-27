@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using Console = Chubrik.XConsole.XConsole;
 
 namespace Chubrik.Kit
 {
@@ -10,9 +10,8 @@ namespace Chubrik.Kit
         public static ConsoleClient Instance => _instance ??= new ConsoleClient();
         private ConsoleClient() { }
 
-        public static ConsolePosition Position { get; private set; } = new ConsolePosition(0, 0);
+        private static bool _isEnabled = true;
         private static LogLevel _minLevel = LogLevel.Log;
-        private static ConsoleMode _mode = ConsoleMode.Enabled;
 
         #region Setup
 
@@ -52,14 +51,14 @@ namespace Chubrik.Kit
         private const string LogTimeFormat = "HH:mm:ss";
         private DateTimeOffset _previousDate = DateTimeOffset.Now;
 
-        private static readonly Dictionary<LogLevel, ConsoleColor?> _logColors =
-            new Dictionary<LogLevel, ConsoleColor?>
+        private static readonly Dictionary<LogLevel, string> _logColors =
+            new()
             {
-                { LogLevel.Log, ConsoleColor.DarkGray },
-                { LogLevel.Info, null },
-                { LogLevel.Success, ConsoleColor.Green },
-                { LogLevel.Warning, ConsoleColor.Yellow },
-                { LogLevel.Error, ConsoleColor.Red },
+                { LogLevel.Log, "d`" },
+                { LogLevel.Info, string.Empty },
+                { LogLevel.Success, "G`" },
+                { LogLevel.Warning, "Y`" },
+                { LogLevel.Error, "R`" },
             };
 
         public void PushToLog(string message, LogLevel level = LogLevel.Log)
@@ -70,7 +69,7 @@ namespace Chubrik.Kit
             var now = DateTimeOffset.Now;
 
             if (now.Day != _previousDate.Day)
-                WriteBase($"\n{now:dd.MM.yyyy}\n\n", color: null, position: null, isLog: true);
+                WriteBase($"\n{now:dd.MM.yyyy}\n", color: string.Empty);
 
             _previousDate = now;
             var timePrefix = now.ToString(LogTimeFormat) + " ";
@@ -82,8 +81,24 @@ namespace Chubrik.Kit
                 message = SplitByWords(message, maxWidth).Join(separator);
             }
 
-            WriteBase($"{timePrefix}{message}\n", color: _logColors[level], position: null, isLog: true);
+            WriteBase(timePrefix + message, color: _logColors[level]);
         }
+
+        private static void WriteBase(string text, string color)
+        {
+            if (_isEnabled)
+                Console.Sync(() =>
+                {
+                    if (Console.CursorLeft > 0)
+                        text = $"\n{text}";
+
+                    Console.WriteLine(color + text);
+                });
+        }
+
+        #endregion
+
+        #region Utils
 
         private static List<string> SplitByWords(string text, int maxWidth)
         {
@@ -104,91 +119,7 @@ namespace Chubrik.Kit
             return lines;
         }
 
-        #endregion
-
-        #region Write
-
-        public static ConsolePosition WriteLine() => WriteLine(string.Empty);
-
-        public static ConsolePosition WriteLine(
-            string text, ConsoleColor? color = null, ConsolePosition? position = null) =>
-            WriteBase($"{text}\n", color, position, isLog: false);
-
-        public static ConsolePosition Write(
-            string text, ConsoleColor? color = null, ConsolePosition? position = null) =>
-            WriteBase(text, color, position, isLog: false);
-
-        private static readonly object _lock = new object();
-
-        private static ConsolePosition WriteBase(
-            string text, ConsoleColor? color, ConsolePosition? position, bool isLog)
-        {
-            lock (_lock)
-            {
-                if (_mode == ConsoleMode.Disabled || (_mode == ConsoleMode.LogOnly && !isLog))
-                    return Position;
-
-                var origColor = Console.ForegroundColor;
-                var origTop = Console.CursorTop;
-                var origLeft = Console.CursorLeft;
-                var isMoved = position != null && !position.Equals(Position);
-                ConsolePosition endPosition;
-
-                try
-                {
-                    if (color != null)
-                        Console.ForegroundColor = (ConsoleColor)color;
-
-                    if (isMoved)
-                    {
-                        Console.CursorVisible = false;
-                        Console.SetCursorPosition(position!.Left, position.Top);
-                    }
-
-                    if (isLog && origLeft > 0)
-                        text = $"\n{text}";
-
-                    Console.Write(text);
-                }
-                catch (ArgumentOutOfRangeException exception)
-                {
-                    Debug.Fail(exception.ToString());
-                    ExceptionHandler.Register(exception, level: LogLevel.Warning);
-                    // no throw for overflow warning
-                }
-                finally
-                {
-                    Console.ForegroundColor = origColor;
-                    endPosition = new ConsolePosition(Console.CursorTop, Console.CursorLeft);
-
-                    if (isMoved)
-                    {
-                        Console.SetCursorPosition(origLeft, origTop);
-                        Console.CursorVisible = true;
-                    }
-                    else
-                        Position = endPosition;
-                }
-
-                return endPosition;
-            }
-        }
-
-        #endregion
-
-        #region Utils
-
-        public static void ReduceToLogOnly()
-        {
-            if (_mode == ConsoleMode.Enabled)
-                _mode = ConsoleMode.LogOnly;
-        }
-
-        public static void Disable()
-        {
-            lock (_lock)
-                _mode = ConsoleMode.Disabled;
-        }
+        public static void Disable() => _isEnabled = false;
 
         #endregion
     }

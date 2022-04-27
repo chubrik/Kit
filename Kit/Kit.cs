@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Console = Chubrik.XConsole.XConsole;
 
 namespace Chubrik.Kit
 {
@@ -122,12 +123,12 @@ namespace Chubrik.Kit
                 _isFailed = true;
                 ConsoleClient.Disable();
                 _сancellationTokenSource.Cancel();
-                Console.BackgroundColor = ConsoleColor.DarkRed;
-                Console.ForegroundColor = ConsoleColor.White;
-                Console.WriteLine((Console.CursorLeft > 0 ? "\n" : string.Empty) + "\n Kit internal error \n");
-                Console.BackgroundColor = ConsoleColor.Black;
-                Console.ForegroundColor = ConsoleColor.Gray;
-                Console.WriteLine(exception.ToString().Trim());
+
+                Console.Sync(() =>
+                {
+                    Console.WriteLine((Console.CursorLeft > 0 ? "\n" : string.Empty) + "\n", "rW` Kit internal error ", "\n");
+                    Console.WriteLine(exception.ToString().Trim());
+                });
 
                 // no throw for internal error
             }
@@ -191,10 +192,7 @@ namespace Chubrik.Kit
             LogService.Log("Kit cancel requested", level: _isFailed ? LogLevel.Log : LogLevel.Warning);
 
             if (!_сancellationTokenSource.IsCancellationRequested)
-            {
-                ConsoleClient.ReduceToLogOnly();
                 _сancellationTokenSource.Cancel();
-            }
         }
 
         #endregion

@@ -4,6 +4,10 @@
     <PackageTags>kit helpers tools utils</PackageTags>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="XConsole" Version="1.1.*" />
+  </ItemGroup>
+
   <ItemGroup Condition="'$(TargetFramework)'=='netstandard2.0' Or '$(TargetFramework)'=='netframework462'">
     <PackageReference Include="System.Text.Json" Version="6.0.3" />
   </ItemGroup>
