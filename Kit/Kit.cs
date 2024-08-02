@@ -126,7 +126,7 @@ namespace Chubrik.Kit
 
                 Console.Sync(() =>
                 {
-                    Console.WriteLine((Console.CursorLeft > 0 ? "\n" : string.Empty) + "\n", "rW` Kit internal error ", "\n");
+                    Console.WriteLine([(Console.CursorLeft > 0 ? "\n" : string.Empty) + "\n", "Wr` Kit internal error ", "\n"]);
                     Console.WriteLine(exception.ToString().Trim());
                 });
 
